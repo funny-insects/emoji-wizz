@@ -109,7 +109,7 @@ Configure Vitest for unit testing with React Testing Library, Playwright for e2e
 - [x] 3.7 Add `test` and `test:e2e` tasks to `Taskfile.yml`
 - [x] 3.8 Verify `task test` and `task test:e2e` both pass
 
-### [ ] 4.0 Pre-commit Hooks (Husky + lint-staged)
+### [x] 4.0 Pre-commit Hooks (Husky + lint-staged)
 
 Install and configure Husky with a pre-commit hook that runs lint-staged. lint-staged runs ESLint, Prettier, and type checking on staged files. Verify that bad commits are blocked.
 
@@ -121,11 +121,11 @@ Install and configure Husky with a pre-commit hook that runs lint-staged. lint-s
 
 #### 4.0 Tasks
 
-- [ ] 4.1 Install Husky and lint-staged (`husky`, `lint-staged`)
-- [ ] 4.2 Add `"prepare": "husky"` script to `package.json` and run it to initialize Husky
-- [ ] 4.3 Configure lint-staged in `package.json` to run ESLint and Prettier on staged `.ts` and `.tsx` files
-- [ ] 4.4 Create `.husky/pre-commit` hook that runs `npx lint-staged`
-- [ ] 4.5 Verify a commit with a deliberate lint error is blocked, and a clean commit succeeds
+- [x] 4.1 Install Husky and lint-staged (`husky`, `lint-staged`)
+- [x] 4.2 Add `"prepare": "husky"` script to `package.json` and run it to initialize Husky
+- [x] 4.3 Configure lint-staged in `package.json` to run ESLint and Prettier on staged `.ts` and `.tsx` files
+- [x] 4.4 Create `.husky/pre-commit` hook that runs `npx lint-staged`
+- [x] 4.5 Verify a commit with a deliberate lint error is blocked, and a clean commit succeeds
 
 ### [ ] 5.0 CI Pipeline (GitHub Actions)
 
