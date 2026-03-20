@@ -11,7 +11,6 @@ Internal tool for our Slack workspace to create custom emojis.
 | Layer | Choice |
 |-------|--------|
 | Frontend | TypeScript + React |
-| Database | DynamoDB |
 | Deployment | AWS App Runner |
 | Task runner | Taskfile (lint, test, typecheck) |
 | Pre-commit | Run tasks + tests before commits |
@@ -21,15 +20,15 @@ Internal tool for our Slack workspace to create custom emojis.
 ## Open Decisions
 
 - **Auth**: Is this internal-only (no login) or do users need accounts to save emoji history?
-- **DynamoDB usage**: What gets persisted? Saved projects? Export history? User preferences?
+answer: no login.
 - **`images.liatr.io`**: Internal AI image generation service — how does it integrate? Text-to-image? What API does it expose?
-- **Deployment**: App Runner selected, but ECS is an alternative if needed.
+- **Deployment**: App Runner selected
 
 ## Feature Overview
 
 ### Smart Emoji Canvas
 - Platform-aware presets (canvas size, margins, contrast, background transparency)
-- Presets: Slack, Discord, Apple custom emojis
+- Presets for emoji sizing: Slack required; Discord, Apple: strech goals
 
 ### Visual Size Optimizer
 - Detects bounds of emoji subject
@@ -73,4 +72,4 @@ Export to multiple image formats (PNG, GIF, WebP) ready for Slack upload.
 | 05 | **Emoji Overlays** | Emoji-specific stickers/effects |
 | 06 | **Visual Size Optimizer** | Sizing analysis + suggestions |
 | 07 | **Export** | Output to file formats |
-| 08 | **AI Command Bar** | Natural language editing |
+| 08 | **AI Command Bar** -| Natural language editing |
