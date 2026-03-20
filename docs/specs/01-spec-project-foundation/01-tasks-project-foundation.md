@@ -87,7 +87,7 @@ Configure ESLint with TypeScript and React rules, Prettier for formatting, and a
 - [x] 2.5 Install [Task](https://taskfile.dev/) runner and create `Taskfile.yml` with `lint`, `format`, and `typecheck` tasks
 - [x] 2.6 Verify `task lint`, `task format`, and `task typecheck` all run and exit cleanly
 
-### [ ] 3.0 Testing Infrastructure (Vitest + Playwright)
+### [x] 3.0 Testing Infrastructure (Vitest + Playwright)
 
 Configure Vitest for unit testing with React Testing Library, Playwright for e2e testing, and add sample tests that pass. Wire both into the Taskfile.
 
@@ -100,14 +100,14 @@ Configure Vitest for unit testing with React Testing Library, Playwright for e2e
 
 #### 3.0 Tasks
 
-- [ ] 3.1 Install Vitest and React Testing Library (`vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `jsdom`)
-- [ ] 3.2 Create `vitest.config.ts` with jsdom environment and React plugin
-- [ ] 3.3 Create a sample unit test `src/App.test.tsx` that verifies the placeholder App component renders
-- [ ] 3.4 Install Playwright (`@playwright/test`) and run `npx playwright install` for browser binaries
-- [ ] 3.5 Create `playwright.config.ts` configured to start the dev server and test against it
-- [ ] 3.6 Create a sample e2e test `e2e/app.spec.ts` that verifies the placeholder page loads with expected content
-- [ ] 3.7 Add `test` and `test:e2e` tasks to `Taskfile.yml`
-- [ ] 3.8 Verify `task test` and `task test:e2e` both pass
+- [x] 3.1 Install Vitest and React Testing Library (`vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `jsdom`)
+- [x] 3.2 Create `vitest.config.ts` with jsdom environment and React plugin
+- [x] 3.3 Create a sample unit test `src/App.test.tsx` that verifies the placeholder App component renders
+- [x] 3.4 Install Playwright (`@playwright/test`) and run `npx playwright install` for browser binaries
+- [x] 3.5 Create `playwright.config.ts` configured to start the dev server and test against it
+- [x] 3.6 Create a sample e2e test `e2e/app.spec.ts` that verifies the placeholder page loads with expected content
+- [x] 3.7 Add `test` and `test:e2e` tasks to `Taskfile.yml`
+- [x] 3.8 Verify `task test` and `task test:e2e` both pass
 
 ### [ ] 4.0 Pre-commit Hooks (Husky + lint-staged)
 
