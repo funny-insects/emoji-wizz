@@ -14,5 +14,4 @@ eslint.config.js
 Taskfile.yml
 vitest.config.ts
 playwright.config.ts
-tsconfig*.json
 docs

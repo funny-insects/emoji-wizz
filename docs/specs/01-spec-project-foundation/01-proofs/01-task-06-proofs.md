@@ -85,23 +85,35 @@ run:
 
 ### `docker build -t emoji-wizz .`
 
-> **Note**: Docker daemon was not running at proof capture time.
-> To verify manually, start Docker Desktop then run:
->
-> ```bash
-> docker build -t emoji-wizz .
-> docker run -p 8080:8080 emoji-wizz
-> # Open http://localhost:8080 — should show the Emoji Wizz placeholder page
-> ```
+```
+#14 [builder 6/6] RUN npm run build
+> emoji-wizz@0.1.0 build
+> tsc -b && vite build
+✓ built in 1.12s
+DONE
+
+IMAGE               ID             DISK USAGE   CONTENT SIZE
+emoji-wizz:latest   f27cd58a4fe9       92.1MB         25.9MB
+```
+
+### `docker run -p 8080:8080 emoji-wizz` + content check
+
+```bash
+$ curl -s -o /dev/null -w "%{http_code}" http://localhost:8080
+200
+
+$ curl -s http://localhost:8080 | grep -o "Emoji Wizz"
+Emoji Wizz
+```
 
 ## Verification
 
-| Proof Artifact                                       | Status                        |
-| ---------------------------------------------------- | ----------------------------- |
-| `Dockerfile` exists with multi-stage build           | ✅                            |
-| Stage 1: Node 22 alpine → `npm ci` + `npm run build` | ✅                            |
-| Stage 2: nginx alpine → serves `dist/` on port 8080  | ✅                            |
-| `.dockerignore` excludes node_modules, .git, dist    | ✅                            |
-| `apprunner.yaml` with port 8080 + health check       | ✅                            |
-| `docker build` — requires Docker Desktop running     | ⚠️ Manual verification needed |
-| `docker run` — requires Docker Desktop running       | ⚠️ Manual verification needed |
+| Proof Artifact                                       | Status |
+| ---------------------------------------------------- | ------ |
+| `Dockerfile` exists with multi-stage build           | ✅     |
+| Stage 1: Node 22 alpine → `npm ci` + `npm run build` | ✅     |
+| Stage 2: nginx alpine → serves `dist/` on port 8080  | ✅     |
+| `.dockerignore` excludes node_modules, .git, dist    | ✅     |
+| `apprunner.yaml` with port 8080 + health check       | ✅     |
+| `docker build -t emoji-wizz .` succeeds (92MB image) | ✅     |
+| `docker run -p 8080:8080` → HTTP 200 + "Emoji Wizz"  | ✅     |
