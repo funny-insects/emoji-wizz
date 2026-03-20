@@ -1,7 +1,7 @@
-Emoji Wizz (prounounced EMO JEE WIZZ)
+# Emoji Wizz (prounounced EMO JEE WIZZ)
 
 
-Features:  Smart Emoji Canvas:
+## Features:  Smart Emoji Canvas:
 Platform aware presets
 * presets to fit each platforms emoji needs
     * handles canvas size, margin requirements, contrast, background transparency
@@ -11,7 +11,7 @@ Platform aware presets
     * discord emoji
     * apple custom emojis
 
-Visual size Optimizer
+## Visual size Optimizer
 * Detects bounds of what user wants as emoji
     * i want to make sure it give user input, like shows what a built in emoji would look like next to theirs for sizing problems. trying to fix the problem shown in this image
     * the pink emoji looks smaller then the default yellow one
@@ -23,7 +23,7 @@ Visual size Optimizer
     * “Boost outline for readability”
     * “Simplify details for small display”
 
-Lightweight editior
+## Lightweight editior
 * normal editor stuff examples
     * crop 
     * resize
@@ -52,14 +52,14 @@ Lightweight editior
     * speech bubble
     * thumbs up
     * white or black outline
-Ai Command bar
+## Ai Command bar
 * Users type commands like:
     * “make this cuter”
     * “add sunglasses”
     * “turn this into pixel art”
     * “remove the background”
-Preview
+## Preview
 * show what the finalized emoji looks like next to other ones
-Export
+## Export
 * allow user to export to different image types
 
