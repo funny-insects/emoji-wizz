@@ -67,7 +67,7 @@ Set up the Vite + React + TypeScript project, establish directory structure, con
 - [x] 1.6 Remove DynamoDB from `docs/specs/specoverview.md` tech stack table and update `README.md` to remove any database references and add basic setup instructions
 - [x] 1.7 Verify `npm install` completes and `npm run dev` starts the dev server without errors
 
-### [ ] 2.0 Code Quality Tooling (ESLint + Prettier + Taskfile)
+### [x] 2.0 Code Quality Tooling (ESLint + Prettier + Taskfile)
 
 Configure ESLint with TypeScript and React rules, Prettier for formatting, and a Taskfile with unified commands for lint, format, and typecheck.
 
@@ -80,12 +80,12 @@ Configure ESLint with TypeScript and React rules, Prettier for formatting, and a
 
 #### 2.0 Tasks
 
-- [ ] 2.1 Install ESLint with TypeScript and React plugins (`eslint`, `@eslint/js`, `typescript-eslint`, `eslint-plugin-react-hooks`, `eslint-plugin-react-refresh`)
-- [ ] 2.2 Configure `eslint.config.js` using flat config with TypeScript + React rules
-- [ ] 2.3 Install Prettier and create `.prettierrc` with formatting rules and `.prettierignore`
-- [ ] 2.4 Install `eslint-config-prettier` to disable ESLint rules that conflict with Prettier
-- [ ] 2.5 Install [Task](https://taskfile.dev/) runner and create `Taskfile.yml` with `lint`, `format`, and `typecheck` tasks
-- [ ] 2.6 Verify `task lint`, `task format`, and `task typecheck` all run and exit cleanly
+- [x] 2.1 Install ESLint with TypeScript and React plugins (`eslint`, `@eslint/js`, `typescript-eslint`, `eslint-plugin-react-hooks`, `eslint-plugin-react-refresh`)
+- [x] 2.2 Configure `eslint.config.js` using flat config with TypeScript + React rules
+- [x] 2.3 Install Prettier and create `.prettierrc` with formatting rules and `.prettierignore`
+- [x] 2.4 Install `eslint-config-prettier` to disable ESLint rules that conflict with Prettier
+- [x] 2.5 Install [Task](https://taskfile.dev/) runner and create `Taskfile.yml` with `lint`, `format`, and `typecheck` tasks
+- [x] 2.6 Verify `task lint`, `task format`, and `task typecheck` all run and exit cleanly
 
 ### [ ] 3.0 Testing Infrastructure (Vitest + Playwright)
 

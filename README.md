@@ -33,23 +33,29 @@ src/
 ## Features
 
 ### Smart Emoji Canvas
+
 - Platform-aware presets (canvas size, margins, contrast, background transparency)
 - Presets for: Slack, Discord, Apple custom emojis
 
 ### Visual Size Optimizer
+
 - Detects bounds of emoji subject
 - Side-by-side preview vs. built-in emoji for sizing comparison
 - Suggests fixes: resize, trim padding, boost outline, simplify details
 
 ### Lightweight Editor
+
 - General tools: crop, resize, rotate, erase background, brush/pen, text, outline/stroke, shadow/glow, sticker layers, shape tools, blur/sharpen, contrast/saturation, fill/recolor, transparent background
 - Emoji-specific overlays: tears, laser eyes, angry brows, blush, sweat drop, sparkle, heart eyes, sunglasses, party hat, speech bubble, thumbs up, white/black outline
 
 ### AI Command Bar
+
 - Natural language commands: "make this cuter", "add sunglasses", "turn this into pixel art", "remove the background"
 
 ### Preview
+
 - Show finalized emoji next to other emojis for size/style comparison
 
 ### Export
+
 - Export to multiple image formats (PNG, GIF, WebP)

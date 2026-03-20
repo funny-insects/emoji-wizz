@@ -3,6 +3,7 @@
 ## CLI Output
 
 ### npm install
+
 ```
 added 1 package, and audited 70 packages in 328ms
 9 packages are looking for funding
@@ -11,6 +12,7 @@ found 0 vulnerabilities
 ```
 
 ### npm run dev
+
 ```
 > emoji-wizz@0.1.0 dev
 > vite
@@ -22,6 +24,7 @@ found 0 vulnerabilities
 ```
 
 ### curl localhost:5173
+
 ```html
 <!doctype html>
 <html lang="en">
@@ -40,16 +43,19 @@ found 0 vulnerabilities
 ## File Verification
 
 ### .nvmrc
+
 ```
 22
 ```
 
 ### .gitignore
+
 Contains patterns for: node_modules, dist, .env files, IDE artifacts (.vscode, .idea), OS files (.DS_Store), Vite artifacts, testing output (coverage, test-results, playwright-report).
 
 ## Configuration
 
 ### Directory Structure
+
 ```
 src/
   components/.gitkeep

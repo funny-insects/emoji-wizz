@@ -29,6 +29,7 @@ Emoji Wizz is an internal tool for creating custom Slack emojis that look great 
 **Purpose:** Establish the base React + TypeScript application so developers can clone, install, and run a dev server immediately.
 
 **Functional Requirements:**
+
 - The project shall be scaffolded with Vite, React 19, and TypeScript targeting Node 22 LTS
 - The project shall use npm as the package manager with a lock file committed to the repo
 - The source code shall follow a layer-based directory structure: `src/components/`, `src/hooks/`, `src/services/`, `src/utils/`, `src/assets/`
@@ -37,6 +38,7 @@ Emoji Wizz is an internal tool for creating custom Slack emojis that look great 
 - An `.nvmrc` file shall pin Node 22
 
 **Proof Artifacts:**
+
 - Screenshot: Browser showing the placeholder page at `localhost:5173` demonstrates the dev server works
 - CLI: `npm run dev` starts without errors demonstrates the scaffold is functional
 
@@ -45,6 +47,7 @@ Emoji Wizz is an internal tool for creating custom Slack emojis that look great 
 **Purpose:** Enforce consistent code quality and formatting across the codebase with a unified task runner interface.
 
 **Functional Requirements:**
+
 - ESLint shall be configured with TypeScript and React rules
 - Prettier shall be configured as the code formatter with an `.prettierrc` config
 - ESLint and Prettier shall not conflict (use `eslint-config-prettier`)
@@ -55,6 +58,7 @@ Emoji Wizz is an internal tool for creating custom Slack emojis that look great 
 - All Taskfile commands shall exit with non-zero codes on failure
 
 **Proof Artifacts:**
+
 - CLI: `task lint` runs successfully on clean code demonstrates linting works
 - CLI: `task typecheck` runs successfully demonstrates type checking works
 - CLI: `task format` runs successfully demonstrates formatting works
@@ -64,6 +68,7 @@ Emoji Wizz is an internal tool for creating custom Slack emojis that look great 
 **Purpose:** Provide unit and e2e testing frameworks so feature specs can include testable requirements from the start.
 
 **Functional Requirements:**
+
 - Vitest shall be configured for unit testing with React Testing Library
 - Playwright shall be configured for e2e testing
 - A sample unit test shall exist and pass (e.g., placeholder component renders)
@@ -73,6 +78,7 @@ Emoji Wizz is an internal tool for creating custom Slack emojis that look great 
 - Test configuration files shall be committed to the repo
 
 **Proof Artifacts:**
+
 - CLI: `task test` passes with sample unit test demonstrates unit testing works
 - CLI: `task test:e2e` passes with sample e2e test demonstrates e2e testing works
 
@@ -81,6 +87,7 @@ Emoji Wizz is an internal tool for creating custom Slack emojis that look great 
 **Purpose:** Catch code quality issues before they reach the remote repository by running checks on staged files at commit time.
 
 **Functional Requirements:**
+
 - Husky shall be installed and configured with a pre-commit hook
 - lint-staged shall run ESLint and Prettier on staged `.ts` and `.tsx` files
 - lint-staged shall run `tsc --noEmit` for type checking
@@ -88,6 +95,7 @@ Emoji Wizz is an internal tool for creating custom Slack emojis that look great 
 - The hook setup shall be automatic via `npm install` (Husky `prepare` script)
 
 **Proof Artifacts:**
+
 - CLI: A commit with a lint error is blocked demonstrates pre-commit hooks work
 - CLI: A clean commit succeeds demonstrates hooks don't block valid code
 
@@ -96,6 +104,7 @@ Emoji Wizz is an internal tool for creating custom Slack emojis that look great 
 **Purpose:** Automate quality checks on every pull request so the main branch stays healthy.
 
 **Functional Requirements:**
+
 - A GitHub Actions workflow shall trigger on pull requests to `main`
 - The workflow shall run on Node 22
 - The workflow shall run `task lint`, `task typecheck`, and `task test` as separate steps
@@ -103,6 +112,7 @@ Emoji Wizz is an internal tool for creating custom Slack emojis that look great 
 - GitHub secret scanning shall be enabled for the repository
 
 **Proof Artifacts:**
+
 - Screenshot: GitHub Actions workflow passing on a PR demonstrates CI works end-to-end
 - CLI: Workflow YAML is valid (no syntax errors) demonstrates correct configuration
 
@@ -111,6 +121,7 @@ Emoji Wizz is an internal tool for creating custom Slack emojis that look great 
 **Purpose:** Make the application deployable to AWS App Runner from day one so deployment is never an afterthought.
 
 **Functional Requirements:**
+
 - A multi-stage Dockerfile shall build the Vite production bundle and serve it with a lightweight server (e.g., nginx or serve)
 - The Docker image shall build successfully with `docker build`
 - An App Runner configuration file shall define the service settings (port, health check, build command)
@@ -118,6 +129,7 @@ Emoji Wizz is an internal tool for creating custom Slack emojis that look great 
 - The Dockerfile shall target Node 22 as the build stage base image
 
 **Proof Artifacts:**
+
 - CLI: `docker build -t emoji-wizz .` succeeds demonstrates the image builds
 - CLI: `docker run -p 8080:8080 emoji-wizz` serves the app demonstrates the container runs
 - File: `apprunner.yaml` exists with valid configuration demonstrates App Runner readiness
