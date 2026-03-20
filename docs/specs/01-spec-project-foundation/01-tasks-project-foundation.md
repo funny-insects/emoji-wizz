@@ -127,7 +127,7 @@ Install and configure Husky with a pre-commit hook that runs lint-staged. lint-s
 - [x] 4.4 Create `.husky/pre-commit` hook that runs `npx lint-staged`
 - [x] 4.5 Verify a commit with a deliberate lint error is blocked, and a clean commit succeeds
 
-### [ ] 5.0 CI Pipeline (GitHub Actions)
+### [x] 5.0 CI Pipeline (GitHub Actions)
 
 Create a GitHub Actions workflow that runs lint, typecheck, and unit tests on PRs to main. Ensure the workflow uses Node 22 and fails on any step failure.
 
@@ -139,11 +139,11 @@ Create a GitHub Actions workflow that runs lint, typecheck, and unit tests on PR
 
 #### 5.0 Tasks
 
-- [ ] 5.1 Create `.github/workflows/` directory structure
-- [ ] 5.2 Create `ci.yml` workflow triggered on pull requests to `main`
-- [ ] 5.3 Configure the workflow with Node 22 setup, npm install, and Taskfile installation
-- [ ] 5.4 Add steps for `task lint`, `task typecheck`, and `task test`
-- [ ] 5.5 Document GitHub secret scanning enablement in the proof artifacts (Settings → Code security)
+- [x] 5.1 Create `.github/workflows/` directory structure
+- [x] 5.2 Create `ci.yml` workflow triggered on pull requests to `main`
+- [x] 5.3 Configure the workflow with Node 22 setup, npm install, and Taskfile installation
+- [x] 5.4 Add steps for `task lint`, `task typecheck`, and `task test`
+- [x] 5.5 Document GitHub secret scanning enablement in the proof artifacts (Settings → Code security)
 
 ### [ ] 6.0 Deployment Scaffold (Dockerfile + App Runner)
 
