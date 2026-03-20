@@ -1,5 +1,10 @@
 # Emoji Wizz (prounounced EMO JEE WIZZ)
+## File Structure:
+/src
+* app source code
 
+/tests
+* testing
 
 ## Features:  Smart Emoji Canvas:
 Platform aware presets
