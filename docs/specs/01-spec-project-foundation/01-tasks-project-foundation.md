@@ -145,7 +145,7 @@ Create a GitHub Actions workflow that runs lint, typecheck, and unit tests on PR
 - [x] 5.4 Add steps for `task lint`, `task typecheck`, and `task test`
 - [x] 5.5 Document GitHub secret scanning enablement in the proof artifacts (Settings → Code security)
 
-### [ ] 6.0 Deployment Scaffold (Dockerfile + App Runner)
+### [x] 6.0 Deployment Scaffold (Dockerfile + App Runner)
 
 Create a multi-stage Dockerfile that builds the Vite production bundle and serves it, plus an App Runner configuration file. Verify the image builds and the container serves the placeholder page.
 
@@ -157,8 +157,8 @@ Create a multi-stage Dockerfile that builds the Vite production bundle and serve
 
 #### 6.0 Tasks
 
-- [ ] 6.1 Create a multi-stage `Dockerfile`: stage 1 uses Node 22 to `npm run build`, stage 2 uses nginx to serve the `dist/` output on port 8080
-- [ ] 6.2 Create a `.dockerignore` to exclude node_modules, .git, and other unnecessary files
-- [ ] 6.3 Create `apprunner.yaml` with service configuration (port 8080, health check path, build command)
-- [ ] 6.4 Verify `docker build -t emoji-wizz .` succeeds
-- [ ] 6.5 Verify `docker run -p 8080:8080 emoji-wizz` serves the placeholder page
+- [x] 6.1 Create a multi-stage `Dockerfile`: stage 1 uses Node 22 to `npm run build`, stage 2 uses nginx to serve the `dist/` output on port 8080
+- [x] 6.2 Create a `.dockerignore` to exclude node_modules, .git, and other unnecessary files
+- [x] 6.3 Create `apprunner.yaml` with service configuration (port 8080, health check path, build command)
+- [x] 6.4 Verify `docker build -t emoji-wizz .` succeeds
+- [x] 6.5 Verify `docker run -p 8080:8080 emoji-wizz` serves the placeholder page
