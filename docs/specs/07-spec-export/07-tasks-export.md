@@ -47,7 +47,7 @@ Create `src/utils/exportUtils.ts` with all pure functions needed for the export 
 
 ---
 
-### [ ] 2.0 ExportControls Component
+### [x] 2.0 ExportControls Component
 
 Create `src/components/ExportControls.tsx` — the format dropdown and Download button — with unit tests. Wire it into `App.tsx` so it renders below the canvas with the correct disabled state. The download logic comes in Task 3; for now `onDownload` is wired up but does nothing yet.
 
@@ -59,7 +59,7 @@ Create `src/components/ExportControls.tsx` — the format dropdown and Download 
 
 #### 2.0 Tasks
 
-- [ ] 2.1 Create `src/components/ExportControls.tsx`. Define the props interface:
+- [x] 2.1 Create `src/components/ExportControls.tsx`. Define the props interface:
   ```ts
   interface ExportControlsProps {
     image: HTMLImageElement | null;
@@ -68,17 +68,17 @@ Create `src/components/ExportControls.tsx` — the format dropdown and Download 
     sizeWarning: string | null;
   }
   ```
-- [ ] 2.2 Render a `<select>` element inside the component with three `<option>` elements: `PNG` (value `"png"`, selected by default), `GIF` (value `"gif"`), `WebP` (value `"webp"`). Track the selected format in local state with `useState<ExportFormat>('png')`.
-- [ ] 2.3 Render a `"Download"` button. Set `disabled={image === null}`. On click, call `onDownload(selectedFormat)`.
-- [ ] 2.4 Below the button, conditionally render the `sizeWarning` string as a `<p>` element with a warning style (e.g., a CSS class `export-warning` with amber/orange colour) when `sizeWarning` is not null.
-- [ ] 2.5 Create `src/components/ExportControls.test.tsx`. Write unit tests covering:
+- [x] 2.2 Render a `<select>` element inside the component with three `<option>` elements: `PNG` (value `"png"`, selected by default), `GIF` (value `"gif"`), `WebP` (value `"webp"`). Track the selected format in local state with `useState<ExportFormat>('png')`.
+- [x] 2.3 Render a `"Download"` button. Set `disabled={image === null}`. On click, call `onDownload(selectedFormat)`.
+- [x] 2.4 Below the button, conditionally render the `sizeWarning` string as a `<p>` element with a warning style (e.g., a CSS class `export-warning` with amber/orange colour) when `sizeWarning` is not null.
+- [x] 2.5 Create `src/components/ExportControls.test.tsx`. Write unit tests covering:
   - Download button is `disabled` when `image` prop is `null`.
   - Download button is not `disabled` when `image` prop is an `HTMLImageElement`.
   - `onDownload` is called with `'png'` when Download is clicked with PNG selected.
   - `onDownload` is called with `'webp'` after the user changes the format select to WebP and clicks Download.
   - Warning `<p>` is not rendered when `sizeWarning` is `null`.
   - Warning `<p>` is rendered with the warning text when `sizeWarning` is a non-null string.
-- [ ] 2.6 Import `ExportControls` in `src/App.tsx`. Render it below `<EmojiCanvas>`, passing `image={image}`, `preset={activePreset}`, `onDownload={() => {}}` (placeholder), and `sizeWarning={null}` (placeholder). The placeholders will be replaced in Task 3.
+- [x] 2.6 Import `ExportControls` in `src/App.tsx`. Render it below `<EmojiCanvas>`, passing `image={image}`, `preset={activePreset}`, `onDownload={() => {}}` (placeholder), and `sizeWarning={null}` (placeholder). The placeholders will be replaced in Task 3.
 
 ---
 

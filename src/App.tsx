@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "./App.css";
 import { EmojiCanvas } from "./components/EmojiCanvas";
+import { ExportControls } from "./components/ExportControls";
 import { PresetSelector } from "./components/PresetSelector";
 import { PLATFORM_PRESETS, type PlatformPreset } from "./utils/presets";
 import { useImageImport } from "./hooks/useImageImport";
@@ -36,6 +37,12 @@ function App() {
         handleFileInput={handleFileInput}
         handleDrop={handleDrop}
         handlePaste={handlePaste}
+      />
+      <ExportControls
+        image={image}
+        preset={activePreset}
+        onDownload={() => {}}
+        sizeWarning={null}
       />
     </div>
   );
