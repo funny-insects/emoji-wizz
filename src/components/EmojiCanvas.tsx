@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { type PlatformPreset } from "../utils/presets";
 import { drawCheckerboard, drawSafeZone } from "../utils/canvasDrawing";
+import { computeContainRect } from "../utils/imageScaling";
+import { useImageImport } from "../hooks/useImageImport";
 
 interface EmojiCanvasProps {
   preset: PlatformPreset;
@@ -8,20 +10,38 @@ interface EmojiCanvasProps {
 
 export function EmojiCanvas({ preset }: EmojiCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { image, handleFileInput, handleDrop, handlePaste } = useImageImport();
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
     ctx.clearRect(0, 0, preset.width, preset.height);
     drawCheckerboard(ctx, preset.width, preset.height);
     drawSafeZone(ctx, preset.width, preset.height, preset.safeZonePadding);
-  }, [preset]);
+
+    if (image) {
+      const rect = computeContainRect(
+        image.naturalWidth,
+        image.naturalHeight,
+        preset.width,
+        preset.height,
+      );
+      ctx.drawImage(image, rect.x, rect.y, rect.width, rect.height);
+    }
+  }, [preset, image]);
+
+  useEffect(() => {
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [handlePaste]);
 
   return (
-    <div>
+    <div onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
       <canvas ref={canvasRef} width={preset.width} height={preset.height} />
+      <input type="file" accept="image/*" onChange={handleFileInput} />
     </div>
   );
 }

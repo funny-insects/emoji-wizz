@@ -1,4 +1,8 @@
 import { test, expect } from "@playwright/test";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 test("canvas renders with Slack preset dimensions", async ({ page }) => {
   await page.goto("/");
@@ -22,4 +26,29 @@ test("canvas renders non-empty pixel data (checkerboard is drawing)", async ({
     const data = ctx.getImageData(0, 0, el.width, el.height).data;
     return data.some((v) => v !== 0);
   });
+});
+
+test("canvas pixel data changes after file upload", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("canvas")).toBeVisible();
+
+  const initialPixels = await page.evaluate(() => {
+    const el = document.querySelector("canvas") as HTMLCanvasElement;
+    const ctx = el.getContext("2d");
+    if (!ctx) return [] as number[];
+    return Array.from(ctx.getImageData(0, 0, el.width, el.height).data);
+  });
+
+  const fixturePath = path.join(__dirname, "fixtures", "test-emoji.png");
+  await page.locator('input[type="file"]').setInputFiles(fixturePath);
+
+  await page.waitForFunction((initial: number[]) => {
+    const el = document.querySelector("canvas") as HTMLCanvasElement;
+    const ctx = el.getContext("2d");
+    if (!ctx) return false;
+    const current = Array.from(
+      ctx.getImageData(0, 0, el.width, el.height).data,
+    );
+    return current.some((v, i) => v !== initial[i]);
+  }, initialPixels);
 });

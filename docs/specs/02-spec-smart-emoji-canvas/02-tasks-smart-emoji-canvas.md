@@ -45,7 +45,7 @@
 
 ---
 
-### [~] 2.0 EmojiCanvas Component — Checkerboard & Safe Zone
+### [x] 2.0 EmojiCanvas Component — Checkerboard & Safe Zone
 
 #### 2.0 Proof Artifact(s)
 
@@ -67,7 +67,7 @@
 
 ---
 
-### [ ] 3.0 Image Import — File Upload, Drag-and-Drop & Clipboard Paste
+### [~] 3.0 Image Import — File Upload, Drag-and-Drop & Clipboard Paste
 
 #### 3.0 Proof Artifact(s)
 
@@ -77,14 +77,14 @@
 
 #### 3.0 Tasks
 
-- [ ] 3.1 Create `src/utils/imageScaling.ts` — write and export `computeContainRect(imageWidth: number, imageHeight: number, canvasWidth: number, canvasHeight: number): { x: number; y: number; width: number; height: number }`. The returned rect should fit entirely within the canvas, preserve the image's aspect ratio, and be centered.
-- [ ] 3.2 Create `src/utils/imageScaling.test.ts` — write tests for at least 3 cases: (a) square image (128×128) into 128×128 canvas — rect fills the canvas exactly, (b) landscape image (256×128) into 128×128 canvas — rect width is 128 and height is 64, centered vertically, (c) portrait image (128×256) into 128×128 canvas — rect height is 128 and width is 64, centered horizontally.
-- [ ] 3.3 Create `src/hooks/useImageImport.ts` — a custom React hook that manages a `HTMLImageElement | null` state. It should expose: (a) `handleFileInput(e: React.ChangeEvent<HTMLInputElement>)` for the file picker, (b) `handleDrop(e: React.DragEvent)` for drag-and-drop, (c) `handlePaste(e: ClipboardEvent)` for clipboard paste. Each handler should read an image file/blob, create an `HTMLImageElement`, wait for it to load, then set it in state. Ignore non-image types silently.
-- [ ] 3.4 Update `src/components/EmojiCanvas.tsx` — import and call `useImageImport`; add a second `useEffect` (dependent on `preset` and the imported image) that redraws the canvas in order: clear → `drawCheckerboard` → `drawSafeZone` → draw image (using `computeContainRect` for positioning) if an image is present. Add `onDragOver` (prevent default) and `onDrop` handlers to the wrapper `<div>`.
-- [ ] 3.5 In `src/components/EmojiCanvas.tsx`, add a `<input type="file" accept="image/*">` element below the canvas with an `onChange` handler wired to `handleFileInput`.
-- [ ] 3.6 Add a small test fixture image at `e2e/fixtures/test-emoji.png` — create or copy any 32×32 solid-color PNG (it just needs to be a valid image file for the upload test).
-- [ ] 3.7 Add a second test case to `e2e/canvas.spec.ts` — use `page.setInputFiles` to upload `e2e/fixtures/test-emoji.png` via the file input, wait for the canvas to update, then read pixel data and assert it has changed from the initial checkerboard-only state.
-- [ ] 3.8 Run `task test` and `task test:e2e` and confirm all tests pass.
+- [x] 3.1 Create `src/utils/imageScaling.ts` — write and export `computeContainRect(imageWidth: number, imageHeight: number, canvasWidth: number, canvasHeight: number): { x: number; y: number; width: number; height: number }`. The returned rect should fit entirely within the canvas, preserve the image's aspect ratio, and be centered.
+- [x] 3.2 Create `src/utils/imageScaling.test.ts` — write tests for at least 3 cases: (a) square image (128×128) into 128×128 canvas — rect fills the canvas exactly, (b) landscape image (256×128) into 128×128 canvas — rect width is 128 and height is 64, centered vertically, (c) portrait image (128×256) into 128×128 canvas — rect height is 128 and width is 64, centered horizontally.
+- [x] 3.3 Create `src/hooks/useImageImport.ts` — a custom React hook that manages a `HTMLImageElement | null` state. It should expose: (a) `handleFileInput(e: React.ChangeEvent<HTMLInputElement>)` for the file picker, (b) `handleDrop(e: React.DragEvent)` for drag-and-drop, (c) `handlePaste(e: ClipboardEvent)` for clipboard paste. Each handler should read an image file/blob, create an `HTMLImageElement`, wait for it to load, then set it in state. Ignore non-image types silently.
+- [x] 3.4 Update `src/components/EmojiCanvas.tsx` — import and call `useImageImport`; add a second `useEffect` (dependent on `preset` and the imported image) that redraws the canvas in order: clear → `drawCheckerboard` → `drawSafeZone` → draw image (using `computeContainRect` for positioning) if an image is present. Add `onDragOver` (prevent default) and `onDrop` handlers to the wrapper `<div>`.
+- [x] 3.5 In `src/components/EmojiCanvas.tsx`, add a `<input type="file" accept="image/*">` element below the canvas with an `onChange` handler wired to `handleFileInput`.
+- [x] 3.6 Add a small test fixture image at `e2e/fixtures/test-emoji.png` — create or copy any 32×32 solid-color PNG (it just needs to be a valid image file for the upload test).
+- [x] 3.7 Add a second test case to `e2e/canvas.spec.ts` — use `page.setInputFiles` to upload `e2e/fixtures/test-emoji.png` via the file input, wait for the canvas to update, then read pixel data and assert it has changed from the initial checkerboard-only state.
+- [x] 3.8 Run `task test` and `task test:e2e` and confirm all tests pass.
 
 ---
 
