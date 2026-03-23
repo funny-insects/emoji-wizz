@@ -1,11 +1,11 @@
 import { test, expect } from "@playwright/test";
 
-test("placeholder page loads with app name", async ({ page }) => {
+test("app renders a canvas element", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /emoji wizz/i })).toBeVisible();
+  await expect(page.locator("canvas")).toBeVisible();
 });
 
-test("placeholder page shows tagline", async ({ page }) => {
+test("app renders a preset selector dropdown", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByText(/create custom emojis/i)).toBeVisible();
+  await expect(page.locator("select")).toBeVisible();
 });

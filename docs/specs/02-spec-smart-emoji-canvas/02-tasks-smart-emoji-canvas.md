@@ -67,7 +67,7 @@
 
 ---
 
-### [~] 3.0 Image Import — File Upload, Drag-and-Drop & Clipboard Paste
+### [x] 3.0 Image Import — File Upload, Drag-and-Drop & Clipboard Paste
 
 #### 3.0 Proof Artifact(s)
 
@@ -88,7 +88,7 @@
 
 ---
 
-### [ ] 4.0 App Integration & Quality Gates
+### [x] 4.0 App Integration & Quality Gates
 
 #### 4.0 Proof Artifact(s)
 
@@ -100,10 +100,10 @@
 
 #### 4.0 Tasks
 
-- [ ] 4.1 Update `src/App.tsx` — replace the existing placeholder heading and tagline with the full canvas UI. Use `useState<PlatformPreset>` initialized to the Slack preset. Render `<PresetSelector>` above `<EmojiCanvas>`, passing the active preset and an `onChange` handler that updates state.
-- [ ] 4.2 Update `src/App.css` — add styles to center the app layout: a flex column container, horizontally centered, with a reasonable gap between the selector and the canvas.
-- [ ] 4.3 Update `src/App.test.tsx` — update the existing tests to match the new App structure. At minimum, assert that a `<canvas>` element and a `<select>` element are present in the rendered output.
-- [ ] 4.4 Run `task lint` — fix any ESLint errors or warnings until the output reports 0 errors and 0 warnings.
-- [ ] 4.5 Run `task typecheck` — fix any TypeScript errors until the output is clean with no errors.
-- [ ] 4.6 Run `task test` — confirm all unit tests pass.
-- [ ] 4.7 Run `task test:e2e` — confirm all Playwright E2E tests pass.
+- [x] 4.1 Update `src/App.tsx` — replace the existing placeholder heading and tagline with the full canvas UI. Use `useState<PlatformPreset>` initialized to the Slack preset. Render `<PresetSelector>` above `<EmojiCanvas>`, passing the active preset and an `onChange` handler that updates state.
+- [x] 4.2 Update `src/App.css` — add styles to center the app layout: a flex column container, horizontally centered, with a reasonable gap between the selector and the canvas.
+- [x] 4.3 Update `src/App.test.tsx` — update the existing tests to match the new App structure. At minimum, assert that a `<canvas>` element and a `<select>` element are present in the rendered output.
+- [x] 4.4 Run `task lint` — fix any ESLint errors or warnings until the output reports 0 errors and 0 warnings.
+- [x] 4.5 Run `task typecheck` — fix any TypeScript errors until the output is clean with no errors.
+- [x] 4.6 Run `task test` — confirm all unit tests pass.
+- [x] 4.7 Run `task test:e2e` — confirm all Playwright E2E tests pass.
