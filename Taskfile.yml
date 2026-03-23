@@ -1,0 +1,32 @@
+version: "3"
+
+tasks:
+  lint:
+    desc: Run ESLint on source files
+    cmds:
+      - npx eslint src/
+
+  format:
+    desc: Run Prettier on the project
+    cmds:
+      - npx prettier --write .
+
+  format:check:
+    desc: Check Prettier formatting without writing
+    cmds:
+      - npx prettier --check .
+
+  typecheck:
+    desc: Run TypeScript type checking
+    cmds:
+      - npx tsc --noEmit
+
+  test:
+    desc: Run Vitest unit tests
+    cmds:
+      - npx vitest run
+
+  test:e2e:
+    desc: Run Playwright e2e tests
+    cmds:
+      - npx playwright test
