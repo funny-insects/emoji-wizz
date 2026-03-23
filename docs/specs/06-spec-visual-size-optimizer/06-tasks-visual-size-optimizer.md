@@ -65,7 +65,7 @@
 
 ---
 
-### [ ] 3.0 OptimizerPanel Component
+### [x] 3.0 OptimizerPanel Component
 
 #### 3.0 Proof Artifact(s)
 
@@ -73,22 +73,22 @@
 
 #### 3.0 Tasks
 
-- [ ] 3.1 Create `src/components/OptimizerPanel.tsx`. Define and export a `OptimizerPanelProps` interface with these fields:
+- [x] 3.1 Create `src/components/OptimizerPanel.tsx`. Define and export a `OptimizerPanelProps` interface with these fields:
   - `hasImage: boolean` — controls whether the Analyze button is enabled
   - `onAnalyze: () => void` — callback invoked when the button is clicked
   - `suggestions: string[] | null` — `null` means no analysis has been run yet; an array (including empty) means analysis has completed
   - `customEmojiDataUrl: string | null` — data URL of the user's emoji for the comparison row
   - `referenceEmojiSrc: string` — path/URL of the bundled reference emoji
-- [ ] 3.2 Implement the `OptimizerPanel` component. Render an `<button>` labelled "Analyze" with `disabled={!hasImage}`.
-- [ ] 3.3 Render a results section **only when `suggestions !== null`**. Inside it: if `suggestions.length === 0`, render a `<p>` with text "Looks good!"; otherwise render a `<ul>` with one `<li>` per suggestion string.
-- [ ] 3.4 Inside the same results section, render a side-by-side comparison row: a `<div>` containing two `<figure>` elements. First figure: `<img src={customEmojiDataUrl ?? ""}` at 64×64 with a `<figcaption>` of "Your emoji". Second figure: `<img src={referenceEmojiSrc}` at 64×64 with a `<figcaption>` of "Reference".
-- [ ] 3.5 Create `src/components/OptimizerPanel.test.tsx`. Import `OptimizerPanel` and `@testing-library/react`.
-- [ ] 3.6 Add a test: render with `hasImage={false}` — assert the "Analyze" button is disabled (`expect(button).toBeDisabled()`).
-- [ ] 3.7 Add a test: render with `hasImage={true}` — assert the "Analyze" button is not disabled.
-- [ ] 3.8 Add a test: render with `suggestions={null}` — assert the results section is not present in the DOM (query for "Looks good!" or a `<ul>` returns null).
-- [ ] 3.9 Add a test: render with `suggestions={[]}` — assert the text "Looks good!" is visible.
-- [ ] 3.10 Add a test: render with `suggestions={["Trim transparent padding"]}` — assert the text "Trim transparent padding" appears in a list item.
-- [ ] 3.11 Run `task test` and confirm all new tests pass.
+- [x] 3.2 Implement the `OptimizerPanel` component. Render an `<button>` labelled "Analyze" with `disabled={!hasImage}`.
+- [x] 3.3 Render a results section **only when `suggestions !== null`**. Inside it: if `suggestions.length === 0`, render a `<p>` with text "Looks good!"; otherwise render a `<ul>` with one `<li>` per suggestion string.
+- [x] 3.4 Inside the same results section, render a side-by-side comparison row: a `<div>` containing two `<figure>` elements. First figure: `<img src={customEmojiDataUrl ?? ""}` at 64×64 with a `<figcaption>` of "Your emoji". Second figure: `<img src={referenceEmojiSrc}` at 64×64 with a `<figcaption>` of "Reference".
+- [x] 3.5 Create `src/components/OptimizerPanel.test.tsx`. Import `OptimizerPanel` and `@testing-library/react`.
+- [x] 3.6 Add a test: render with `hasImage={false}` — assert the "Analyze" button is disabled (`expect(button).toBeDisabled()`).
+- [x] 3.7 Add a test: render with `hasImage={true}` — assert the "Analyze" button is not disabled.
+- [x] 3.8 Add a test: render with `suggestions={null}` — assert the results section is not present in the DOM (query for "Looks good!" or a `<ul>` returns null).
+- [x] 3.9 Add a test: render with `suggestions={[]}` — assert the text "Looks good!" is visible.
+- [x] 3.10 Add a test: render with `suggestions={["Trim transparent padding"]}` — assert the text "Trim transparent padding" appears in a list item.
+- [x] 3.11 Run `task test` and confirm all new tests pass.
 
 ---
 
