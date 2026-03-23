@@ -28,6 +28,36 @@ test("canvas renders non-empty pixel data (checkerboard is drawing)", async ({
   });
 });
 
+test("switching to Apple preset with no image resizes canvas silently", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator("canvas")).toBeVisible();
+
+  await page.locator("select").selectOption({ label: "Apple — 512×512" });
+
+  const canvas = page.locator("canvas");
+  await expect(canvas).toHaveAttribute("width", "512");
+  await expect(canvas).toHaveAttribute("height", "512");
+});
+
+test("switching preset after image upload shows confirm dialog and resizes canvas", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator("canvas")).toBeVisible();
+
+  const fixturePath = path.join(__dirname, "fixtures", "test-emoji.png");
+  await page.locator('input[type="file"]').setInputFiles(fixturePath);
+
+  page.on("dialog", (dialog) => dialog.accept());
+  await page.locator("select").selectOption({ label: "Apple — 512×512" });
+
+  const canvas = page.locator("canvas");
+  await expect(canvas).toHaveAttribute("width", "512");
+  await expect(canvas).toHaveAttribute("height", "512");
+});
+
 test("canvas pixel data changes after file upload", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("canvas")).toBeVisible();

@@ -45,7 +45,7 @@ Add `maxFileSizeKb` to the `PlatformPreset` interface and populate all three pla
 
 ---
 
-### [ ] 2.0 Preset Switch — Confirmation Dialog, Canvas Resize, and Image Re-scale
+### [x] 2.0 Preset Switch — Confirmation Dialog, Canvas Resize, and Image Re-scale
 
 Lift image state from `EmojiCanvas` to `App.tsx`, then add a `window.confirm` guard in the preset-change handler. Update `EmojiCanvas` to receive image state as props instead of managing it internally.
 
@@ -58,12 +58,12 @@ Lift image state from `EmojiCanvas` to `App.tsx`, then add a `window.confirm` gu
 
 #### 2.0 Tasks
 
-- [ ] 2.1 In `src/components/EmojiCanvas.tsx`, extend `EmojiCanvasProps` to add four new props: `image: HTMLImageElement | null`, `handleFileInput: React.ChangeEventHandler<HTMLInputElement>`, `handleDrop: React.DragEventHandler<HTMLDivElement>`, and `handlePaste: (e: ClipboardEvent) => void`.
-- [ ] 2.2 Remove the `useImageImport()` call from inside `EmojiCanvas` — delete the line and its import. The component will now receive these values from props instead.
-- [ ] 2.3 In `src/App.tsx`, add `import { useImageImport } from "./hooks/useImageImport";` and call `const { image, handleFileInput, handleDrop, handlePaste } = useImageImport();` inside the `App` component.
-- [ ] 2.4 In `src/App.tsx`, update the `<EmojiCanvas>` JSX to pass down the four new props: `image={image}`, `handleFileInput={handleFileInput}`, `handleDrop={handleDrop}`, `handlePaste={handlePaste}`.
-- [ ] 2.5 In `src/App.tsx`, update `handlePresetChange` to check `if (image)` before switching — if an image is loaded, call `window.confirm("Switching to [preset label] will resize the canvas. Your image will be re-scaled to fit. Continue?")` and only call `setActivePreset` if the user clicks OK.
-- [ ] 2.6 In `src/components/EmojiCanvas.test.tsx`, update the existing render test to pass the new required props: `image={null}` and no-op handlers (`handleFileInput={() => {}}`, `handleDrop={() => {}}`, `handlePaste={() => {}}`).
-- [ ] 2.7 In `e2e/canvas.spec.ts`, add a test: navigate to `/`, select the `"Apple — 512×512"` option in the dropdown (no image loaded), assert the canvas `width` attribute is `"512"` and `height` is `"512"` — no dialog should appear.
-- [ ] 2.8 In `e2e/canvas.spec.ts`, add a test: navigate to `/`, upload the fixture image via the file input, then set up a dialog handler with `page.on('dialog', dialog => dialog.accept())`, select a different preset in the dropdown, and assert the canvas resizes to the new dimensions — demonstrates the confirmation guard fires and the canvas updates on acceptance.
-- [ ] 2.9 Run `task test`, `task e2e`, `task typecheck`, and `task lint` — fix any errors before marking this task complete.
+- [x] 2.1 In `src/components/EmojiCanvas.tsx`, extend `EmojiCanvasProps` to add four new props: `image: HTMLImageElement | null`, `handleFileInput: React.ChangeEventHandler<HTMLInputElement>`, `handleDrop: React.DragEventHandler<HTMLDivElement>`, and `handlePaste: (e: ClipboardEvent) => void`.
+- [x] 2.2 Remove the `useImageImport()` call from inside `EmojiCanvas` — delete the line and its import. The component will now receive these values from props instead.
+- [x] 2.3 In `src/App.tsx`, add `import { useImageImport } from "./hooks/useImageImport";` and call `const { image, handleFileInput, handleDrop, handlePaste } = useImageImport();` inside the `App` component.
+- [x] 2.4 In `src/App.tsx`, update the `<EmojiCanvas>` JSX to pass down the four new props: `image={image}`, `handleFileInput={handleFileInput}`, `handleDrop={handleDrop}`, `handlePaste={handlePaste}`.
+- [x] 2.5 In `src/App.tsx`, update `handlePresetChange` to check `if (image)` before switching — if an image is loaded, call `window.confirm("Switching to [preset label] will resize the canvas. Your image will be re-scaled to fit. Continue?")` and only call `setActivePreset` if the user clicks OK.
+- [x] 2.6 In `src/components/EmojiCanvas.test.tsx`, update the existing render test to pass the new required props: `image={null}` and no-op handlers (`handleFileInput={() => {}}`, `handleDrop={() => {}}`, `handlePaste={() => {}}`).
+- [x] 2.7 In `e2e/canvas.spec.ts`, add a test: navigate to `/`, select the `"Apple — 512×512"` option in the dropdown (no image loaded), assert the canvas `width` attribute is `"512"` and `height` is `"512"` — no dialog should appear.
+- [x] 2.8 In `e2e/canvas.spec.ts`, add a test: navigate to `/`, upload the fixture image via the file input, then set up a dialog handler with `page.on('dialog', dialog => dialog.accept())`, select a different preset in the dropdown, and assert the canvas resizes to the new dimensions — demonstrates the confirmation guard fires and the canvas updates on acceptance.
+- [x] 2.9 Run `task test`, `task e2e`, `task typecheck`, and `task lint` — fix any errors before marking this task complete.
