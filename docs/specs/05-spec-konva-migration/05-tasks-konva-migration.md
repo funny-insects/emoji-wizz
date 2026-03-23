@@ -64,7 +64,7 @@ Add a Konva `<Image>` node on a separate image `<Layer>` that renders the user's
 - [x] 2.4 Verify all three import methods work: (a) click the file input and select an image, (b) drag an image file onto the canvas area, (c) copy an image and paste with Ctrl/Cmd+V. Each method should display the image scaled to fit within the stage.
 - [x] 2.5 Verify preset switching with a loaded image: switch presets in the dropdown, confirm the confirmation dialog appears, accept it, and verify the image re-scales to the new preset dimensions.
 
-### [ ] 3.0 Rewrite Unit Tests for Konva Components
+### [x] 3.0 Rewrite Unit Tests for Konva Components
 
 Replace all canvas-context-mocking unit tests with tests that verify Konva component props and layer structure. The old `canvasDrawing.test.ts` tests (which mock `CanvasRenderingContext2D`) are replaced with tests that verify the Konva `<Rect>` shapes have the correct props. `EmojiCanvas.test.tsx` is updated to verify the Konva `<Stage>` renders with correct dimensions.
 
@@ -75,11 +75,11 @@ Replace all canvas-context-mocking unit tests with tests that verify Konva compo
 
 #### 3.0 Tasks
 
-- [ ] 3.1 Rewrite `EmojiCanvas.test.tsx`: replace the test that queries `container.querySelector("canvas")` for width/height attributes. Instead, verify the Konva `<Stage>` renders by checking for a canvas element in the DOM (Konva renders to a `<canvas>` internally). Verify the canvas dimensions match the preset. Note: Konva wraps its canvas in a `<div class="konvajs-content">` — use this to locate the rendered element.
-- [ ] 3.2 Add a new test in `EmojiCanvas.test.tsx` that verifies the three-layer structure renders: background layer, image layer, and overlays layer (the overlays layer is added in task 4.0 — mark this test as a placeholder or skip until 4.0 completes).
-- [ ] 3.3 Rewrite `canvasDrawing.test.ts` as a new Konva-focused test file (e.g., update in-place or create `src/components/EmojiCanvas.test.tsx` tests). Replace `CanvasRenderingContext2D` mock tests with tests that render `<EmojiCanvas>` and verify: (a) the correct number of `<Rect>` elements exist for the checkerboard (e.g., 256 rects for 128×128 with 8px tiles), (b) the safe-zone rect has the correct stroke, dash, and position props.
-- [ ] 3.4 Update `App.test.tsx` if needed: the test `expect(document.querySelector("canvas")).toBeInTheDocument()` should still pass since Konva renders a `<canvas>` element, but verify and adjust the selector if necessary.
-- [ ] 3.5 Run `task test` and `task typecheck` to confirm all unit tests pass and there are no TypeScript errors.
+- [x] 3.1 Rewrite `EmojiCanvas.test.tsx`: replace the test that queries `container.querySelector("canvas")` for width/height attributes. Instead, verify the Konva `<Stage>` renders by checking for a canvas element in the DOM (Konva renders to a `<canvas>` internally). Verify the canvas dimensions match the preset. Note: Konva wraps its canvas in a `<div class="konvajs-content">` — use this to locate the rendered element.
+- [x] 3.2 Add a new test in `EmojiCanvas.test.tsx` that verifies the three-layer structure renders: background layer, image layer, and overlays layer (the overlays layer is added in task 4.0 — mark this test as a placeholder or skip until 4.0 completes).
+- [x] 3.3 Rewrite `canvasDrawing.test.ts` as a new Konva-focused test file (e.g., update in-place or create `src/components/EmojiCanvas.test.tsx` tests). Replace `CanvasRenderingContext2D` mock tests with tests that render `<EmojiCanvas>` and verify: (a) the correct number of `<Rect>` elements exist for the checkerboard (e.g., 256 rects for 128×128 with 8px tiles), (b) the safe-zone rect has the correct stroke, dash, and position props.
+- [x] 3.4 Update `App.test.tsx` if needed: the test `expect(document.querySelector("canvas")).toBeInTheDocument()` should still pass since Konva renders a `<canvas>` element, but verify and adjust the selector if necessary.
+- [x] 3.5 Run `task test` and `task typecheck` to confirm all unit tests pass and there are no TypeScript errors.
 
 ### [ ] 4.0 Remove Legacy Canvas Code, Add Overlays Layer, Final Verification
 
