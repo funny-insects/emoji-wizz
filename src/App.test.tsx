@@ -3,13 +3,13 @@ import { describe, it, expect } from "vitest";
 import App from "./App";
 
 describe("App", () => {
-  it("renders the Emoji Wizz heading", () => {
+  it("renders a canvas element", () => {
     render(<App />);
-    expect(screen.getByRole("heading", { name: /emoji wizz/i })).toBeInTheDocument();
+    expect(document.querySelector("canvas")).toBeInTheDocument();
   });
 
-  it("renders the tagline", () => {
+  it("renders a select element for preset selection", () => {
     render(<App />);
-    expect(screen.getByText(/create custom emojis/i)).toBeInTheDocument();
+    expect(screen.getByRole("combobox")).toBeInTheDocument();
   });
 });
