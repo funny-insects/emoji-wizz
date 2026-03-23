@@ -82,7 +82,7 @@ Create `src/components/ExportControls.tsx` — the format dropdown and Download 
 
 ---
 
-### [~] 3.0 Download Pipeline & File Size Warning
+### [x] 3.0 Download Pipeline & File Size Warning
 
 Replace the placeholder props in `App.tsx` with a real `handleDownload` function that renders an offscreen canvas, encodes it to the selected format, checks the file size, updates the warning state, and triggers a browser download.
 
