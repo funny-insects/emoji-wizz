@@ -2,15 +2,23 @@ import { useEffect, useRef } from "react";
 import { type PlatformPreset } from "../utils/presets";
 import { drawCheckerboard, drawSafeZone } from "../utils/canvasDrawing";
 import { computeContainRect } from "../utils/imageScaling";
-import { useImageImport } from "../hooks/useImageImport";
 
 interface EmojiCanvasProps {
   preset: PlatformPreset;
+  image: HTMLImageElement | null;
+  handleFileInput: React.ChangeEventHandler<HTMLInputElement>;
+  handleDrop: React.DragEventHandler<HTMLDivElement>;
+  handlePaste: (e: ClipboardEvent) => void;
 }
 
-export function EmojiCanvas({ preset }: EmojiCanvasProps) {
+export function EmojiCanvas({
+  preset,
+  image,
+  handleFileInput,
+  handleDrop,
+  handlePaste,
+}: EmojiCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { image, handleFileInput, handleDrop, handlePaste } = useImageImport();
 
   useEffect(() => {
     const canvas = canvasRef.current;

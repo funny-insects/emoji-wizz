@@ -3,15 +3,24 @@ import "./App.css";
 import { EmojiCanvas } from "./components/EmojiCanvas";
 import { PresetSelector } from "./components/PresetSelector";
 import { PLATFORM_PRESETS, type PlatformPreset } from "./utils/presets";
+import { useImageImport } from "./hooks/useImageImport";
 
 function App() {
   const [activePreset, setActivePreset] = useState<PlatformPreset>(
     PLATFORM_PRESETS[0],
   );
+  const { image, handleFileInput, handleDrop, handlePaste } = useImageImport();
 
   function handlePresetChange(id: string) {
     const preset = PLATFORM_PRESETS.find((p) => p.id === id);
-    if (preset) setActivePreset(preset);
+    if (!preset) return;
+    if (image) {
+      const ok = window.confirm(
+        `Switching to ${preset.label} will resize the canvas. Your image will be re-scaled to fit. Continue?`,
+      );
+      if (!ok) return;
+    }
+    setActivePreset(preset);
   }
 
   return (
@@ -21,7 +30,13 @@ function App() {
         activePresetId={activePreset.id}
         onChange={handlePresetChange}
       />
-      <EmojiCanvas preset={activePreset} />
+      <EmojiCanvas
+        preset={activePreset}
+        image={image}
+        handleFileInput={handleFileInput}
+        handleDrop={handleDrop}
+        handlePaste={handlePaste}
+      />
     </div>
   );
 }

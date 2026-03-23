@@ -7,7 +7,15 @@ const slackPreset = PLATFORM_PRESETS.find((p) => p.id === "slack")!;
 
 describe("EmojiCanvas", () => {
   it("renders a canvas with the correct dimensions for the Slack preset", () => {
-    const { container } = render(<EmojiCanvas preset={slackPreset} />);
+    const { container } = render(
+      <EmojiCanvas
+        preset={slackPreset}
+        image={null}
+        handleFileInput={() => {}}
+        handleDrop={() => {}}
+        handlePaste={() => {}}
+      />,
+    );
     const canvas = container.querySelector("canvas");
     expect(canvas).not.toBeNull();
     expect(canvas?.getAttribute("width")).toBe("128");
