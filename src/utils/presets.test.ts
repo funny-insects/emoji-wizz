@@ -6,12 +6,31 @@ describe("PLATFORM_PRESETS", () => {
     expect(PLATFORM_PRESETS.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("slack preset has correct dimensions and safe zone", () => {
+  it("slack preset has correct dimensions, safe zone, and maxFileSizeKb", () => {
     const slack = PLATFORM_PRESETS.find((p) => p.id === "slack");
     expect(slack).toBeDefined();
     expect(slack?.width).toBe(128);
     expect(slack?.height).toBe(128);
     expect(slack?.safeZonePadding).toBe(12);
+    expect(slack?.maxFileSizeKb).toBe(128);
+  });
+
+  it("discord preset has correct dimensions, safe zone, and maxFileSizeKb", () => {
+    const discord = PLATFORM_PRESETS.find((p) => p.id === "discord");
+    expect(discord).toBeDefined();
+    expect(discord?.width).toBe(128);
+    expect(discord?.height).toBe(128);
+    expect(discord?.safeZonePadding).toBe(10);
+    expect(discord?.maxFileSizeKb).toBe(256);
+  });
+
+  it("apple preset has correct dimensions, safe zone, and maxFileSizeKb", () => {
+    const apple = PLATFORM_PRESETS.find((p) => p.id === "apple");
+    expect(apple).toBeDefined();
+    expect(apple?.width).toBe(512);
+    expect(apple?.height).toBe(512);
+    expect(apple?.safeZonePadding).toBe(40);
+    expect(apple?.maxFileSizeKb).toBe(500);
   });
 
   it("every entry has all required fields defined", () => {
@@ -21,6 +40,7 @@ describe("PLATFORM_PRESETS", () => {
       "width",
       "height",
       "safeZonePadding",
+      "maxFileSizeKb",
     ];
     for (const preset of PLATFORM_PRESETS) {
       for (const field of requiredFields) {
