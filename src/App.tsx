@@ -5,11 +5,18 @@ import { ExportControls } from "./components/ExportControls";
 import { PresetSelector } from "./components/PresetSelector";
 import { PLATFORM_PRESETS, type PlatformPreset } from "./utils/presets";
 import { useImageImport } from "./hooks/useImageImport";
+import {
+  buildExportCanvas,
+  buildFilename,
+  checkFileSizeWarning,
+  type ExportFormat,
+} from "./utils/exportUtils";
 
 function App() {
   const [activePreset, setActivePreset] = useState<PlatformPreset>(
     PLATFORM_PRESETS[0],
   );
+  const [sizeWarning, setSizeWarning] = useState<string | null>(null);
   const { image, handleFileInput, handleDrop, handlePaste } = useImageImport();
 
   function handlePresetChange(id: string) {
@@ -22,6 +29,34 @@ function App() {
       if (!ok) return;
     }
     setActivePreset(preset);
+    setSizeWarning(null);
+  }
+
+  function handleDownload(format: ExportFormat) {
+    if (!image) return;
+    const canvas = buildExportCanvas(image, activePreset);
+    const mimeMap: Record<ExportFormat, string> = {
+      png: "image/png",
+      gif: "image/gif",
+      webp: "image/webp",
+    };
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        setSizeWarning(
+          "Export failed: this format is not supported by your browser.",
+        );
+        return;
+      }
+      setSizeWarning(checkFileSizeWarning(blob.size, activePreset));
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = href;
+      a.download = buildFilename(format);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(href);
+    }, mimeMap[format]);
   }
 
   return (
@@ -41,8 +76,8 @@ function App() {
       <ExportControls
         image={image}
         preset={activePreset}
-        onDownload={() => {}}
-        sizeWarning={null}
+        onDownload={handleDownload}
+        sizeWarning={sizeWarning}
       />
     </div>
   );

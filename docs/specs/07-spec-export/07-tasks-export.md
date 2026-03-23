@@ -82,7 +82,7 @@ Create `src/components/ExportControls.tsx` — the format dropdown and Download 
 
 ---
 
-### [ ] 3.0 Download Pipeline & File Size Warning
+### [~] 3.0 Download Pipeline & File Size Warning
 
 Replace the placeholder props in `App.tsx` with a real `handleDownload` function that renders an offscreen canvas, encodes it to the selected format, checks the file size, updates the warning state, and triggers a browser download.
 
@@ -94,18 +94,18 @@ Replace the placeholder props in `App.tsx` with a real `handleDownload` function
 
 #### 3.0 Tasks
 
-- [ ] 3.1 Add `sizeWarning` state to `App.tsx`: `const [sizeWarning, setSizeWarning] = useState<string | null>(null)`.
-- [ ] 3.2 Add `handleDownload(format: ExportFormat)` function in `App.tsx`. Inside it:
+- [x] 3.1 Add `sizeWarning` state to `App.tsx`: `const [sizeWarning, setSizeWarning] = useState<string | null>(null)`.
+- [x] 3.2 Add `handleDownload(format: ExportFormat)` function in `App.tsx`. Inside it:
   - Return early if `image` is null (safety guard).
   - Call `buildExportCanvas(image, activePreset)` to get an offscreen canvas.
   - Call `canvas.toBlob(callback, mimeType)` where `mimeType` maps: `'png' → 'image/png'`, `'gif' → 'image/gif'`, `'webp' → 'image/webp'`.
-- [ ] 3.3 Inside the `toBlob` callback:
+- [x] 3.3 Inside the `toBlob` callback:
   - If `blob` is null (e.g., GIF not supported by browser), call `setSizeWarning('Export failed: this format is not supported by your browser.')` and return.
   - Call `checkFileSizeWarning(blob.size, activePreset)` and pass the result to `setSizeWarning`.
   - Create a temporary `<a>` element: set `href = URL.createObjectURL(blob)` and `download = buildFilename(format)`. Append it to `document.body`, call `.click()`, then remove it and call `URL.revokeObjectURL(href)`.
-- [ ] 3.4 Replace the `onDownload={() => {}}` placeholder in `App.tsx` with `onDownload={handleDownload}`.
-- [ ] 3.5 Replace the `sizeWarning={null}` placeholder in `App.tsx` with `sizeWarning={sizeWarning}`.
-- [ ] 3.6 Reset `sizeWarning` to `null` when the active preset changes (add `setSizeWarning(null)` inside `handlePresetChange` after `setActivePreset`).
+- [x] 3.4 Replace the `onDownload={() => {}}` placeholder in `App.tsx` with `onDownload={handleDownload}`.
+- [x] 3.5 Replace the `sizeWarning={null}` placeholder in `App.tsx` with `sizeWarning={sizeWarning}`.
+- [x] 3.6 Reset `sizeWarning` to `null` when the active preset changes (add `setSizeWarning(null)` inside `handlePresetChange` after `setActivePreset`).
 
 ---
 
