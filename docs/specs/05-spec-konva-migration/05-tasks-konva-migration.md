@@ -81,7 +81,7 @@ Replace all canvas-context-mocking unit tests with tests that verify Konva compo
 - [x] 3.4 Update `App.test.tsx` if needed: the test `expect(document.querySelector("canvas")).toBeInTheDocument()` should still pass since Konva renders a `<canvas>` element, but verify and adjust the selector if necessary.
 - [x] 3.5 Run `task test` and `task typecheck` to confirm all unit tests pass and there are no TypeScript errors.
 
-### [ ] 4.0 Remove Legacy Canvas Code, Add Overlays Layer, Final Verification
+### [x] 4.0 Remove Legacy Canvas Code, Add Overlays Layer, Final Verification
 
 Delete `canvasDrawing.ts` and its test file. Remove all `CanvasRenderingContext2D` references from the codebase. Add an empty overlays `<Layer>` to the Konva stage as structural preparation for Spec 04. Update any E2E test selectors if Konva's canvas element requires different DOM queries. Run the full quality gate suite.
 
@@ -95,12 +95,12 @@ Delete `canvasDrawing.ts` and its test file. Remove all `CanvasRenderingContext2
 
 #### 4.0 Tasks
 
-- [ ] 4.1 Delete `src/utils/canvasDrawing.ts` — its functionality is fully replaced by Konva `<Rect>` components in `EmojiCanvas.tsx`.
-- [ ] 4.2 Delete `src/utils/canvasDrawing.test.ts` — its tests are replaced by the new Konva-based tests written in task 3.3.
-- [ ] 4.3 Remove the `import { drawCheckerboard, drawSafeZone } from "../utils/canvasDrawing"` line from `EmojiCanvas.tsx` if not already removed in task 1.2.
-- [ ] 4.4 Add a third `<Layer>` to the Konva `<Stage>` in `EmojiCanvas.tsx`, after the image layer. This is the empty overlays layer for Spec 04. It renders no children.
-- [ ] 4.5 Search the `src/` directory for any remaining references to `getContext`, `CanvasRenderingContext2D`, `fillRect`, `strokeRect`, or `drawImage` on a context object. Remove any that are found.
-- [ ] 4.6 Review E2E tests in `e2e/canvas.spec.ts`: Konva renders its canvas inside a `<div class="konvajs-content">` wrapper. The `page.locator("canvas")` selector should still find Konva's canvas. However, the pixel-inspection tests that use `document.querySelector("canvas").getContext("2d").getImageData(...)` may need adjustment — Konva's canvas may not expose a usable 2D context via `getContext("2d")` for external reads. If tests fail, update them to query the canvas element inside `.konvajs-content` instead.
-- [ ] 4.7 Review E2E tests in `e2e/app.spec.ts`: verify `page.locator("canvas")` still finds the Konva-rendered canvas element. Update selector if needed.
-- [ ] 4.8 Run the full quality gate suite: `task lint`, `task typecheck`, `task test`, and `task test:e2e`. All must pass with zero errors and zero warnings.
-- [ ] 4.9 Complete the layer-structure test from task 3.2 if it was deferred: verify three layers render in the correct order (background, image, overlays).
+- [x] 4.1 Delete `src/utils/canvasDrawing.ts` — its functionality is fully replaced by Konva `<Rect>` components in `EmojiCanvas.tsx`.
+- [x] 4.2 Delete `src/utils/canvasDrawing.test.ts` — its tests are replaced by the new Konva-based tests written in task 3.3.
+- [x] 4.3 Remove the `import { drawCheckerboard, drawSafeZone } from "../utils/canvasDrawing"` line from `EmojiCanvas.tsx` if not already removed in task 1.2.
+- [x] 4.4 Add a third `<Layer>` to the Konva `<Stage>` in `EmojiCanvas.tsx`, after the image layer. This is the empty overlays layer for Spec 04. It renders no children.
+- [x] 4.5 Search the `src/` directory for any remaining references to `getContext`, `CanvasRenderingContext2D`, `fillRect`, `strokeRect`, or `drawImage` on a context object. Remove any that are found.
+- [x] 4.6 Review E2E tests in `e2e/canvas.spec.ts`: Konva renders its canvas inside a `<div class="konvajs-content">` wrapper. The `page.locator("canvas")` selector should still find Konva's canvas. However, the pixel-inspection tests that use `document.querySelector("canvas").getContext("2d").getImageData(...)` may need adjustment — Konva's canvas may not expose a usable 2D context via `getContext("2d")` for external reads. If tests fail, update them to query the canvas element inside `.konvajs-content` instead.
+- [x] 4.7 Review E2E tests in `e2e/app.spec.ts`: verify `page.locator("canvas")` still finds the Konva-rendered canvas element. Update selector if needed.
+- [x] 4.8 Run the full quality gate suite: `task lint`, `task typecheck`, `task test`, and `task test:e2e`. All must pass with zero errors and zero warnings.
+- [x] 4.9 Complete the layer-structure test from task 3.2 if it was deferred: verify three layers render in the correct order (background, image, overlays).

@@ -31,10 +31,20 @@ describe("EmojiCanvas", () => {
     expect(canvas!.height).toBe(128);
   });
 
-  // 3.2 — placeholder until the overlays layer is added in task 4.0
-  it.todo(
-    "renders three layers: background, image, and overlays (overlays layer added in task 4.0)",
-  );
+  // 3.2 / 4.9 — verify three-layer structure: background, image, overlays
+  it("renders three layers in order: background, image, and overlays", () => {
+    render(
+      <EmojiCanvas
+        preset={slackPreset}
+        image={null}
+        handleFileInput={noop}
+        handleDrop={noop}
+        handlePaste={noop}
+      />,
+    );
+    const stage = Konva.stages[0];
+    expect(stage.getLayers().length).toBe(3);
+  });
 
   // 3.3a — verify checkerboard tile count
   it("renders 256 checkerboard Rect tiles for the 128×128 Slack preset", () => {

@@ -82,6 +82,7 @@ export function EmojiCanvas({
             />
           )}
         </Layer>
+        <Layer />
       </Stage>
       <input type="file" accept="image/*" onChange={handleFileInput} />
     </div>
