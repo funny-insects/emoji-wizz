@@ -46,7 +46,7 @@ Replace the raw `<canvas>` element with a Konva `<Stage>` and render the checker
 - [x] 1.5 Keep the file input and drag-drop wrapper (`<div onDragOver ... onDrop ...>` and `<input type="file">`) around the Konva `<Stage>` so image import entry points remain in place.
 - [x] 1.6 Verify the app renders correctly in the browser: run `npm run dev`, open `http://localhost:5173`, and confirm the checkerboard and safe-zone border appear. Switch presets in the dropdown and confirm dimensions update.
 
-### [ ] 2.0 Image Display on Dedicated Konva Image Layer
+### [x] 2.0 Image Display on Dedicated Konva Image Layer
 
 Add a Konva `<Image>` node on a separate image `<Layer>` that renders the user's imported image with contain-fit scaling. All three import methods (file input, drag-and-drop, clipboard paste) and preset-switch re-scaling must continue to work. The existing `computeContainRect` utility and `useImageImport` hook remain unchanged.
 
@@ -58,11 +58,11 @@ Add a Konva `<Image>` node on a separate image `<Layer>` that renders the user's
 
 #### 2.0 Tasks
 
-- [ ] 2.1 Add a second `<Layer>` to the Konva `<Stage>` in `EmojiCanvas.tsx`, positioned after the background layer. This is the image layer.
-- [ ] 2.2 When the `image` prop is non-null, render a Konva `<Image>` component on the image layer. Use `computeContainRect(image.naturalWidth, image.naturalHeight, preset.width, preset.height)` to calculate `x`, `y`, `width`, and `height` props for the `<Image>` node.
-- [ ] 2.3 Verify that the `useImageImport` hook's `HTMLImageElement` output works directly with Konva's `<Image image={...}>` prop — no conversion should be needed since Konva accepts `HTMLImageElement`.
-- [ ] 2.4 Verify all three import methods work: (a) click the file input and select an image, (b) drag an image file onto the canvas area, (c) copy an image and paste with Ctrl/Cmd+V. Each method should display the image scaled to fit within the stage.
-- [ ] 2.5 Verify preset switching with a loaded image: switch presets in the dropdown, confirm the confirmation dialog appears, accept it, and verify the image re-scales to the new preset dimensions.
+- [x] 2.1 Add a second `<Layer>` to the Konva `<Stage>` in `EmojiCanvas.tsx`, positioned after the background layer. This is the image layer.
+- [x] 2.2 When the `image` prop is non-null, render a Konva `<Image>` component on the image layer. Use `computeContainRect(image.naturalWidth, image.naturalHeight, preset.width, preset.height)` to calculate `x`, `y`, `width`, and `height` props for the `<Image>` node.
+- [x] 2.3 Verify that the `useImageImport` hook's `HTMLImageElement` output works directly with Konva's `<Image image={...}>` prop — no conversion should be needed since Konva accepts `HTMLImageElement`.
+- [x] 2.4 Verify all three import methods work: (a) click the file input and select an image, (b) drag an image file onto the canvas area, (c) copy an image and paste with Ctrl/Cmd+V. Each method should display the image scaled to fit within the stage.
+- [x] 2.5 Verify preset switching with a loaded image: switch presets in the dropdown, confirm the confirmation dialog appears, accept it, and verify the image re-scales to the new preset dimensions.
 
 ### [ ] 3.0 Rewrite Unit Tests for Konva Components
 

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
-import { Stage, Layer, Rect } from "react-konva";
+import { Stage, Layer, Rect, Image as KonvaImage } from "react-konva";
 import { type PlatformPreset } from "../utils/presets";
+import { computeContainRect } from "../utils/imageScaling";
 
 interface EmojiCanvasProps {
   preset: PlatformPreset;
@@ -29,6 +30,7 @@ function buildCheckerboard(
 
 export function EmojiCanvas({
   preset,
+  image,
   handleFileInput,
   handleDrop,
   handlePaste,
@@ -40,6 +42,9 @@ export function EmojiCanvas({
 
   const { width, height, safeZonePadding } = preset;
   const tiles = buildCheckerboard(width, height);
+  const imageRect = image
+    ? computeContainRect(image.naturalWidth, image.naturalHeight, width, height)
+    : null;
 
   return (
     <div onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
@@ -65,6 +70,17 @@ export function EmojiCanvas({
             dash={[4, 4]}
             fill="transparent"
           />
+        </Layer>
+        <Layer>
+          {image && imageRect && (
+            <KonvaImage
+              image={image}
+              x={imageRect.x}
+              y={imageRect.y}
+              width={imageRect.width}
+              height={imageRect.height}
+            />
+          )}
         </Layer>
       </Stage>
       <input type="file" accept="image/*" onChange={handleFileInput} />
