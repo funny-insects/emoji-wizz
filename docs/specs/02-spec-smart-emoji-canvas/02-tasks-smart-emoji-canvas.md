@@ -30,7 +30,7 @@
 
 ## Tasks
 
-### [~] 1.0 Platform Preset Configuration Module
+### [x] 1.0 Platform Preset Configuration Module
 
 #### 1.0 Proof Artifact(s)
 
@@ -45,7 +45,7 @@
 
 ---
 
-### [ ] 2.0 EmojiCanvas Component — Checkerboard & Safe Zone
+### [~] 2.0 EmojiCanvas Component — Checkerboard & Safe Zone
 
 #### 2.0 Proof Artifact(s)
 
@@ -55,15 +55,15 @@
 
 #### 2.0 Tasks
 
-- [ ] 2.1 Create `src/utils/canvasDrawing.ts` — write and export `drawCheckerboard(ctx: CanvasRenderingContext2D, width: number, height: number): void`. It should fill the canvas with 8×8 px alternating tiles using `#CCCCCC` and `#FFFFFF`.
-- [ ] 2.2 In `src/utils/canvasDrawing.ts`, write and export `drawSafeZone(ctx: CanvasRenderingContext2D, width: number, height: number, padding: number): void`. It should stroke a dashed rectangle inset by `padding` px from each edge, using a subtle color (e.g., `rgba(0, 120, 255, 0.5)`).
-- [ ] 2.3 Create `src/utils/canvasDrawing.test.ts` — write tests for both functions using a mocked `CanvasRenderingContext2D` object. Assert that `drawCheckerboard` calls `fillRect` and that `drawSafeZone` calls `strokeRect` with arguments that reflect the correct inset from the padding value.
-- [ ] 2.4 Create `src/components/PresetSelector.tsx` — a React component that accepts `presets: PlatformPreset[]`, `activePresetId: string`, and `onChange: (id: string) => void` as props. Render a `<select>` element with one `<option>` per preset, using `preset.id` as the value and `preset.label` as the display text.
-- [ ] 2.5 Create `src/components/PresetSelector.test.tsx` — write tests that: (a) render the component with the Slack preset and assert one `<option>` is in the DOM, and (b) simulate selecting an option and assert `onChange` is called with the correct preset id.
-- [ ] 2.6 Create `src/components/EmojiCanvas.tsx` — a React component that accepts `preset: PlatformPreset` as a prop. Render a `<div>` wrapper containing a `<canvas>` element. Use `useRef` to access the canvas's 2D context. In a `useEffect` (dependent on `preset`), clear the canvas then call `drawCheckerboard` and `drawSafeZone` using values from the preset.
-- [ ] 2.7 Create `src/components/EmojiCanvas.test.tsx` — write a test that renders `<EmojiCanvas preset={slackPreset} />` and asserts the `<canvas>` element has `width="128"` and `height="128"`.
-- [ ] 2.8 Create `e2e/canvas.spec.ts` — write a Playwright test that: (a) navigates to `http://localhost:5173`, (b) asserts a `<canvas>` element is visible with `width` attribute `"128"` and `height` attribute `"128"`, and (c) reads the canvas pixel data via `page.evaluate` and asserts it is not all zeros (checkerboard is rendering).
-- [ ] 2.9 Run `task test` and `task test:e2e` and confirm all tests pass.
+- [x] 2.1 Create `src/utils/canvasDrawing.ts` — write and export `drawCheckerboard(ctx: CanvasRenderingContext2D, width: number, height: number): void`. It should fill the canvas with 8×8 px alternating tiles using `#CCCCCC` and `#FFFFFF`.
+- [x] 2.2 In `src/utils/canvasDrawing.ts`, write and export `drawSafeZone(ctx: CanvasRenderingContext2D, width: number, height: number, padding: number): void`. It should stroke a dashed rectangle inset by `padding` px from each edge, using a subtle color (e.g., `rgba(0, 120, 255, 0.5)`).
+- [x] 2.3 Create `src/utils/canvasDrawing.test.ts` — write tests for both functions using a mocked `CanvasRenderingContext2D` object. Assert that `drawCheckerboard` calls `fillRect` and that `drawSafeZone` calls `strokeRect` with arguments that reflect the correct inset from the padding value.
+- [x] 2.4 Create `src/components/PresetSelector.tsx` — a React component that accepts `presets: PlatformPreset[]`, `activePresetId: string`, and `onChange: (id: string) => void` as props. Render a `<select>` element with one `<option>` per preset, using `preset.id` as the value and `preset.label` as the display text.
+- [x] 2.5 Create `src/components/PresetSelector.test.tsx` — write tests that: (a) render the component with the Slack preset and assert one `<option>` is in the DOM, and (b) simulate selecting an option and assert `onChange` is called with the correct preset id.
+- [x] 2.6 Create `src/components/EmojiCanvas.tsx` — a React component that accepts `preset: PlatformPreset` as a prop. Render a `<div>` wrapper containing a `<canvas>` element. Use `useRef` to access the canvas's 2D context. In a `useEffect` (dependent on `preset`), clear the canvas then call `drawCheckerboard` and `drawSafeZone` using values from the preset.
+- [x] 2.7 Create `src/components/EmojiCanvas.test.tsx` — write a test that renders `<EmojiCanvas preset={slackPreset} />` and asserts the `<canvas>` element has `width="128"` and `height="128"`.
+- [x] 2.8 Create `e2e/canvas.spec.ts` — write a Playwright test that: (a) navigates to `http://localhost:5173`, (b) asserts a `<canvas>` element is visible with `width` attribute `"128"` and `height` attribute `"128"`, and (c) reads the canvas pixel data via `page.evaluate` and asserts it is not all zeros (checkerboard is rendering).
+- [x] 2.9 Run `task test` and `task test:e2e` and confirm all tests pass.
 
 ---
 
