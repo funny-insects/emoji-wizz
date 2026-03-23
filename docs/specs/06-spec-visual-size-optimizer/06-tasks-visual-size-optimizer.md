@@ -44,7 +44,7 @@
 
 ---
 
-### [ ] 2.0 Suggestion Engine Utility
+### [x] 2.0 Suggestion Engine Utility
 
 #### 2.0 Proof Artifact(s)
 
