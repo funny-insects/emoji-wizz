@@ -1,7 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
+import { Stage, Layer, Rect } from "react-konva";
 import { type PlatformPreset } from "../utils/presets";
-import { drawCheckerboard, drawSafeZone } from "../utils/canvasDrawing";
-import { computeContainRect } from "../utils/imageScaling";
 
 interface EmojiCanvasProps {
   preset: PlatformPreset;
@@ -11,44 +10,63 @@ interface EmojiCanvasProps {
   handlePaste: (e: ClipboardEvent) => void;
 }
 
+const TILE_SIZE = 8;
+
+function buildCheckerboard(
+  width: number,
+  height: number,
+): { x: number; y: number; fill: string }[] {
+  const tiles: { x: number; y: number; fill: string }[] = [];
+  for (let y = 0; y < height; y += TILE_SIZE) {
+    for (let x = 0; x < width; x += TILE_SIZE) {
+      const isLight =
+        (Math.floor(x / TILE_SIZE) + Math.floor(y / TILE_SIZE)) % 2 === 0;
+      tiles.push({ x, y, fill: isLight ? "#FFFFFF" : "#CCCCCC" });
+    }
+  }
+  return tiles;
+}
+
 export function EmojiCanvas({
   preset,
-  image,
   handleFileInput,
   handleDrop,
   handlePaste,
 }: EmojiCanvasProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, preset.width, preset.height);
-    drawCheckerboard(ctx, preset.width, preset.height);
-    drawSafeZone(ctx, preset.width, preset.height, preset.safeZonePadding);
-
-    if (image) {
-      const rect = computeContainRect(
-        image.naturalWidth,
-        image.naturalHeight,
-        preset.width,
-        preset.height,
-      );
-      ctx.drawImage(image, rect.x, rect.y, rect.width, rect.height);
-    }
-  }, [preset, image]);
-
   useEffect(() => {
     document.addEventListener("paste", handlePaste);
     return () => document.removeEventListener("paste", handlePaste);
   }, [handlePaste]);
 
+  const { width, height, safeZonePadding } = preset;
+  const tiles = buildCheckerboard(width, height);
+
   return (
     <div onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
-      <canvas ref={canvasRef} width={preset.width} height={preset.height} />
+      <Stage width={width} height={height}>
+        <Layer>
+          {tiles.map((tile, i) => (
+            <Rect
+              key={i}
+              x={tile.x}
+              y={tile.y}
+              width={TILE_SIZE}
+              height={TILE_SIZE}
+              fill={tile.fill}
+            />
+          ))}
+          <Rect
+            x={safeZonePadding}
+            y={safeZonePadding}
+            width={width - 2 * safeZonePadding}
+            height={height - 2 * safeZonePadding}
+            stroke="rgba(0, 120, 255, 0.5)"
+            strokeWidth={1}
+            dash={[4, 4]}
+            fill="transparent"
+          />
+        </Layer>
+      </Stage>
       <input type="file" accept="image/*" onChange={handleFileInput} />
     </div>
   );

@@ -10,8 +10,10 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "konva": "^10.2.3",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-konva": "^19.2.3"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
