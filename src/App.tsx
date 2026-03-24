@@ -41,15 +41,30 @@ function App() {
   const { pushState, undo, redo, canUndo, canRedo } = useHistory();
 
   const [restoreSnapshot, setRestoreSnapshot] = useState<string | null>(null);
+  const [latestSnapshot, setLatestSnapshot] = useState<string | null>(null);
+
+  const handlePushState = useCallback(
+    (snapshot: string) => {
+      pushState(snapshot);
+      setLatestSnapshot(snapshot);
+    },
+    [pushState],
+  );
 
   const handleUndo = useCallback(() => {
     const snapshot = undo();
-    if (snapshot) setRestoreSnapshot(snapshot);
+    if (snapshot) {
+      setRestoreSnapshot(snapshot);
+      setLatestSnapshot(snapshot);
+    }
   }, [undo]);
 
   const handleRedo = useCallback(() => {
     const snapshot = redo();
-    if (snapshot) setRestoreSnapshot(snapshot);
+    if (snapshot) {
+      setRestoreSnapshot(snapshot);
+      setLatestSnapshot(snapshot);
+    }
   }, [redo]);
 
   const handleSnapshotRestored = useCallback(() => {
@@ -99,9 +114,7 @@ function App() {
     setSizeWarning(null);
   }
 
-  function handleDownload(format: ExportFormat) {
-    if (!image) return;
-    const canvas = buildExportCanvas(image, activePreset);
+  function triggerDownload(canvas: HTMLCanvasElement, format: ExportFormat) {
     const mimeMap: Record<ExportFormat, string> = {
       png: "image/png",
       gif: "image/gif",
@@ -124,6 +137,23 @@ function App() {
       document.body.removeChild(a);
       URL.revokeObjectURL(href);
     }, mimeMap[format]);
+  }
+
+  function handleDownload(format: ExportFormat) {
+    if (!image) return;
+    if (latestSnapshot) {
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = activePreset.width;
+        canvas.height = activePreset.height;
+        canvas.getContext("2d")!.drawImage(img, 0, 0);
+        triggerDownload(canvas, format);
+      };
+      img.src = latestSnapshot;
+    } else {
+      triggerDownload(buildExportCanvas(image, activePreset), format);
+    }
   }
 
   return (
@@ -167,7 +197,7 @@ function App() {
             handlePaste={handlePaste}
             activeTool={activeTool}
             onToolChange={setActiveTool}
-            onPushState={pushState}
+            onPushState={handlePushState}
             restoreSnapshot={restoreSnapshot}
             onSnapshotRestored={handleSnapshotRestored}
             brushColor={brushColor}
