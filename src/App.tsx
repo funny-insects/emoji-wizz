@@ -1,12 +1,14 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Konva from "konva";
 import "./App.css";
 import { EmojiCanvas } from "./components/EmojiCanvas";
+import { Toolbar } from "./components/Toolbar";
 import { OptimizerPanel } from "./components/OptimizerPanel";
 import { ExportControls } from "./components/ExportControls";
 import { PresetSelector } from "./components/PresetSelector";
 import { PLATFORM_PRESETS, type PlatformPreset } from "./utils/presets";
 import { useImageImport } from "./hooks/useImageImport";
+import { useHistory } from "./hooks/useHistory";
 import { detectContentBounds } from "./utils/detectContentBounds";
 import { generateSuggestions } from "./utils/generateSuggestions";
 import {
@@ -17,9 +19,11 @@ import {
 } from "./utils/exportUtils";
 import referenceEmojiPng from "./assets/reference-emoji.png";
 
+export type EditorTool = "eraser" | "brush" | "text";
+
 function App() {
   const [activePreset, setActivePreset] = useState<PlatformPreset>(
-    PLATFORM_PRESETS[0],
+    PLATFORM_PRESETS[0]!,
   );
   const [sizeWarning, setSizeWarning] = useState<string | null>(null);
   const { image, handleFileInput, handleDrop, handlePaste, fileName } =
@@ -29,6 +33,42 @@ function App() {
   const [customEmojiDataUrl, setCustomEmojiDataUrl] = useState<string | null>(
     null,
   );
+  const [activeTool, setActiveTool] = useState<EditorTool>("eraser");
+  const [brushColor, setBrushColor] = useState<string>("#000000");
+  const [brushSize, setBrushSize] = useState<number>(3);
+  const [textColor, setTextColor] = useState<string>("#000000");
+  const [textSize, setTextSize] = useState<number>(18);
+  const { pushState, undo, redo, canUndo, canRedo } = useHistory();
+
+  const [restoreSnapshot, setRestoreSnapshot] = useState<string | null>(null);
+
+  const handleUndo = useCallback(() => {
+    const snapshot = undo();
+    if (snapshot) setRestoreSnapshot(snapshot);
+  }, [undo]);
+
+  const handleRedo = useCallback(() => {
+    const snapshot = redo();
+    if (snapshot) setRestoreSnapshot(snapshot);
+  }, [redo]);
+
+  const handleSnapshotRestored = useCallback(() => {
+    setRestoreSnapshot(null);
+  }, []);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key === "z") {
+        e.preventDefault();
+        handleUndo();
+      } else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "z") {
+        e.preventDefault();
+        handleRedo();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [handleUndo, handleRedo]);
 
   function handleAnalyze() {
     if (!stageRef.current) return;
@@ -101,15 +141,43 @@ function App() {
           activePresetId={activePreset.id}
           onChange={handlePresetChange}
         />
-        <EmojiCanvas
-          preset={activePreset}
-          image={image}
-          handleFileInput={handleFileInput}
-          handleDrop={handleDrop}
-          handlePaste={handlePaste}
-          stageRef={stageRef}
-          fileName={fileName}
-        />
+        <div className="editor-area">
+          <Toolbar
+            image={image}
+            activeTool={activeTool}
+            onToolChange={setActiveTool}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            brushColor={brushColor}
+            onBrushColorChange={setBrushColor}
+            brushSize={brushSize}
+            onBrushSizeChange={setBrushSize}
+            textColor={textColor}
+            onTextColorChange={setTextColor}
+            textSize={textSize}
+            onTextSizeChange={setTextSize}
+          />
+          <EmojiCanvas
+            preset={activePreset}
+            image={image}
+            handleFileInput={handleFileInput}
+            handleDrop={handleDrop}
+            handlePaste={handlePaste}
+            activeTool={activeTool}
+            onToolChange={setActiveTool}
+            onPushState={pushState}
+            restoreSnapshot={restoreSnapshot}
+            onSnapshotRestored={handleSnapshotRestored}
+            brushColor={brushColor}
+            brushSize={brushSize}
+            textColor={textColor}
+            textSize={textSize}
+            stageRef={stageRef}
+            fileName={fileName}
+          />
+        </div>
         <OptimizerPanel
           hasImage={image !== null}
           onAnalyze={handleAnalyze}

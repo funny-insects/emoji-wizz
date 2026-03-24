@@ -77,6 +77,13 @@
   text-align: center;
 }
 
+.editor-area {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+}
+
 .preset-tab:hover {
   border-color: var(--accent);
   color: var(--text);
