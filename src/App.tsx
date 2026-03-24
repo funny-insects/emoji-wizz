@@ -1,15 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 import { EmojiCanvas } from "./components/EmojiCanvas";
+import { Toolbar } from "./components/Toolbar";
 import { PresetSelector } from "./components/PresetSelector";
 import { PLATFORM_PRESETS, type PlatformPreset } from "./utils/presets";
 import { useImageImport } from "./hooks/useImageImport";
+import { useHistory } from "./hooks/useHistory";
+
+export type EditorTool = "eraser" | "brush" | "text";
 
 function App() {
   const [activePreset, setActivePreset] = useState<PlatformPreset>(
-    PLATFORM_PRESETS[0],
+    PLATFORM_PRESETS[0]!,
   );
   const { image, handleFileInput, handleDrop, handlePaste } = useImageImport();
+  const [activeTool, setActiveTool] = useState<EditorTool>("eraser");
+  const { undo, redo, canUndo, canRedo } = useHistory();
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key === "z") {
+        e.preventDefault();
+        undo();
+      } else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "z") {
+        e.preventDefault();
+        redo();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [undo, redo]);
 
   function handlePresetChange(id: string) {
     const preset = PLATFORM_PRESETS.find((p) => p.id === id);
@@ -30,13 +50,26 @@ function App() {
         activePresetId={activePreset.id}
         onChange={handlePresetChange}
       />
-      <EmojiCanvas
-        preset={activePreset}
-        image={image}
-        handleFileInput={handleFileInput}
-        handleDrop={handleDrop}
-        handlePaste={handlePaste}
-      />
+      <div className="editor-area">
+        <Toolbar
+          image={image}
+          activeTool={activeTool}
+          onToolChange={setActiveTool}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          onUndo={undo}
+          onRedo={redo}
+        />
+        <EmojiCanvas
+          preset={activePreset}
+          image={image}
+          handleFileInput={handleFileInput}
+          handleDrop={handleDrop}
+          handlePaste={handlePaste}
+          activeTool={activeTool}
+          onToolChange={setActiveTool}
+        />
+      </div>
     </div>
   );
 }

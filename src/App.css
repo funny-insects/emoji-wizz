@@ -7,3 +7,10 @@
   gap: 16px;
   text-align: center;
 }
+
+.editor-area {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+}

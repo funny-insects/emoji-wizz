@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Stage, Layer, Rect, Image as KonvaImage } from "react-konva";
 import { type PlatformPreset } from "../utils/presets";
 import { computeContainRect } from "../utils/imageScaling";
+import type { EditorTool } from "../App";
 
 interface EmojiCanvasProps {
   preset: PlatformPreset;
@@ -9,6 +10,8 @@ interface EmojiCanvasProps {
   handleFileInput: React.ChangeEventHandler<HTMLInputElement>;
   handleDrop: React.DragEventHandler<HTMLDivElement>;
   handlePaste: (e: ClipboardEvent) => void;
+  activeTool?: EditorTool;
+  onToolChange?: (tool: EditorTool) => void;
 }
 
 const TILE_SIZE = 8;
