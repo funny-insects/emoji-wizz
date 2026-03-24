@@ -62,6 +62,15 @@ export function EmojiCanvas({
   const tiles = buildCheckerboard(width, height);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const defaultZoom = width === 128 ? 4 : 1;
+  const [zoom, setZoom] = useState(defaultZoom);
+
+  const [prevPreset, setPrevPreset] = useState(preset);
+  if (preset !== prevPreset) {
+    setPrevPreset(preset);
+    setZoom(preset.width === 128 ? 4 : 1);
+  }
+
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const isRestoringRef = useRef(false);
   const isErasingRef = useRef(false);
@@ -419,86 +428,113 @@ export function EmojiCanvas({
           title={image ? undefined : "Click or drop an image"}
           style={containerStyle}
         >
-          <Stage
-            width={width}
-            height={height}
-            ref={stageRef}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-            onClick={handleClick}
+          <div
+            data-testid="zoom-outer"
+            style={{
+              width: `${width * zoom}px`,
+              height: `${height * zoom}px`,
+              overflow: "hidden",
+            }}
+            onWheel={(e) => {
+              e.preventDefault();
+              setZoom((prev) => {
+                const delta = e.deltaY < 0 ? 0.5 : -0.5;
+                return Math.min(8, Math.max(1, prev + delta));
+              });
+            }}
           >
-            <Layer>
-              {tiles.map((tile, i) => (
-                <Rect
-                  key={i}
-                  x={tile.x}
-                  y={tile.y}
-                  width={TILE_SIZE}
-                  height={TILE_SIZE}
-                  fill={tile.fill}
-                />
-              ))}
-              <Rect
-                x={safeZonePadding}
-                y={safeZonePadding}
-                width={width - 2 * safeZonePadding}
-                height={height - 2 * safeZonePadding}
-                stroke="rgba(254, 129, 212, 0.6)"
-                strokeWidth={1}
-                dash={[4, 4]}
-                fill="transparent"
-              />
-            </Layer>
-            <Layer>
-              {image && imageRect && displayCanvas && (
-                <KonvaImage
-                  image={displayCanvas}
-                  x={0}
-                  y={0}
-                  width={width}
-                  height={height}
-                />
-              )}
-            </Layer>
-            <Layer>
-              {activeTool === "eraser" && eraserPos && image && (
-                <Circle
-                  x={eraserPos.x}
-                  y={eraserPos.y}
-                  radius={eraserRadius}
-                  stroke="rgba(0,0,0,0.7)"
-                  strokeWidth={1.5}
-                  fill="transparent"
-                  listening={false}
-                />
-              )}
-            </Layer>
-          </Stage>
-          {textInputPos && activeTool === "text" && (
-            <input
-              key={`text-${textInputPos.x}-${textInputPos.y}`}
+            <div
+              data-testid="zoom-inner"
               style={{
-                position: "absolute",
-                left: textInputPos.x,
-                top: textInputPos.y,
-                fontSize: `${scaledFontSize}px`,
-                color: textColor,
-                background: "transparent",
-                border: "none",
-                outline: "1px dashed rgba(0,0,0,0.5)",
-                padding: 0,
-                margin: 0,
-                fontFamily: "sans-serif",
-                zIndex: 10,
-                minWidth: "50px",
+                transform: `scale(${zoom})`,
+                transformOrigin: "top left",
+                position: "relative",
+                width: width,
+                height: height,
               }}
-              autoFocus
-              onKeyDown={(e) => handleTextKeyDown(e, textInputPos)}
-              onBlur={(e) => handleTextBlur(e, textInputPos)}
-            />
-          )}
+            >
+              <Stage
+                width={width}
+                height={height}
+                ref={stageRef}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseLeave}
+                onClick={handleClick}
+              >
+                <Layer>
+                  {tiles.map((tile, i) => (
+                    <Rect
+                      key={i}
+                      x={tile.x}
+                      y={tile.y}
+                      width={TILE_SIZE}
+                      height={TILE_SIZE}
+                      fill={tile.fill}
+                    />
+                  ))}
+                  <Rect
+                    x={safeZonePadding}
+                    y={safeZonePadding}
+                    width={width - 2 * safeZonePadding}
+                    height={height - 2 * safeZonePadding}
+                    stroke="rgba(254, 129, 212, 0.6)"
+                    strokeWidth={1}
+                    dash={[4, 4]}
+                    fill="transparent"
+                  />
+                </Layer>
+                <Layer>
+                  {image && imageRect && displayCanvas && (
+                    <KonvaImage
+                      image={displayCanvas}
+                      x={0}
+                      y={0}
+                      width={width}
+                      height={height}
+                    />
+                  )}
+                </Layer>
+                <Layer>
+                  {activeTool === "eraser" && eraserPos && image && (
+                    <Circle
+                      x={eraserPos.x}
+                      y={eraserPos.y}
+                      radius={eraserRadius}
+                      stroke="rgba(0,0,0,0.7)"
+                      strokeWidth={1.5}
+                      fill="transparent"
+                      listening={false}
+                    />
+                  )}
+                </Layer>
+              </Stage>
+              {textInputPos && activeTool === "text" && (
+                <input
+                  key={`text-${textInputPos.x}-${textInputPos.y}`}
+                  style={{
+                    position: "absolute",
+                    left: textInputPos.x,
+                    top: textInputPos.y,
+                    fontSize: `${scaledFontSize}px`,
+                    color: textColor,
+                    background: "transparent",
+                    border: "none",
+                    outline: "1px dashed rgba(0,0,0,0.5)",
+                    padding: 0,
+                    margin: 0,
+                    fontFamily: "sans-serif",
+                    zIndex: 10,
+                    minWidth: "50px",
+                  }}
+                  autoFocus
+                  onKeyDown={(e) => handleTextKeyDown(e, textInputPos)}
+                  onBlur={(e) => handleTextBlur(e, textInputPos)}
+                />
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="file-input-row">
