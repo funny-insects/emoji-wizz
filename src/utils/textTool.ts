@@ -1,5 +1,3 @@
-export type TextSize = "small" | "medium" | "large";
-
 export const TEXT_COLOR_PALETTE = [
   "#000000",
   "#FFFFFF",
@@ -10,9 +8,3 @@ export const TEXT_COLOR_PALETTE = [
   "#FFA500",
   "#800080",
 ];
-
-export const TEXT_SIZE_PRESETS: Record<TextSize, number> = {
-  small: 10,
-  medium: 18,
-  large: 28,
-};

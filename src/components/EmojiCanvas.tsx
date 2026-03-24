@@ -4,8 +4,6 @@ import Konva from "konva";
 import { type PlatformPreset } from "../utils/presets";
 import { computeContainRect } from "../utils/imageScaling";
 import type { EditorTool } from "../App";
-import type { TextSize } from "../utils/textTool";
-import { TEXT_SIZE_PRESETS } from "../utils/textTool";
 
 interface EmojiCanvasProps {
   preset: PlatformPreset;
@@ -18,8 +16,10 @@ interface EmojiCanvasProps {
   onPushState?: (snapshot: string) => void;
   restoreSnapshot?: string | null;
   onSnapshotRestored?: () => void;
+  brushColor?: string;
+  brushSize?: number;
   textColor?: string;
-  textSize?: TextSize;
+  textSize?: number;
 }
 
 const TILE_SIZE = 8;
@@ -49,13 +49,16 @@ export function EmojiCanvas({
   onPushState,
   restoreSnapshot,
   onSnapshotRestored,
+  brushColor = "#000000",
+  brushSize,
   textColor = "#000000",
-  textSize = "medium",
+  textSize = 18,
 }: EmojiCanvasProps) {
   const { width, height, safeZonePadding } = preset;
   const tiles = buildCheckerboard(width, height);
 
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const isRestoringRef = useRef(false);
   const isErasingRef = useRef(false);
   const isBrushingRef = useRef(false);
   const currentBrushLineRef = useRef<Konva.Line | null>(null);
@@ -100,11 +103,8 @@ export function EmojiCanvas({
   );
 
   const eraserRadius = Math.round((width / 128) * 3);
-  const brushStrokeWidth = Math.round((width / 128) * 3);
-  const scaledFontSize = Math.max(
-    4,
-    Math.round(TEXT_SIZE_PRESETS[textSize] * (width / 512)),
-  );
+  const brushStrokeWidth = brushSize ?? Math.round((width / 128) * 3);
+  const scaledFontSize = Math.max(4, textSize);
 
   // Derived state: rebuild offscreen canvas when image or stage dimensions change.
   // Following the React "Storing information from previous renders" pattern to avoid
@@ -115,12 +115,18 @@ export function EmojiCanvas({
     setPrevDimensions(currentDimensions);
     if (image && imageRect) {
       const canvas = document.createElement("canvas");
-      canvas.width = imageRect.width;
-      canvas.height = imageRect.height;
+      canvas.width = width;
+      canvas.height = height;
       const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(image, 0, 0, imageRect.width, imageRect.height);
+        ctx.drawImage(
+          image,
+          imageRect.x,
+          imageRect.y,
+          imageRect.width,
+          imageRect.height,
+        );
       }
       setDisplayCanvas(canvas);
     } else {
@@ -130,11 +136,14 @@ export function EmojiCanvas({
 
   // Sync ref with displayCanvas and push initial snapshot when canvas is ready.
   // Ref mutation and external function calls are allowed in effects.
+  // Skip the push when displayCanvas changed due to a snapshot restore (undo/redo),
+  // to avoid pushing duplicates onto the undo stack and clearing the redo stack.
   useEffect(() => {
     offscreenCanvasRef.current = displayCanvas;
-    if (displayCanvas) {
+    if (displayCanvas && !isRestoringRef.current) {
       onPushStateRef.current?.(displayCanvas.toDataURL("image/png"));
     }
+    isRestoringRef.current = false;
   }, [displayCanvas]);
 
   // Restore snapshot (setState is inside img.onload — async, not flagged by lint rule)
@@ -149,6 +158,7 @@ export function EmojiCanvas({
       if (!ctx) return;
       ctx.drawImage(img, 0, 0);
       offscreenCanvasRef.current = canvas;
+      isRestoringRef.current = true;
       setDisplayCanvas(canvas);
       onSnapshotRestoredRef.current?.();
     };
@@ -192,13 +202,7 @@ export function EmojiCanvas({
       const prevOp = ctx.globalCompositeOperation;
       ctx.globalCompositeOperation = "destination-out";
       ctx.beginPath();
-      ctx.arc(
-        stageX - imageRect.x,
-        stageY - imageRect.y,
-        eraserRadius,
-        0,
-        Math.PI * 2,
-      );
+      ctx.arc(stageX, stageY, eraserRadius, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalCompositeOperation = prevOp;
     },
@@ -219,9 +223,9 @@ export function EmojiCanvas({
     ctx.lineCap = line.lineCap() as CanvasLineCap;
     ctx.lineJoin = line.lineJoin() as CanvasLineJoin;
     ctx.beginPath();
-    ctx.moveTo(pts[0]! - imageRect.x, pts[1]! - imageRect.y);
+    ctx.moveTo(pts[0]!, pts[1]!);
     for (let i = 2; i < pts.length; i += 2) {
-      ctx.lineTo(pts[i]! - imageRect.x, pts[i + 1]! - imageRect.y);
+      ctx.lineTo(pts[i]!, pts[i + 1]!);
     }
     ctx.stroke();
     ctx.restore();
@@ -257,11 +261,7 @@ export function EmojiCanvas({
         ctx.save();
         ctx.font = `${textNode.fontSize()}px ${textNode.fontFamily()}`;
         ctx.fillStyle = textNode.fill();
-        ctx.fillText(
-          textNode.text(),
-          textNode.x() - imageRect.x,
-          textNode.y() - imageRect.y,
-        );
+        ctx.fillText(textNode.text(), textNode.x(), textNode.y());
         ctx.restore();
       }
 
@@ -329,7 +329,7 @@ export function EmojiCanvas({
         if (!pos) return;
         const overlaysLayer = stage?.getLayers()[2];
         const line = new Konva.Line({
-          stroke: "#000000",
+          stroke: brushColor,
           strokeWidth: brushStrokeWidth,
           lineCap: "round",
           lineJoin: "round",
@@ -340,7 +340,7 @@ export function EmojiCanvas({
         overlaysLayer?.batchDraw();
       }
     },
-    [activeTool, applyEraserAt, brushStrokeWidth],
+    [activeTool, applyEraserAt, brushColor, brushStrokeWidth],
   );
 
   const handleMouseMove = useCallback(
@@ -458,10 +458,10 @@ export function EmojiCanvas({
           {image && imageRect && displayCanvas && (
             <KonvaImage
               image={displayCanvas}
-              x={imageRect.x}
-              y={imageRect.y}
-              width={imageRect.width}
-              height={imageRect.height}
+              x={0}
+              y={0}
+              width={width}
+              height={height}
             />
           )}
         </Layer>

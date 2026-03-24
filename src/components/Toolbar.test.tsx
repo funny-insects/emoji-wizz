@@ -1,19 +1,26 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { Toolbar } from "./Toolbar";
-import type { TextSize } from "../utils/textTool";
 
 const mockImage = new Image();
 
 const defaultTextProps: {
+  brushColor: string;
+  onBrushColorChange: () => void;
+  brushSize: number;
+  onBrushSizeChange: () => void;
   textColor: string;
   onTextColorChange: () => void;
-  textSize: TextSize;
+  textSize: number;
   onTextSizeChange: () => void;
 } = {
+  brushColor: "#000000",
+  onBrushColorChange: () => {},
+  brushSize: 3,
+  onBrushSizeChange: () => {},
   textColor: "#000000",
   onTextColorChange: () => {},
-  textSize: "medium",
+  textSize: 18,
   onTextSizeChange: () => {},
 };
 
@@ -127,7 +134,7 @@ describe("Toolbar", () => {
 });
 
 describe("Toolbar — text tool settings", () => {
-  it("does not render color swatches or size buttons when tool is not text", () => {
+  it("does not render color swatches or size input when tool is not text", () => {
     render(
       <Toolbar
         image={mockImage}
@@ -143,12 +150,10 @@ describe("Toolbar — text tool settings", () => {
     expect(
       screen.queryByRole("button", { name: /Color #/ }),
     ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Small" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("px")).not.toBeInTheDocument();
   });
 
-  it("renders 8 color swatches and 3 size buttons when text tool is active", () => {
+  it("renders 8 color swatches and size input when text tool is active", () => {
     render(
       <Toolbar
         image={mockImage}
@@ -163,9 +168,7 @@ describe("Toolbar — text tool settings", () => {
     );
     const swatches = screen.getAllByRole("button", { name: /Color #/ });
     expect(swatches).toHaveLength(8);
-    expect(screen.getByRole("button", { name: "Small" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Medium" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Large" })).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: "px" })).toBeInTheDocument();
   });
 
   it("calls onTextColorChange when a color swatch is clicked", () => {
@@ -181,7 +184,7 @@ describe("Toolbar — text tool settings", () => {
         onRedo={() => {}}
         textColor="#000000"
         onTextColorChange={onTextColorChange}
-        textSize="medium"
+        textSize={18}
         onTextSizeChange={() => {}}
       />,
     );
@@ -189,7 +192,7 @@ describe("Toolbar — text tool settings", () => {
     expect(onTextColorChange).toHaveBeenCalledWith("#FF0000");
   });
 
-  it("calls onTextSizeChange when a size button is clicked", () => {
+  it("calls onTextSizeChange when size input changes", () => {
     const onTextSizeChange = vi.fn();
     render(
       <Toolbar
@@ -202,12 +205,14 @@ describe("Toolbar — text tool settings", () => {
         onRedo={() => {}}
         textColor="#000000"
         onTextColorChange={() => {}}
-        textSize="medium"
+        textSize={18}
         onTextSizeChange={onTextSizeChange}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Large" }));
-    expect(onTextSizeChange).toHaveBeenCalledWith("large");
+    fireEvent.change(screen.getByRole("spinbutton", { name: "px" }), {
+      target: { value: "32" },
+    });
+    expect(onTextSizeChange).toHaveBeenCalledWith(32);
   });
 
   it("active color swatch has the active CSS class", () => {
@@ -222,7 +227,7 @@ describe("Toolbar — text tool settings", () => {
         onRedo={() => {}}
         textColor="#FF0000"
         onTextColorChange={() => {}}
-        textSize="medium"
+        textSize={18}
         onTextSizeChange={() => {}}
       />,
     );
@@ -234,7 +239,7 @@ describe("Toolbar — text tool settings", () => {
     ).not.toHaveClass("toolbar-color-swatch--active");
   });
 
-  it("active size button has the active CSS class", () => {
+  it("size input displays the current textSize value", () => {
     render(
       <Toolbar
         image={mockImage}
@@ -245,14 +250,9 @@ describe("Toolbar — text tool settings", () => {
         onUndo={() => {}}
         onRedo={() => {}}
         {...defaultTextProps}
-        textSize="large"
+        textSize={28}
       />,
     );
-    expect(screen.getByRole("button", { name: "Large" })).toHaveClass(
-      "toolbar-size-btn--active",
-    );
-    expect(screen.getByRole("button", { name: "Small" })).not.toHaveClass(
-      "toolbar-size-btn--active",
-    );
+    expect(screen.getByRole("spinbutton", { name: "px" })).toHaveValue(28);
   });
 });

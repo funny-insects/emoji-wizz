@@ -1,6 +1,5 @@
 import "./Toolbar.css";
 import type { EditorTool } from "../App";
-import type { TextSize } from "../utils/textTool";
 import { TEXT_COLOR_PALETTE } from "../utils/textTool";
 
 interface ToolbarProps {
@@ -11,19 +10,15 @@ interface ToolbarProps {
   canRedo: boolean;
   onUndo: () => void;
   onRedo: () => void;
+  brushColor: string;
+  onBrushColorChange: (color: string) => void;
+  brushSize: number;
+  onBrushSizeChange: (size: number) => void;
   textColor: string;
   onTextColorChange: (color: string) => void;
-  textSize: TextSize;
-  onTextSizeChange: (size: TextSize) => void;
+  textSize: number;
+  onTextSizeChange: (size: number) => void;
 }
-
-const SIZE_LABELS: Record<TextSize, string> = {
-  small: "S",
-  medium: "M",
-  large: "L",
-};
-
-const TEXT_SIZES: TextSize[] = ["small", "medium", "large"];
 
 export function Toolbar({
   image,
@@ -33,6 +28,10 @@ export function Toolbar({
   canRedo,
   onUndo,
   onRedo,
+  brushColor,
+  onBrushColorChange,
+  brushSize,
+  onBrushSizeChange,
   textColor,
   onTextColorChange,
   textSize,
@@ -69,6 +68,40 @@ export function Toolbar({
         </button>
       </div>
 
+      {activeTool === "brush" && (
+        <div className="toolbar-brush-settings">
+          <div className="toolbar-colors">
+            {TEXT_COLOR_PALETTE.map((color) => (
+              <button
+                key={color}
+                className={`toolbar-color-swatch${brushColor === color ? " toolbar-color-swatch--active" : ""}`}
+                style={{ background: color }}
+                onClick={() => onBrushColorChange(color)}
+                aria-label={`Color ${color}`}
+                title={color}
+              />
+            ))}
+          </div>
+          <div className="toolbar-brush-size">
+            <label className="toolbar-brush-size-label" htmlFor="brush-size">
+              px
+            </label>
+            <input
+              id="brush-size"
+              type="number"
+              className="toolbar-brush-size-input"
+              value={brushSize}
+              min={1}
+              max={100}
+              onChange={(e) => {
+                const v = parseInt(e.target.value, 10);
+                if (!isNaN(v) && v >= 1 && v <= 100) onBrushSizeChange(v);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       {activeTool === "text" && (
         <div className="toolbar-text-settings">
           <div className="toolbar-colors">
@@ -83,18 +116,22 @@ export function Toolbar({
               />
             ))}
           </div>
-          <div className="toolbar-sizes">
-            {TEXT_SIZES.map((size) => (
-              <button
-                key={size}
-                className={`toolbar-size-btn${textSize === size ? " toolbar-size-btn--active" : ""}`}
-                onClick={() => onTextSizeChange(size)}
-                aria-label={size.charAt(0).toUpperCase() + size.slice(1)}
-                title={size}
-              >
-                {SIZE_LABELS[size]}
-              </button>
-            ))}
+          <div className="toolbar-brush-size">
+            <label className="toolbar-brush-size-label" htmlFor="text-size">
+              px
+            </label>
+            <input
+              id="text-size"
+              type="number"
+              className="toolbar-brush-size-input"
+              value={textSize}
+              min={4}
+              max={200}
+              onChange={(e) => {
+                const v = parseInt(e.target.value, 10);
+                if (!isNaN(v) && v >= 4 && v <= 200) onTextSizeChange(v);
+              }}
+            />
           </div>
         </div>
       )}

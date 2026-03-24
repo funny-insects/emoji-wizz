@@ -6,7 +6,6 @@ import { PresetSelector } from "./components/PresetSelector";
 import { PLATFORM_PRESETS, type PlatformPreset } from "./utils/presets";
 import { useImageImport } from "./hooks/useImageImport";
 import { useHistory } from "./hooks/useHistory";
-import type { TextSize } from "./utils/textTool";
 
 export type EditorTool = "eraser" | "brush" | "text";
 
@@ -16,8 +15,10 @@ function App() {
   );
   const { image, handleFileInput, handleDrop, handlePaste } = useImageImport();
   const [activeTool, setActiveTool] = useState<EditorTool>("eraser");
+  const [brushColor, setBrushColor] = useState<string>("#000000");
+  const [brushSize, setBrushSize] = useState<number>(3);
   const [textColor, setTextColor] = useState<string>("#000000");
-  const [textSize, setTextSize] = useState<TextSize>("medium");
+  const [textSize, setTextSize] = useState<number>(18);
   const { pushState, undo, redo, canUndo, canRedo } = useHistory();
 
   const [restoreSnapshot, setRestoreSnapshot] = useState<string | null>(null);
@@ -78,6 +79,10 @@ function App() {
           canRedo={canRedo}
           onUndo={handleUndo}
           onRedo={handleRedo}
+          brushColor={brushColor}
+          onBrushColorChange={setBrushColor}
+          brushSize={brushSize}
+          onBrushSizeChange={setBrushSize}
           textColor={textColor}
           onTextColorChange={setTextColor}
           textSize={textSize}
@@ -94,6 +99,8 @@ function App() {
           onPushState={pushState}
           restoreSnapshot={restoreSnapshot}
           onSnapshotRestored={handleSnapshotRestored}
+          brushColor={brushColor}
+          brushSize={brushSize}
           textColor={textColor}
           textSize={textSize}
         />

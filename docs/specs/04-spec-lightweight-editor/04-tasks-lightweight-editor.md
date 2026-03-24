@@ -119,7 +119,7 @@ Implement the text tool with click-to-place inline editing. When the user select
 - [x] 4.7 Write E2E test `e2e/text-tool.spec.ts` — upload test fixture, click text button, click on canvas, type "LGTM" into the input, press Enter, verify text is rendered on canvas (pixel data changed at text position), change color/size and place another text, click undo to remove the last text.
 - [x] 4.8 Run `task typecheck && task lint && task test && task test:e2e` and fix any errors.
 
-### [ ] 5.0 Transparency Preservation & Integration Verification
+### [x] 5.0 Transparency Preservation & Integration Verification
 
 Verify that imported transparent PNGs maintain transparency through all editing operations (eraser, brush, text) and export. Ensure all tools work correctly together — switching between tools, undo/redo across tool boundaries, and flattening behavior. Run the full quality gate suite.
 
@@ -132,9 +132,9 @@ Verify that imported transparent PNGs maintain transparency through all editing 
 
 #### 5.0 Tasks
 
-- [ ] 5.1 Create a transparent test fixture PNG (e.g., `e2e/fixtures/test-emoji-transparent.png`) — a small image with known transparent areas for deterministic pixel verification.
-- [ ] 5.2 Write E2E test `e2e/editor-integration.spec.ts` with a multi-tool workflow: upload transparent PNG, verify transparent pixels have alpha = 0, apply eraser stroke, apply brush stroke, add text, verify original transparent areas still have alpha = 0 (not filled with white or any color), undo all actions back to the original image, verify canvas matches initial state.
-- [ ] 5.3 Verify tool switching: test that switching from brush to eraser flattens pending brush strokes before activating eraser, and that switching from text tool (while input is open) finalizes or discards the text before switching.
-- [ ] 5.4 Verify undo/redo across tool boundaries: undo after using eraser → brush → text should step back through each action regardless of which tool created it.
-- [ ] 5.5 Run the full quality gate: `task lint && task typecheck && task test && task test:e2e`. Fix any remaining lint, type, or test errors.
-- [ ] 5.6 Capture proof artifact screenshots: toolbar with all tools, each tool in use, transparency preserved after multi-tool editing.
+- [x] 5.1 Create a transparent test fixture PNG (e.g., `e2e/fixtures/test-emoji-transparent.png`) — a small image with known transparent areas for deterministic pixel verification.
+- [x] 5.2 Write E2E test `e2e/editor-integration.spec.ts` with a multi-tool workflow: upload transparent PNG, verify transparent pixels have alpha = 0, apply eraser stroke, apply brush stroke, add text, verify original transparent areas still have alpha = 0 (not filled with white or any color), undo all actions back to the original image, verify canvas matches initial state.
+- [x] 5.3 Verify tool switching: test that switching from brush to eraser flattens pending brush strokes before activating eraser, and that switching from text tool (while input is open) finalizes or discards the text before switching.
+- [x] 5.4 Verify undo/redo across tool boundaries: undo after using eraser → brush → text should step back through each action regardless of which tool created it.
+- [x] 5.5 Run the full quality gate: `task lint && task typecheck && task test && task test:e2e`. Fix any remaining lint, type, or test errors.
+- [x] 5.6 Capture proof artifact screenshots: toolbar with all tools, each tool in use, transparency preserved after multi-tool editing.
