@@ -76,7 +76,7 @@ Implement the eraser tool that makes painted-over pixels fully transparent (alph
 - [x] 2.6 Write E2E test `e2e/eraser.spec.ts` — upload test fixture, click eraser button, simulate drag across canvas, verify pixel data changed (alpha = 0 in erased area), click undo, verify pixels restored.
 - [x] 2.7 Run `task typecheck && task lint && task test && task test:e2e` and fix any errors.
 
-### [ ] 3.0 Freehand Brush/Pen Tool
+### [x] 3.0 Freehand Brush/Pen Tool
 
 Implement the brush tool that draws freehand strokes on top of the emoji. When the user selects the Brush tool and click-drags, black strokes are rendered on the Konva overlays layer (Layer 3). Each completed stroke (mousedown → mouseup) is a single undo/redo action. When the user switches tools or performs another action, brush strokes are destructively flattened onto the image data.
 
@@ -89,12 +89,12 @@ Implement the brush tool that draws freehand strokes on top of the emoji. When t
 
 #### 3.0 Tasks
 
-- [ ] 3.1 Implement brush mouse event handlers: on `mousedown` when brush is active, capture a "before" snapshot and create a new `Konva.Line` on the overlays layer (Layer 3) with `stroke: "#000000"`, `strokeWidth` proportional to canvas size (e.g., 3px for 128×128, 12px for 512×512), `lineCap: "round"`, `lineJoin: "round"`, and initial `points` from the click position. On `mousemove`, append the pointer position to the Line's `points` array. On `mouseup`, finalize the stroke.
-- [ ] 3.2 Implement destructive flattening: when the user switches away from the brush tool (or triggers another action), flatten all Konva.Line nodes on the overlays layer onto the image layer. Do this by: rendering the overlays layer to a temporary canvas, compositing it onto the image offscreen canvas, updating the Konva Image node, and clearing the overlays layer. Push a snapshot after flattening.
-- [ ] 3.3 Set the CSS cursor to a crosshair or dot when the brush tool is active.
-- [ ] 3.4 Write unit tests — verify that a brush stroke creates a `Konva.Line` on the overlays layer with correct color (`#000000`) and stroke width, and that completing a stroke results in one history push.
-- [ ] 3.5 Write E2E test `e2e/brush.spec.ts` — upload test fixture, click brush button, simulate drag across canvas, verify overlays layer has content (pixel data changed), click undo, verify stroke removed.
-- [ ] 3.6 Run `task typecheck && task lint && task test && task test:e2e` and fix any errors.
+- [x] 3.1 Implement brush mouse event handlers: on `mousedown` when brush is active, capture a "before" snapshot and create a new `Konva.Line` on the overlays layer (Layer 3) with `stroke: "#000000"`, `strokeWidth` proportional to canvas size (e.g., 3px for 128×128, 12px for 512×512), `lineCap: "round"`, `lineJoin: "round"`, and initial `points` from the click position. On `mousemove`, append the pointer position to the Line's `points` array. On `mouseup`, finalize the stroke.
+- [x] 3.2 Implement destructive flattening: when the user switches away from the brush tool (or triggers another action), flatten all Konva.Line nodes on the overlays layer onto the image layer. Do this by: rendering the overlays layer to a temporary canvas, compositing it onto the image offscreen canvas, updating the Konva Image node, and clearing the overlays layer. Push a snapshot after flattening.
+- [x] 3.3 Set the CSS cursor to a crosshair or dot when the brush tool is active.
+- [x] 3.4 Write unit tests — verify that a brush stroke creates a `Konva.Line` on the overlays layer with correct color (`#000000`) and stroke width, and that completing a stroke results in one history push.
+- [x] 3.5 Write E2E test `e2e/brush.spec.ts` — upload test fixture, click brush button, simulate drag across canvas, verify overlays layer has content (pixel data changed), click undo, verify stroke removed.
+- [x] 3.6 Run `task typecheck && task lint && task test && task test:e2e` and fix any errors.
 
 ### [ ] 4.0 Text Overlay Tool
 

@@ -191,7 +191,7 @@ describe("EmojiCanvas — eraser tool", () => {
     expect(onPushState).toHaveBeenCalledTimes(1);
   });
 
-  it("does not push a snapshot when tool is not eraser", async () => {
+  it("does not push a snapshot when tool is text (no mouse handling)", async () => {
     const onPushState = vi.fn();
     const mockImage = makeMockImage();
 
@@ -204,7 +204,7 @@ describe("EmojiCanvas — eraser tool", () => {
           handleFileInput={noop}
           handleDrop={noop}
           handlePaste={noop}
-          activeTool="brush"
+          activeTool="text"
           onPushState={onPushState}
         />,
       ));
@@ -219,7 +219,7 @@ describe("EmojiCanvas — eraser tool", () => {
       fireEvent.mouseUp(content);
     });
 
-    // No additional push — not in eraser mode
+    // No additional push — text tool has no mouse-down/up snapshot logic yet
     expect(onPushState).toHaveBeenCalledTimes(1);
   });
 
@@ -281,5 +281,166 @@ describe("EmojiCanvas — eraser tool", () => {
     });
 
     expect(compositeOpsUsed).toContain("destination-out");
+  });
+});
+
+describe("EmojiCanvas — brush tool", () => {
+  it("creates a Konva.Line on the overlays layer with correct color and stroke width on mousedown", async () => {
+    const mockImage = makeMockImage();
+
+    let container!: HTMLElement;
+    await act(async () => {
+      ({ container } = render(
+        <EmojiCanvas
+          preset={slackPreset}
+          image={mockImage}
+          handleFileInput={noop}
+          handleDrop={noop}
+          handlePaste={noop}
+          activeTool="brush"
+          onPushState={() => {}}
+        />,
+      ));
+    });
+
+    const content = container.querySelector(".konvajs-content")!;
+
+    // Fire mousedown — line should be created on overlays layer (index 2)
+    act(() => {
+      fireEvent.mouseDown(content, { clientX: 64, clientY: 64 });
+    });
+
+    const stage = Konva.stages[0];
+    const overlaysLayer = stage.getLayers()[2];
+    const lines = overlaysLayer?.find<Konva.Line>("Line") ?? [];
+    expect(lines.length).toBe(1);
+    expect(lines[0]?.stroke()).toBe("#000000");
+    // 128×128 canvas → strokeWidth = Math.round((128/128)*3) = 3
+    expect(lines[0]?.strokeWidth()).toBe(3);
+    expect(lines[0]?.lineCap()).toBe("round");
+    expect(lines[0]?.lineJoin()).toBe("round");
+
+    // Finish the stroke
+    act(() => {
+      fireEvent.mouseUp(content);
+    });
+
+    // Line should be flattened and removed from overlays layer
+    const linesAfter = overlaysLayer?.find<Konva.Line>("Line") ?? [];
+    expect(linesAfter.length).toBe(0);
+  });
+
+  it("pushes exactly one snapshot after a complete brush mousedown→mouseup stroke", async () => {
+    const onPushState = vi.fn();
+    const mockImage = makeMockImage();
+
+    let container!: HTMLElement;
+    await act(async () => {
+      ({ container } = render(
+        <EmojiCanvas
+          preset={slackPreset}
+          image={mockImage}
+          handleFileInput={noop}
+          handleDrop={noop}
+          handlePaste={noop}
+          activeTool="brush"
+          onPushState={onPushState}
+        />,
+      ));
+    });
+
+    // 1 call from initial snapshot
+    expect(onPushState).toHaveBeenCalledTimes(1);
+
+    const content = container.querySelector(".konvajs-content")!;
+
+    act(() => {
+      fireEvent.mouseDown(content, { clientX: 64, clientY: 64 });
+      fireEvent.mouseMove(content, { clientX: 70, clientY: 64 });
+      fireEvent.mouseUp(content, { clientX: 70, clientY: 64 });
+    });
+
+    // Exactly one additional push from the completed stroke
+    expect(onPushState).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not push a snapshot when tool is not brush on mousedown", async () => {
+    const onPushState = vi.fn();
+    const mockImage = makeMockImage();
+
+    let container!: HTMLElement;
+    await act(async () => {
+      ({ container } = render(
+        <EmojiCanvas
+          preset={slackPreset}
+          image={mockImage}
+          handleFileInput={noop}
+          handleDrop={noop}
+          handlePaste={noop}
+          activeTool="eraser"
+          onPushState={onPushState}
+        />,
+      ));
+    });
+
+    // Initial snapshot still pushed
+    expect(onPushState).toHaveBeenCalledTimes(1);
+
+    const content = container.querySelector(".konvajs-content")!;
+    act(() => {
+      fireEvent.mouseDown(content, { clientX: 64, clientY: 64 });
+      fireEvent.mouseUp(content);
+    });
+
+    // Eraser mouseup pushes (for the eraser stroke), brush does not interfere
+    // Active tool is eraser so brush path is not taken
+    const stage = Konva.stages[0];
+    const overlaysLayer = stage.getLayers()[2];
+    const lines = overlaysLayer?.find<Konva.Line>("Line") ?? [];
+    expect(lines.length).toBe(0);
+  });
+
+  it("appends points to the line on mousemove during a brush stroke", async () => {
+    const mockImage = makeMockImage();
+
+    let container!: HTMLElement;
+    await act(async () => {
+      ({ container } = render(
+        <EmojiCanvas
+          preset={slackPreset}
+          image={mockImage}
+          handleFileInput={noop}
+          handleDrop={noop}
+          handlePaste={noop}
+          activeTool="brush"
+          onPushState={() => {}}
+        />,
+      ));
+    });
+
+    const content = container.querySelector(".konvajs-content")!;
+
+    act(() => {
+      fireEvent.mouseDown(content, { clientX: 10, clientY: 10 });
+    });
+
+    const stage = Konva.stages[0];
+    const overlaysLayer = stage.getLayers()[2];
+    const lines = overlaysLayer?.find<Konva.Line>("Line") ?? [];
+    const initialPointCount = lines[0]?.points().length ?? 0;
+
+    act(() => {
+      fireEvent.mouseMove(content, { clientX: 20, clientY: 10 });
+      fireEvent.mouseMove(content, { clientX: 30, clientY: 10 });
+    });
+
+    // Points should have grown: initial 4 (2 pairs) + 2 moves × 2 coords = 8
+    const updatedLines = overlaysLayer?.find<Konva.Line>("Line") ?? [];
+    const updatedPointCount = updatedLines[0]?.points().length ?? 0;
+    expect(updatedPointCount).toBeGreaterThan(initialPointCount);
+
+    act(() => {
+      fireEvent.mouseUp(content);
+    });
   });
 });

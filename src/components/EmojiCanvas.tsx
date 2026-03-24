@@ -51,6 +51,8 @@ export function EmojiCanvas({
 
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const isErasingRef = useRef(false);
+  const isBrushingRef = useRef(false);
+  const currentBrushLineRef = useRef<Konva.Line | null>(null);
   const onSnapshotRestoredRef = useRef(onSnapshotRestored);
   const onPushStateRef = useRef(onPushState);
 
@@ -88,6 +90,7 @@ export function EmojiCanvas({
   );
 
   const eraserRadius = Math.round((width / 128) * 3);
+  const brushStrokeWidth = Math.round((width / 128) * 3);
 
   // Derived state: rebuild offscreen canvas when image or stage dimensions change.
   // Following the React "Storing information from previous renders" pattern to avoid
@@ -144,6 +147,16 @@ export function EmojiCanvas({
     return () => document.removeEventListener("paste", handlePaste);
   }, [handlePaste]);
 
+  // Clean up any in-progress brush stroke when tool changes away from brush
+  useEffect(() => {
+    if (activeTool !== "brush" && currentBrushLineRef.current) {
+      currentBrushLineRef.current.destroy();
+      currentBrushLineRef.current = null;
+      isBrushingRef.current = false;
+      Konva.stages[0]?.getLayers()[2]?.batchDraw();
+    }
+  }, [activeTool]);
+
   const applyEraserAt = useCallback(
     (stageX: number, stageY: number) => {
       if (!offscreenCanvasRef.current || !imageRect) return;
@@ -165,17 +178,63 @@ export function EmojiCanvas({
     [imageRect, eraserRadius],
   );
 
+  // Flatten the current brush line onto the offscreen canvas and remove it from the
+  // overlays layer. Returns true if a line was flattened, false otherwise.
+  const flattenCurrentLine = useCallback((): boolean => {
+    const line = currentBrushLineRef.current;
+    if (!line || !offscreenCanvasRef.current || !imageRect) return false;
+    const ctx = offscreenCanvasRef.current.getContext("2d");
+    if (!ctx) return false;
+    const pts = line.points();
+    ctx.save();
+    ctx.strokeStyle = line.stroke();
+    ctx.lineWidth = line.strokeWidth();
+    ctx.lineCap = line.lineCap() as CanvasLineCap;
+    ctx.lineJoin = line.lineJoin() as CanvasLineJoin;
+    ctx.beginPath();
+    ctx.moveTo(pts[0]! - imageRect.x, pts[1]! - imageRect.y);
+    for (let i = 2; i < pts.length; i += 2) {
+      ctx.lineTo(pts[i]! - imageRect.x, pts[i + 1]! - imageRect.y);
+    }
+    ctx.stroke();
+    ctx.restore();
+    line.destroy();
+    currentBrushLineRef.current = null;
+    const stage = Konva.stages[0];
+    stage?.getLayers()[2]?.batchDraw();
+    stage?.getLayers()[1]?.batchDraw();
+    return true;
+  }, [imageRect]);
+
   const handleMouseDown = useCallback(
     (e: Konva.KonvaEventObject<MouseEvent>) => {
-      if (activeTool !== "eraser" || !offscreenCanvasRef.current) return;
-      isErasingRef.current = true;
+      if (!offscreenCanvasRef.current) return;
       const stage = e.target.getStage();
-      const pos = stage?.getPointerPosition();
-      if (!pos) return;
-      applyEraserAt(pos.x, pos.y);
-      stage?.getLayers()[1]?.batchDraw();
+
+      if (activeTool === "eraser") {
+        isErasingRef.current = true;
+        const pos = stage?.getPointerPosition();
+        if (!pos) return;
+        applyEraserAt(pos.x, pos.y);
+        stage?.getLayers()[1]?.batchDraw();
+      } else if (activeTool === "brush") {
+        isBrushingRef.current = true;
+        const pos = stage?.getPointerPosition();
+        if (!pos) return;
+        const overlaysLayer = stage?.getLayers()[2];
+        const line = new Konva.Line({
+          stroke: "#000000",
+          strokeWidth: brushStrokeWidth,
+          lineCap: "round",
+          lineJoin: "round",
+          points: [pos.x, pos.y, pos.x, pos.y],
+        });
+        overlaysLayer?.add(line);
+        currentBrushLineRef.current = line;
+        overlaysLayer?.batchDraw();
+      }
     },
-    [activeTool, applyEraserAt],
+    [activeTool, applyEraserAt, brushStrokeWidth],
   );
 
   const handleMouseMove = useCallback(
@@ -188,20 +247,37 @@ export function EmojiCanvas({
         if (!isErasingRef.current) return;
         applyEraserAt(pos.x, pos.y);
         stage?.getLayers()[1]?.batchDraw();
+      } else if (
+        activeTool === "brush" &&
+        isBrushingRef.current &&
+        currentBrushLineRef.current
+      ) {
+        const points = currentBrushLineRef.current.points();
+        currentBrushLineRef.current.points([...points, pos.x, pos.y]);
+        stage?.getLayers()[2]?.batchDraw();
       }
     },
     [activeTool, applyEraserAt],
   );
 
   const handleMouseUp = useCallback(() => {
-    if (!isErasingRef.current || activeTool !== "eraser") return;
-    isErasingRef.current = false;
-    if (offscreenCanvasRef.current) {
-      onPushStateRef.current?.(
-        offscreenCanvasRef.current.toDataURL("image/png"),
-      );
+    if (isErasingRef.current && activeTool === "eraser") {
+      isErasingRef.current = false;
+      if (offscreenCanvasRef.current) {
+        onPushStateRef.current?.(
+          offscreenCanvasRef.current.toDataURL("image/png"),
+        );
+      }
+    } else if (isBrushingRef.current && activeTool === "brush") {
+      isBrushingRef.current = false;
+      flattenCurrentLine();
+      if (offscreenCanvasRef.current) {
+        onPushStateRef.current?.(
+          offscreenCanvasRef.current.toDataURL("image/png"),
+        );
+      }
     }
-  }, [activeTool]);
+  }, [activeTool, flattenCurrentLine]);
 
   const handleMouseLeave = useCallback(() => {
     setEraserPos(null);
@@ -212,11 +288,23 @@ export function EmojiCanvas({
           offscreenCanvasRef.current.toDataURL("image/png"),
         );
       }
+    } else if (isBrushingRef.current && activeTool === "brush") {
+      isBrushingRef.current = false;
+      flattenCurrentLine();
+      if (offscreenCanvasRef.current) {
+        onPushStateRef.current?.(
+          offscreenCanvasRef.current.toDataURL("image/png"),
+        );
+      }
     }
-  }, [activeTool]);
+  }, [activeTool, flattenCurrentLine]);
 
   const containerStyle: React.CSSProperties =
-    activeTool === "eraser" && image ? { cursor: "none" } : {};
+    image && activeTool === "eraser"
+      ? { cursor: "none" }
+      : image && activeTool === "brush"
+        ? { cursor: "crosshair" }
+        : {};
 
   return (
     <div
