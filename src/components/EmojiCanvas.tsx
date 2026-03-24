@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Konva from "konva";
 import { Stage, Layer, Rect, Image as KonvaImage } from "react-konva";
 import { type PlatformPreset } from "../utils/presets";
@@ -11,6 +11,7 @@ interface EmojiCanvasProps {
   handleDrop: React.DragEventHandler<HTMLDivElement>;
   handlePaste: (e: ClipboardEvent) => void;
   stageRef?: React.RefObject<Konva.Stage | null>;
+  fileName?: string;
 }
 
 const TILE_SIZE = 8;
@@ -37,7 +38,10 @@ export function EmojiCanvas({
   handleDrop,
   handlePaste,
   stageRef,
+  fileName,
 }: EmojiCanvasProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     document.addEventListener("paste", handlePaste);
     return () => document.removeEventListener("paste", handlePaste);
@@ -50,44 +54,87 @@ export function EmojiCanvas({
     : null;
 
   return (
-    <div onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
-      <Stage width={width} height={height} ref={stageRef}>
-        <Layer>
-          {tiles.map((tile, i) => (
-            <Rect
-              key={i}
-              x={tile.x}
-              y={tile.y}
-              width={TILE_SIZE}
-              height={TILE_SIZE}
-              fill={tile.fill}
+    <div className="section">
+      <span className="section-label">
+        Canvas — {width}×{height}px
+      </span>
+      <div className="canvas-wrapper">
+        <div
+          className={`canvas-drop-zone${image ? " has-image" : ""}`}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
+          onClick={() => !image && fileInputRef.current?.click()}
+          title={image ? undefined : "Click or drop an image"}
+        >
+          <Stage width={width} height={height} ref={stageRef}>
+            <Layer>
+              {tiles.map((tile, i) => (
+                <Rect
+                  key={i}
+                  x={tile.x}
+                  y={tile.y}
+                  width={TILE_SIZE}
+                  height={TILE_SIZE}
+                  fill={tile.fill}
+                />
+              ))}
+              <Rect
+                x={safeZonePadding}
+                y={safeZonePadding}
+                width={width - 2 * safeZonePadding}
+                height={height - 2 * safeZonePadding}
+                stroke="rgba(254, 129, 212, 0.6)"
+                strokeWidth={1}
+                dash={[4, 4]}
+                fill="transparent"
+              />
+            </Layer>
+            <Layer>
+              {image && imageRect && (
+                <KonvaImage
+                  image={image}
+                  x={imageRect.x}
+                  y={imageRect.y}
+                  width={imageRect.width}
+                  height={imageRect.height}
+                />
+              )}
+            </Layer>
+            <Layer />
+          </Stage>
+        </div>
+
+        <div className="file-input-row">
+          <label className="file-input-label">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            {fileName ? "Change image" : "Choose image"}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileInput}
             />
-          ))}
-          <Rect
-            x={safeZonePadding}
-            y={safeZonePadding}
-            width={width - 2 * safeZonePadding}
-            height={height - 2 * safeZonePadding}
-            stroke="rgba(0, 120, 255, 0.5)"
-            strokeWidth={1}
-            dash={[4, 4]}
-            fill="transparent"
-          />
-        </Layer>
-        <Layer>
-          {image && imageRect && (
-            <KonvaImage
-              image={image}
-              x={imageRect.x}
-              y={imageRect.y}
-              width={imageRect.width}
-              height={imageRect.height}
-            />
+          </label>
+          {fileName && (
+            <span className="file-name" title={fileName}>
+              {fileName}
+            </span>
           )}
-        </Layer>
-        <Layer />
-      </Stage>
-      <input type="file" accept="image/*" onChange={handleFileInput} />
+        </div>
+      </div>
     </div>
   );
 }

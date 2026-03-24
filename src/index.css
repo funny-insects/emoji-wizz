@@ -6,6 +6,27 @@
   padding: 0;
 }
 
+:root {
+  --bg: #12080f;
+  --surface: #1c0e18;
+  --surface-2: #241422;
+  --border: #3d1e36;
+  --accent: #fe81d4;
+  --accent-hover: #ff9bde;
+  --accent-dim: rgba(254, 129, 212, 0.13);
+  --green: #faacbf;
+  --green-dim: rgba(250, 172, 191, 0.12);
+  --yellow: #ffeabb;
+  --yellow-dim: rgba(255, 234, 187, 0.12);
+  --red: #fbc3c1;
+  --red-dim: rgba(251, 195, 193, 0.12);
+  --text: #ffffff;
+  --text-2: #ffffff;
+  --text-3: #c8a8bc;
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+
 body {
   font-family:
     system-ui,
@@ -13,4 +34,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
 }

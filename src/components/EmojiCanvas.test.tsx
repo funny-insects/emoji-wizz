@@ -85,7 +85,7 @@ describe("EmojiCanvas", () => {
       .filter((r) => r.fill() === "transparent");
     const safeZone = safeZones[0] as Konva.Rect;
     expect(safeZone).toBeDefined();
-    expect(safeZone.stroke()).toBe("rgba(0, 120, 255, 0.5)");
+    expect(safeZone.stroke()).toBe("rgba(254, 129, 212, 0.6)");
     expect(safeZone.strokeWidth()).toBe(1);
     expect(safeZone.dash()).toEqual([4, 4]);
     expect(safeZone.x()).toBe(slackPreset.safeZonePadding);

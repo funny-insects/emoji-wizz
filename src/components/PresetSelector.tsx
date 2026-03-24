@@ -12,12 +12,19 @@ export function PresetSelector({
   onChange,
 }: PresetSelectorProps) {
   return (
-    <select value={activePresetId} onChange={(e) => onChange(e.target.value)}>
-      {presets.map((preset) => (
-        <option key={preset.id} value={preset.id}>
-          {preset.label}
-        </option>
-      ))}
-    </select>
+    <div className="section">
+      <span className="section-label">Platform</span>
+      <div className="preset-tabs">
+        {presets.map((preset) => (
+          <button
+            key={preset.id}
+            className={`preset-tab${activePresetId === preset.id ? " active" : ""}`}
+            onClick={() => onChange(preset.id)}
+          >
+            {preset.label}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }

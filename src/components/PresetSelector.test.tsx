@@ -4,7 +4,7 @@ import { PresetSelector } from "./PresetSelector";
 import { PLATFORM_PRESETS } from "../utils/presets";
 
 describe("PresetSelector", () => {
-  it("renders one option per preset", () => {
+  it("renders one button per preset", () => {
     render(
       <PresetSelector
         presets={PLATFORM_PRESETS}
@@ -12,32 +12,20 @@ describe("PresetSelector", () => {
         onChange={vi.fn()}
       />,
     );
-    const options = screen.getAllByRole("option");
-    expect(options.length).toBe(PLATFORM_PRESETS.length);
+    const buttons = screen.getAllByRole("button");
+    expect(buttons.length).toBe(PLATFORM_PRESETS.length);
   });
 
   it("calls onChange with the selected preset id", () => {
-    const multiPresets = [
-      ...PLATFORM_PRESETS,
-      {
-        id: "discord",
-        label: "Discord — 128×128",
-        width: 128,
-        height: 128,
-        safeZonePadding: 8,
-      },
-    ];
     const onChange = vi.fn();
     render(
       <PresetSelector
-        presets={multiPresets}
+        presets={PLATFORM_PRESETS}
         activePresetId="slack"
         onChange={onChange}
       />,
     );
-    fireEvent.change(screen.getByRole("combobox"), {
-      target: { value: "discord" },
-    });
+    fireEvent.click(screen.getByRole("button", { name: /discord/i }));
     expect(onChange).toHaveBeenCalledWith("discord");
   });
 });
