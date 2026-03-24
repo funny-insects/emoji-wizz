@@ -284,6 +284,221 @@ describe("EmojiCanvas — eraser tool", () => {
   });
 });
 
+describe("EmojiCanvas — text tool", () => {
+  it("shows a text input element on click when text tool is active", async () => {
+    const mockImage = makeMockImage();
+
+    let container!: HTMLElement;
+    await act(async () => {
+      ({ container } = render(
+        <EmojiCanvas
+          preset={slackPreset}
+          image={mockImage}
+          handleFileInput={noop}
+          handleDrop={noop}
+          handlePaste={noop}
+          activeTool="text"
+          onPushState={() => {}}
+        />,
+      ));
+    });
+
+    const content = container.querySelector(".konvajs-content")!;
+    act(() => {
+      fireEvent.mouseDown(content, { clientX: 64, clientY: 64 });
+      fireEvent.mouseUp(content, { clientX: 64, clientY: 64 });
+    });
+
+    // Konva fires onClick after mousedown+mouseup at same position
+    const input = container.querySelector("input:not([type='file'])");
+    expect(input).not.toBeNull();
+  });
+
+  it("pushes exactly one snapshot when text is finalized with Enter", async () => {
+    const onPushState = vi.fn();
+    const mockImage = makeMockImage();
+
+    let container!: HTMLElement;
+    await act(async () => {
+      ({ container } = render(
+        <EmojiCanvas
+          preset={slackPreset}
+          image={mockImage}
+          handleFileInput={noop}
+          handleDrop={noop}
+          handlePaste={noop}
+          activeTool="text"
+          onPushState={onPushState}
+        />,
+      ));
+    });
+
+    // 1 call from initial snapshot
+    expect(onPushState).toHaveBeenCalledTimes(1);
+
+    const content = container.querySelector(".konvajs-content")!;
+    act(() => {
+      fireEvent.mouseDown(content, { clientX: 64, clientY: 64 });
+      fireEvent.mouseUp(content, { clientX: 64, clientY: 64 });
+    });
+
+    const input = container.querySelector(
+      "input:not([type='file'])",
+    ) as HTMLInputElement | null;
+    expect(input).not.toBeNull();
+
+    act(() => {
+      fireEvent.change(input!, { target: { value: "LGTM" } });
+      fireEvent.keyDown(input!, { key: "Enter" });
+    });
+
+    // One additional push from text placement
+    expect(onPushState).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not push a snapshot when text input is empty on Enter", async () => {
+    const onPushState = vi.fn();
+    const mockImage = makeMockImage();
+
+    let container!: HTMLElement;
+    await act(async () => {
+      ({ container } = render(
+        <EmojiCanvas
+          preset={slackPreset}
+          image={mockImage}
+          handleFileInput={noop}
+          handleDrop={noop}
+          handlePaste={noop}
+          activeTool="text"
+          onPushState={onPushState}
+        />,
+      ));
+    });
+
+    expect(onPushState).toHaveBeenCalledTimes(1);
+
+    const content = container.querySelector(".konvajs-content")!;
+    act(() => {
+      fireEvent.mouseDown(content, { clientX: 64, clientY: 64 });
+      fireEvent.mouseUp(content, { clientX: 64, clientY: 64 });
+    });
+
+    const input = container.querySelector(
+      "input:not([type='file'])",
+    ) as HTMLInputElement | null;
+    expect(input).not.toBeNull();
+
+    act(() => {
+      fireEvent.keyDown(input!, { key: "Enter" });
+    });
+
+    // No additional push — empty text discarded
+    expect(onPushState).toHaveBeenCalledTimes(1);
+  });
+
+  it("calls fillText on the canvas context when text is finalized", async () => {
+    const fillTextCalls: [string, number, number][] = [];
+    const origGetContext = HTMLCanvasElement.prototype.getContext;
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(
+      function (this: HTMLCanvasElement, type: string) {
+        const ctx = origGetContext.call(this, type);
+        if (ctx && type === "2d") {
+          const handler: ProxyHandler<CanvasRenderingContext2D> = {
+            get(target, prop) {
+              if (prop === "fillText") {
+                return (text: string, x: number, y: number) => {
+                  fillTextCalls.push([text, x, y]);
+                  return Reflect.apply(target.fillText, target, [text, x, y]);
+                };
+              }
+              const val = Reflect.get(target, prop);
+              return typeof val === "function" ? val.bind(target) : val;
+            },
+          };
+          return new Proxy(ctx, handler);
+        }
+        return ctx;
+      } as typeof HTMLCanvasElement.prototype.getContext,
+    );
+
+    const mockImage = makeMockImage();
+    let container!: HTMLElement;
+    await act(async () => {
+      ({ container } = render(
+        <EmojiCanvas
+          preset={slackPreset}
+          image={mockImage}
+          handleFileInput={noop}
+          handleDrop={noop}
+          handlePaste={noop}
+          activeTool="text"
+          onPushState={() => {}}
+          textColor="#FF0000"
+        />,
+      ));
+    });
+
+    const content = container.querySelector(".konvajs-content")!;
+    act(() => {
+      fireEvent.mouseDown(content, { clientX: 40, clientY: 40 });
+      fireEvent.mouseUp(content, { clientX: 40, clientY: 40 });
+    });
+
+    const input = container.querySelector(
+      "input:not([type='file'])",
+    ) as HTMLInputElement | null;
+    expect(input).not.toBeNull();
+
+    act(() => {
+      fireEvent.change(input!, { target: { value: "Hello" } });
+      fireEvent.keyDown(input!, { key: "Enter" });
+    });
+
+    expect(fillTextCalls.some(([text]) => text === "Hello")).toBe(true);
+  });
+
+  it("discards text input when tool switches away from text", async () => {
+    const mockImage = makeMockImage();
+    const { container, rerender } = await act(async () =>
+      render(
+        <EmojiCanvas
+          preset={slackPreset}
+          image={mockImage}
+          handleFileInput={noop}
+          handleDrop={noop}
+          handlePaste={noop}
+          activeTool="text"
+          onPushState={() => {}}
+        />,
+      ),
+    );
+
+    const content = container.querySelector(".konvajs-content")!;
+    act(() => {
+      fireEvent.mouseDown(content, { clientX: 64, clientY: 64 });
+      fireEvent.mouseUp(content, { clientX: 64, clientY: 64 });
+    });
+
+    expect(container.querySelector("input:not([type='file'])")).not.toBeNull();
+
+    act(() => {
+      rerender(
+        <EmojiCanvas
+          preset={slackPreset}
+          image={mockImage}
+          handleFileInput={noop}
+          handleDrop={noop}
+          handlePaste={noop}
+          activeTool="brush"
+          onPushState={() => {}}
+        />,
+      );
+    });
+
+    expect(container.querySelector("input:not([type='file'])")).toBeNull();
+  });
+});
+
 describe("EmojiCanvas — brush tool", () => {
   it("creates a Konva.Line on the overlays layer with correct color and stroke width on mousedown", async () => {
     const mockImage = makeMockImage();

@@ -1,5 +1,7 @@
 import "./Toolbar.css";
 import type { EditorTool } from "../App";
+import type { TextSize } from "../utils/textTool";
+import { TEXT_COLOR_PALETTE } from "../utils/textTool";
 
 interface ToolbarProps {
   image: HTMLImageElement | null;
@@ -9,7 +11,19 @@ interface ToolbarProps {
   canRedo: boolean;
   onUndo: () => void;
   onRedo: () => void;
+  textColor: string;
+  onTextColorChange: (color: string) => void;
+  textSize: TextSize;
+  onTextSizeChange: (size: TextSize) => void;
 }
+
+const SIZE_LABELS: Record<TextSize, string> = {
+  small: "S",
+  medium: "M",
+  large: "L",
+};
+
+const TEXT_SIZES: TextSize[] = ["small", "medium", "large"];
 
 export function Toolbar({
   image,
@@ -19,6 +33,10 @@ export function Toolbar({
   canRedo,
   onUndo,
   onRedo,
+  textColor,
+  onTextColorChange,
+  textSize,
+  onTextSizeChange,
 }: ToolbarProps) {
   if (!image) return null;
 
@@ -50,6 +68,37 @@ export function Toolbar({
           T
         </button>
       </div>
+
+      {activeTool === "text" && (
+        <div className="toolbar-text-settings">
+          <div className="toolbar-colors">
+            {TEXT_COLOR_PALETTE.map((color) => (
+              <button
+                key={color}
+                className={`toolbar-color-swatch${textColor === color ? " toolbar-color-swatch--active" : ""}`}
+                style={{ background: color }}
+                onClick={() => onTextColorChange(color)}
+                aria-label={`Color ${color}`}
+                title={color}
+              />
+            ))}
+          </div>
+          <div className="toolbar-sizes">
+            {TEXT_SIZES.map((size) => (
+              <button
+                key={size}
+                className={`toolbar-size-btn${textSize === size ? " toolbar-size-btn--active" : ""}`}
+                onClick={() => onTextSizeChange(size)}
+                aria-label={size.charAt(0).toUpperCase() + size.slice(1)}
+                title={size}
+              >
+                {SIZE_LABELS[size]}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="toolbar-history">
         <button
           className="toolbar-btn"

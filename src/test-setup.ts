@@ -2,13 +2,15 @@ import "@testing-library/jest-dom";
 
 // Konva requires a canvas 2D context; jsdom doesn't implement it by default.
 // Use a Proxy that returns no-ops for most methods, but returns real values for
-// methods Konva inspects (getImageData → data array, createLinearGradient → object).
+// methods Konva inspects (getImageData → data array, createLinearGradient → object,
+// measureText → object with width, used by Konva.Text).
 const mockCanvasContext = new Proxy(
   {
     getImageData: () => ({ data: new Uint8ClampedArray(4) }),
     createLinearGradient: () => ({ addColorStop: () => {} }),
     createRadialGradient: () => ({ addColorStop: () => {} }),
     createPattern: () => null,
+    measureText: () => ({ width: 0 }),
     canvas: { width: 0, height: 0 },
   },
   {

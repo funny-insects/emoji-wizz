@@ -96,7 +96,7 @@ Implement the brush tool that draws freehand strokes on top of the emoji. When t
 - [x] 3.5 Write E2E test `e2e/brush.spec.ts` — upload test fixture, click brush button, simulate drag across canvas, verify overlays layer has content (pixel data changed), click undo, verify stroke removed.
 - [x] 3.6 Run `task typecheck && task lint && task test && task test:e2e` and fix any errors.
 
-### [ ] 4.0 Text Overlay Tool
+### [x] 4.0 Text Overlay Tool
 
 Implement the text tool with click-to-place inline editing. When the user selects the Text tool and clicks on the canvas, a temporary HTML input appears at the click position. The user types text, and pressing Enter or clicking outside finalizes the text as a Konva.Text node. The toolbar sidebar shows color swatches (8 colors: black, white, red, blue, green, yellow, orange, purple) and size presets (Small, Medium, Large) when the Text tool is active. Each placed text is a single undo/redo action. Text is destructively flattened onto the image data after placement.
 
@@ -110,14 +110,14 @@ Implement the text tool with click-to-place inline editing. When the user select
 
 #### 4.0 Tasks
 
-- [ ] 4.1 Add `textColor` and `textSize` state to `App.tsx` (or a dedicated hook). Define the 8-color palette (`["#000000", "#FFFFFF", "#FF0000", "#0000FF", "#008000", "#FFFF00", "#FFA500", "#800080"]`) and 3 size presets (`{ small: 10, medium: 18, large: 28 }` — scaled proportionally for 512×512 canvases). Pass these as props to `Toolbar`.
-- [ ] 4.2 Update `Toolbar.tsx` to render color swatches (small colored circles/squares) and size preset buttons (S / M / L) below the tool icons, only visible when `activeTool === "text"`. Clicking a swatch sets `textColor`; clicking a size button sets `textSize`. The selected color and size should have a visual indicator (e.g., border/ring).
-- [ ] 4.3 Implement text placement in `EmojiCanvas`: on `click` when text tool is active, create a temporary HTML `<input>` element positioned absolutely over the canvas at the click coordinates (accounting for the Stage container's offset). Style the input to match the selected font size and color, with a transparent background and no border.
-- [ ] 4.4 Implement text finalization: on `Enter` keypress or `blur` of the temporary input, remove the input element, capture a "before" snapshot, create a `Konva.Text` node on the overlays layer at the click position with the entered text, selected color, selected font size, and `fontFamily: "sans-serif"`. Immediately flatten the text onto the image layer (same flattening logic as brush tool) and push a snapshot. If the input is empty on finalization, discard without creating a node.
-- [ ] 4.5 Write unit tests for the text tool settings in `Toolbar.test.tsx` — verify color swatches and size buttons render only when text tool is active, clicking a swatch calls `onTextColorChange`, clicking a size button calls `onTextSizeChange`.
-- [ ] 4.6 Write unit tests for text placement — verify that finalizing text creates a `Konva.Text` node with correct `text()`, `fill()`, `fontSize()`, and position, and results in one history push.
-- [ ] 4.7 Write E2E test `e2e/text-tool.spec.ts` — upload test fixture, click text button, click on canvas, type "LGTM" into the input, press Enter, verify text is rendered on canvas (pixel data changed at text position), change color/size and place another text, click undo to remove the last text.
-- [ ] 4.8 Run `task typecheck && task lint && task test && task test:e2e` and fix any errors.
+- [x] 4.1 Add `textColor` and `textSize` state to `App.tsx` (or a dedicated hook). Define the 8-color palette (`["#000000", "#FFFFFF", "#FF0000", "#0000FF", "#008000", "#FFFF00", "#FFA500", "#800080"]`) and 3 size presets (`{ small: 10, medium: 18, large: 28 }` — scaled proportionally for 512×512 canvases). Pass these as props to `Toolbar`.
+- [x] 4.2 Update `Toolbar.tsx` to render color swatches (small colored circles/squares) and size preset buttons (S / M / L) below the tool icons, only visible when `activeTool === "text"`. Clicking a swatch sets `textColor`; clicking a size button sets `textSize`. The selected color and size should have a visual indicator (e.g., border/ring).
+- [x] 4.3 Implement text placement in `EmojiCanvas`: on `click` when text tool is active, create a temporary HTML `<input>` element positioned absolutely over the canvas at the click coordinates (accounting for the Stage container's offset). Style the input to match the selected font size and color, with a transparent background and no border.
+- [x] 4.4 Implement text finalization: on `Enter` keypress or `blur` of the temporary input, remove the input element, capture a "before" snapshot, create a `Konva.Text` node on the overlays layer at the click position with the entered text, selected color, selected font size, and `fontFamily: "sans-serif"`. Immediately flatten the text onto the image layer (same flattening logic as brush tool) and push a snapshot. If the input is empty on finalization, discard without creating a node.
+- [x] 4.5 Write unit tests for the text tool settings in `Toolbar.test.tsx` — verify color swatches and size buttons render only when text tool is active, clicking a swatch calls `onTextColorChange`, clicking a size button calls `onTextSizeChange`.
+- [x] 4.6 Write unit tests for text placement — verify that finalizing text creates a `Konva.Text` node with correct `text()`, `fill()`, `fontSize()`, and position, and results in one history push.
+- [x] 4.7 Write E2E test `e2e/text-tool.spec.ts` — upload test fixture, click text button, click on canvas, type "LGTM" into the input, press Enter, verify text is rendered on canvas (pixel data changed at text position), change color/size and place another text, click undo to remove the last text.
+- [x] 4.8 Run `task typecheck && task lint && task test && task test:e2e` and fix any errors.
 
 ### [ ] 5.0 Transparency Preservation & Integration Verification
 

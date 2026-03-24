@@ -4,6 +4,8 @@ import Konva from "konva";
 import { type PlatformPreset } from "../utils/presets";
 import { computeContainRect } from "../utils/imageScaling";
 import type { EditorTool } from "../App";
+import type { TextSize } from "../utils/textTool";
+import { TEXT_SIZE_PRESETS } from "../utils/textTool";
 
 interface EmojiCanvasProps {
   preset: PlatformPreset;
@@ -16,6 +18,8 @@ interface EmojiCanvasProps {
   onPushState?: (snapshot: string) => void;
   restoreSnapshot?: string | null;
   onSnapshotRestored?: () => void;
+  textColor?: string;
+  textSize?: TextSize;
 }
 
 const TILE_SIZE = 8;
@@ -45,6 +49,8 @@ export function EmojiCanvas({
   onPushState,
   restoreSnapshot,
   onSnapshotRestored,
+  textColor = "#000000",
+  textSize = "medium",
 }: EmojiCanvasProps) {
   const { width, height, safeZonePadding } = preset;
   const tiles = buildCheckerboard(width, height);
@@ -55,6 +61,10 @@ export function EmojiCanvas({
   const currentBrushLineRef = useRef<Konva.Line | null>(null);
   const onSnapshotRestoredRef = useRef(onSnapshotRestored);
   const onPushStateRef = useRef(onPushState);
+  const [textInputPos, setTextInputPos] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
 
   useEffect(() => {
     onSnapshotRestoredRef.current = onSnapshotRestored;
@@ -91,6 +101,10 @@ export function EmojiCanvas({
 
   const eraserRadius = Math.round((width / 128) * 3);
   const brushStrokeWidth = Math.round((width / 128) * 3);
+  const scaledFontSize = Math.max(
+    4,
+    Math.round(TEXT_SIZE_PRESETS[textSize] * (width / 512)),
+  );
 
   // Derived state: rebuild offscreen canvas when image or stage dimensions change.
   // Following the React "Storing information from previous renders" pattern to avoid
@@ -157,6 +171,19 @@ export function EmojiCanvas({
     }
   }, [activeTool]);
 
+  // Derived state: discard open text input when tool changes away from text.
+  // Following the "storing information from previous renders" pattern to avoid
+  // calling setState inside a useEffect (react-hooks/set-state-in-effect).
+  const [prevActiveTool, setPrevActiveTool] = useState<EditorTool | undefined>(
+    activeTool,
+  );
+  if (activeTool !== prevActiveTool) {
+    setPrevActiveTool(activeTool);
+    if (activeTool !== "text" && textInputPos !== null) {
+      setTextInputPos(null);
+    }
+  }
+
   const applyEraserAt = useCallback(
     (stageX: number, stageY: number) => {
       if (!offscreenCanvasRef.current || !imageRect) return;
@@ -205,6 +232,85 @@ export function EmojiCanvas({
     stage?.getLayers()[1]?.batchDraw();
     return true;
   }, [imageRect]);
+
+  const finalizeText = useCallback(
+    (text: string, pos: { x: number; y: number } | null) => {
+      setTextInputPos(null);
+      if (!text.trim() || !pos || !offscreenCanvasRef.current || !imageRect)
+        return;
+
+      const stage = Konva.stages[0];
+      const overlaysLayer = stage?.getLayers()[2];
+
+      const textNode = new Konva.Text({
+        x: pos.x,
+        y: pos.y,
+        text,
+        fill: textColor,
+        fontSize: scaledFontSize,
+        fontFamily: "sans-serif",
+      });
+      overlaysLayer?.add(textNode);
+
+      const ctx = offscreenCanvasRef.current.getContext("2d");
+      if (ctx) {
+        ctx.save();
+        ctx.font = `${textNode.fontSize()}px ${textNode.fontFamily()}`;
+        ctx.fillStyle = textNode.fill();
+        ctx.fillText(
+          textNode.text(),
+          textNode.x() - imageRect.x,
+          textNode.y() - imageRect.y,
+        );
+        ctx.restore();
+      }
+
+      textNode.destroy();
+      stage?.getLayers()[1]?.batchDraw();
+      overlaysLayer?.batchDraw();
+
+      onPushStateRef.current?.(
+        offscreenCanvasRef.current.toDataURL("image/png"),
+      );
+    },
+    [textColor, scaledFontSize, imageRect],
+  );
+
+  const handleTextKeyDown = useCallback(
+    (
+      e: React.KeyboardEvent<HTMLInputElement>,
+      pos: { x: number; y: number } | null,
+    ) => {
+      if (e.key === "Enter") {
+        finalizeText(e.currentTarget.value, pos);
+      } else if (e.key === "Escape") {
+        setTextInputPos(null);
+      }
+    },
+    [finalizeText],
+  );
+
+  const handleTextBlur = useCallback(
+    (
+      e: React.FocusEvent<HTMLInputElement>,
+      pos: { x: number; y: number } | null,
+    ) => {
+      finalizeText(e.currentTarget.value, pos);
+    },
+    [finalizeText],
+  );
+
+  const handleClick = useCallback(
+    (e: Konva.KonvaEventObject<MouseEvent>) => {
+      if (activeTool !== "text") return;
+      if (textInputPos) return;
+      const stage = e.target.getStage();
+      const pos = stage?.getPointerPosition();
+      if (!pos) return;
+      setTextInputPos({ x: pos.x, y: pos.y });
+    },
+    [activeTool, textInputPos],
+  );
 
   const handleMouseDown = useCallback(
     (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -299,12 +405,17 @@ export function EmojiCanvas({
     }
   }, [activeTool, flattenCurrentLine]);
 
-  const containerStyle: React.CSSProperties =
-    image && activeTool === "eraser"
+  const containerStyle: React.CSSProperties = {
+    position: "relative",
+    display: "inline-block",
+    ...(image && activeTool === "eraser"
       ? { cursor: "none" }
       : image && activeTool === "brush"
         ? { cursor: "crosshair" }
-        : {};
+        : image && activeTool === "text"
+          ? { cursor: "text" }
+          : {}),
+  };
 
   return (
     <div
@@ -319,6 +430,7 @@ export function EmojiCanvas({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
       >
         <Layer>
           {tiles.map((tile, i) => (
@@ -367,6 +479,29 @@ export function EmojiCanvas({
           )}
         </Layer>
       </Stage>
+      {textInputPos && activeTool === "text" && (
+        <input
+          key={`text-${textInputPos.x}-${textInputPos.y}`}
+          style={{
+            position: "absolute",
+            left: textInputPos.x,
+            top: textInputPos.y,
+            fontSize: `${scaledFontSize}px`,
+            color: textColor,
+            background: "transparent",
+            border: "none",
+            outline: "1px dashed rgba(0,0,0,0.5)",
+            padding: 0,
+            margin: 0,
+            fontFamily: "sans-serif",
+            zIndex: 10,
+            minWidth: "50px",
+          }}
+          autoFocus
+          onKeyDown={(e) => handleTextKeyDown(e, textInputPos)}
+          onBlur={(e) => handleTextBlur(e, textInputPos)}
+        />
+      )}
       <input type="file" accept="image/*" onChange={handleFileInput} />
     </div>
   );
