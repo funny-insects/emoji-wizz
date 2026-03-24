@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import "./App.css";
 import { EmojiCanvas } from "./components/EmojiCanvas";
 import { Toolbar } from "./components/Toolbar";
@@ -15,21 +15,37 @@ function App() {
   );
   const { image, handleFileInput, handleDrop, handlePaste } = useImageImport();
   const [activeTool, setActiveTool] = useState<EditorTool>("eraser");
-  const { undo, redo, canUndo, canRedo } = useHistory();
+  const { pushState, undo, redo, canUndo, canRedo } = useHistory();
+
+  const [restoreSnapshot, setRestoreSnapshot] = useState<string | null>(null);
+
+  const handleUndo = useCallback(() => {
+    const snapshot = undo();
+    if (snapshot) setRestoreSnapshot(snapshot);
+  }, [undo]);
+
+  const handleRedo = useCallback(() => {
+    const snapshot = redo();
+    if (snapshot) setRestoreSnapshot(snapshot);
+  }, [redo]);
+
+  const handleSnapshotRestored = useCallback(() => {
+    setRestoreSnapshot(null);
+  }, []);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key === "z") {
         e.preventDefault();
-        undo();
+        handleUndo();
       } else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "z") {
         e.preventDefault();
-        redo();
+        handleRedo();
       }
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [undo, redo]);
+  }, [handleUndo, handleRedo]);
 
   function handlePresetChange(id: string) {
     const preset = PLATFORM_PRESETS.find((p) => p.id === id);
@@ -57,8 +73,8 @@ function App() {
           onToolChange={setActiveTool}
           canUndo={canUndo}
           canRedo={canRedo}
-          onUndo={undo}
-          onRedo={redo}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
         />
         <EmojiCanvas
           preset={activePreset}
@@ -68,6 +84,9 @@ function App() {
           handlePaste={handlePaste}
           activeTool={activeTool}
           onToolChange={setActiveTool}
+          onPushState={pushState}
+          restoreSnapshot={restoreSnapshot}
+          onSnapshotRestored={handleSnapshotRestored}
         />
       </div>
     </div>

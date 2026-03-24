@@ -54,7 +54,7 @@ Build the foundational editing UI and history system. When an image is loaded, a
 - [x] 1.7 Add keyboard shortcut listener in `App.tsx` (or a dedicated hook) — listen for `Cmd+Z` (undo) and `Cmd+Shift+Z` (redo) on `keydown`, calling the corresponding history methods. Ensure the listener is added/removed in a `useEffect` cleanup.
 - [x] 1.8 Run `task typecheck && task lint && task test` and fix any errors until all pass cleanly.
 
-### [ ] 2.0 Manual Eraser Tool
+### [x] 2.0 Manual Eraser Tool
 
 Implement the eraser tool that makes painted-over pixels fully transparent (alpha = 0). When the user selects the Eraser tool and click-drags on the canvas, pixels under the circular brush become transparent, revealing the checkerboard background. Each completed stroke (mousedown → mouseup) is recorded as a single undo/redo action. The eraser uses `globalCompositeOperation: 'destination-out'` on an offscreen canvas to modify the image layer pixel data.
 
@@ -68,13 +68,13 @@ Implement the eraser tool that makes painted-over pixels fully transparent (alph
 
 #### 2.0 Tasks
 
-- [ ] 2.1 Add a Konva `Stage` ref to `EmojiCanvas` and expose a `takeSnapshot(): string` method that returns `stage.toDataURL()`. On image load, push an initial snapshot to the history stack as the baseline state.
-- [ ] 2.2 Implement eraser mouse event handlers in `EmojiCanvas` (or a `useEditorTools` hook): on `mousedown` when eraser is active, capture a "before" snapshot, create an offscreen canvas from the current image layer data, and begin tracking pointer position. On `mousemove`, draw a filled circle at the pointer position on the offscreen canvas using `globalCompositeOperation: 'destination-out'`. On `mouseup`, write the modified offscreen canvas back to the Konva Image node and push the new snapshot to the history stack.
-- [ ] 2.3 Set the CSS cursor to a circle outline (e.g., via a custom CSS cursor or by setting `cursor: 'none'` on the Stage container and rendering a Konva circle that follows the pointer) when the eraser tool is active.
-- [ ] 2.4 Wire the undo/redo methods to restore the image: when `undo()` or `redo()` returns a snapshot data URL, load it as an `HTMLImageElement` and update the Konva Image node's `image` attribute.
-- [ ] 2.5 Write unit tests in `src/hooks/useEditorTools.test.ts` (or `src/components/EmojiCanvas.test.tsx`) — test that an eraser stroke modifies pixel alpha values and that a single stroke results in exactly one history push.
-- [ ] 2.6 Write E2E test `e2e/eraser.spec.ts` — upload test fixture, click eraser button, simulate drag across canvas, verify pixel data changed (alpha = 0 in erased area), click undo, verify pixels restored.
-- [ ] 2.7 Run `task typecheck && task lint && task test && task test:e2e` and fix any errors.
+- [x] 2.1 Add a Konva `Stage` ref to `EmojiCanvas` and expose a `takeSnapshot(): string` method that returns `stage.toDataURL()`. On image load, push an initial snapshot to the history stack as the baseline state.
+- [x] 2.2 Implement eraser mouse event handlers in `EmojiCanvas` (or a `useEditorTools` hook): on `mousedown` when eraser is active, capture a "before" snapshot, create an offscreen canvas from the current image layer data, and begin tracking pointer position. On `mousemove`, draw a filled circle at the pointer position on the offscreen canvas using `globalCompositeOperation: 'destination-out'`. On `mouseup`, write the modified offscreen canvas back to the Konva Image node and push the new snapshot to the history stack.
+- [x] 2.3 Set the CSS cursor to a circle outline (e.g., via a custom CSS cursor or by setting `cursor: 'none'` on the Stage container and rendering a Konva circle that follows the pointer) when the eraser tool is active.
+- [x] 2.4 Wire the undo/redo methods to restore the image: when `undo()` or `redo()` returns a snapshot data URL, load it as an `HTMLImageElement` and update the Konva Image node's `image` attribute.
+- [x] 2.5 Write unit tests in `src/hooks/useEditorTools.test.ts` (or `src/components/EmojiCanvas.test.tsx`) — test that an eraser stroke modifies pixel alpha values and that a single stroke results in exactly one history push.
+- [x] 2.6 Write E2E test `e2e/eraser.spec.ts` — upload test fixture, click eraser button, simulate drag across canvas, verify pixel data changed (alpha = 0 in erased area), click undo, verify pixels restored.
+- [x] 2.7 Run `task typecheck && task lint && task test && task test:e2e` and fix any errors.
 
 ### [ ] 3.0 Freehand Brush/Pen Tool
 
