@@ -155,7 +155,7 @@
 
 ---
 
-### [ ] 5.0 Export integration + undo/redo for stickers and frames
+### [x] 5.0 Export integration + undo/redo for stickers and frames
 
 **Purpose:** Switches export to `stage.toDataURL()` (capturing all layers), hides the checkerboard from the export, and wires sticker/frame actions into the undo/redo history alongside image snapshots.
 
@@ -169,19 +169,19 @@
 
 #### 5.0 Tasks
 
-- [ ] 5.1 Create `src/hooks/useStickerHistory.ts`. Copy the structure of `useHistory.ts` exactly, but replace `string` with `StickerDescriptor[]` (import from `stickerTypes.ts`). The hook stores an array of `StickerDescriptor[]` snapshots on the undo stack. Export `{ pushState, undo, redo, canUndo, canRedo, clear }`.
-- [ ] 5.2 In `App.tsx`, add `const stickerHistory = useStickerHistory()`. The two history hooks (`useHistory` for images, `useStickerHistory` for stickers) must always be pushed **together** so their stacks stay the same length. Wrap the existing `handlePushState(snapshot)` to also call `stickerHistory.pushState([...stickers])` at the same time.
-- [ ] 5.3 Update `handlePlaceSticker`, `handleUpdateSticker`, `handleDeleteSticker`, and `handleToggleFrame` in `App.tsx`: after updating the stickers/frame state, call `pushState(latestSnapshot)` (the last image snapshot) AND `stickerHistory.pushState(newStickers)` to record a history entry for the sticker-only change.
-- [ ] 5.4 Update `handleUndo` in `App.tsx`: call both `const imgSnap = imageHistory.undo()` and `const stickerSnap = stickerHistory.undo()`. Apply `imgSnap` as before (set `restoreSnapshot`). Apply `stickerSnap` by calling `setStickers(stickerSnap ?? [])`. Update `canUndo` from `imageHistory.canUndo`.
-- [ ] 5.5 Update `handleRedo` in `App.tsx` the same way: call both redo functions, restore both image snapshot and sticker array.
-- [ ] 5.6 Add `exportStageAsBlob` to `src/utils/exportUtils.ts`. It accepts a `Konva.Stage` and returns a `Promise<Blob | null>`. Before calling `stage.toDataURL()`:
+- [x] 5.1 Create `src/hooks/useStickerHistory.ts`. Copy the structure of `useHistory.ts` exactly, but replace `string` with `StickerDescriptor[]` (import from `stickerTypes.ts`). The hook stores an array of `StickerDescriptor[]` snapshots on the undo stack. Export `{ pushState, undo, redo, canUndo, canRedo, clear }`.
+- [x] 5.2 In `App.tsx`, add `const stickerHistory = useStickerHistory()`. The two history hooks (`useHistory` for images, `useStickerHistory` for stickers) must always be pushed **together** so their stacks stay the same length. Wrap the existing `handlePushState(snapshot)` to also call `stickerHistory.pushState([...stickers])` at the same time.
+- [x] 5.3 Update `handlePlaceSticker`, `handleUpdateSticker`, `handleDeleteSticker`, and `handleToggleFrame` in `App.tsx`: after updating the stickers/frame state, call `pushState(latestSnapshot)` (the last image snapshot) AND `stickerHistory.pushState(newStickers)` to record a history entry for the sticker-only change.
+- [x] 5.4 Update `handleUndo` in `App.tsx`: call both `const imgSnap = imageHistory.undo()` and `const stickerSnap = stickerHistory.undo()`. Apply `imgSnap` as before (set `restoreSnapshot`). Apply `stickerSnap` by calling `setStickers(stickerSnap ?? [])`. Update `canUndo` from `imageHistory.canUndo`.
+- [x] 5.5 Update `handleRedo` in `App.tsx` the same way: call both redo functions, restore both image snapshot and sticker array.
+- [x] 5.6 Add `exportStageAsBlob` to `src/utils/exportUtils.ts`. It accepts a `Konva.Stage` and returns a `Promise<Blob | null>`. Before calling `stage.toDataURL()`:
   - Get `const bgLayer = stage.getLayers()[0]` and call `bgLayer.visible(false)`.
   - Get the safe-zone `Rect` node from Layer 0 (or pass it in as a parameter) and hide it too.
   - Call `const dataUrl = stage.toDataURL({ pixelRatio: 1 })`.
   - Restore `bgLayer.visible(true)`.
   - Convert the data URL to a `Blob` (use `fetch(dataUrl).then(r => r.blob())`).
   - Return the blob.
-- [ ] 5.7 Update `handleDownload` in `App.tsx`: replace the `latestSnapshot`-based branch with a call to `exportStageAsBlob(stageRef.current)`. On the returned blob, run `checkFileSizeWarning` and trigger the download as before. Remove the `buildExportCanvas` fallback path (when stickers are in use, the stage is always the source of truth). Keep `buildExportCanvas` in `exportUtils.ts` since it is still tested.
-- [ ] 5.8 Handle the case where `stageRef.current` is null in `handleDownload` (e.g., early return with a warning).
-- [ ] 5.9 Create `src/hooks/useStickerHistory.test.ts`. Mirror all 8 tests from `useHistory.test.ts`, using `StickerDescriptor[]` snapshots instead of strings (e.g., `pushState([])`, `pushState([{ id: '1', ... }])`).
-- [ ] 5.10 Run `task lint`, `task typecheck`, and `task test`. Fix all errors and warnings. Ensure the full suite passes with no regressions before marking this task done.
+- [x] 5.7 Update `handleDownload` in `App.tsx`: replace the `latestSnapshot`-based branch with a call to `exportStageAsBlob(stageRef.current)`. On the returned blob, run `checkFileSizeWarning` and trigger the download as before. Remove the `buildExportCanvas` fallback path (when stickers are in use, the stage is always the source of truth). Keep `buildExportCanvas` in `exportUtils.ts` since it is still tested.
+- [x] 5.8 Handle the case where `stageRef.current` is null in `handleDownload` (e.g., early return with a warning).
+- [x] 5.9 Create `src/hooks/useStickerHistory.test.ts`. Mirror all 8 tests from `useHistory.test.ts`, using `StickerDescriptor[]` snapshots instead of strings (e.g., `pushState([])`, `pushState([{ id: '1', ... }])`).
+- [x] 5.10 Run `task lint`, `task typecheck`, and `task test`. Fix all errors and warnings. Ensure the full suite passes with no regressions before marking this task done.

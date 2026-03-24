@@ -11,12 +11,14 @@ import { SpeechBubbleModal } from "./components/SpeechBubbleModal";
 import { PLATFORM_PRESETS, type PlatformPreset } from "./utils/presets";
 import { useImageImport } from "./hooks/useImageImport";
 import { useHistory } from "./hooks/useHistory";
+import { useStickerHistory } from "./hooks/useStickerHistory";
 import { detectContentBounds } from "./utils/detectContentBounds";
 import { generateSuggestions } from "./utils/generateSuggestions";
 import {
   buildExportCanvas,
   buildFilename,
   checkFileSizeWarning,
+  exportStageAsBlob,
   type ExportFormat,
 } from "./utils/exportUtils";
 import { STICKER_DEFINITIONS } from "./assets/stickers/index";
@@ -44,10 +46,18 @@ function App() {
   const [brushSize, setBrushSize] = useState<number>(3);
   const [textColor, setTextColor] = useState<string>("#000000");
   const [textSize, setTextSize] = useState<number>(18);
-  const { pushState, undo, redo, canUndo, canRedo } = useHistory();
+  const {
+    pushState,
+    undo: imageUndo,
+    redo: imageRedo,
+    canUndo,
+    canRedo,
+  } = useHistory();
+  const stickerHistory = useStickerHistory();
 
   const [restoreSnapshot, setRestoreSnapshot] = useState<string | null>(null);
   const [latestSnapshot, setLatestSnapshot] = useState<string | null>(null);
+  const latestSnapshotRef = useRef<string | null>(null);
 
   const [stickers, setStickers] = useState<StickerDescriptor[]>([]);
   const [selectedStickerId, setSelectedStickerId] = useState<string | null>(
@@ -62,26 +72,32 @@ function App() {
   const handlePushState = useCallback(
     (snapshot: string) => {
       pushState(snapshot);
+      stickerHistory.pushState([...stickers]);
       setLatestSnapshot(snapshot);
+      latestSnapshotRef.current = snapshot;
     },
-    [pushState],
+    [pushState, stickerHistory, stickers],
   );
 
   const handleUndo = useCallback(() => {
-    const snapshot = undo();
-    if (snapshot) {
-      setRestoreSnapshot(snapshot);
-      setLatestSnapshot(snapshot);
+    const imgSnap = imageUndo();
+    const stickerSnap = stickerHistory.undo();
+    if (imgSnap) {
+      setRestoreSnapshot(imgSnap);
+      setLatestSnapshot(imgSnap);
     }
-  }, [undo]);
+    setStickers(stickerSnap ?? []);
+  }, [imageUndo, stickerHistory]);
 
   const handleRedo = useCallback(() => {
-    const snapshot = redo();
-    if (snapshot) {
-      setRestoreSnapshot(snapshot);
-      setLatestSnapshot(snapshot);
+    const imgSnap = imageRedo();
+    const stickerSnap = stickerHistory.redo();
+    if (imgSnap) {
+      setRestoreSnapshot(imgSnap);
+      setLatestSnapshot(imgSnap);
     }
-  }, [redo]);
+    setStickers(stickerSnap ?? []);
+  }, [imageRedo, stickerHistory]);
 
   const handleSnapshotRestored = useCallback(() => {
     setRestoreSnapshot(null);
@@ -112,21 +128,33 @@ function App() {
         setShowSpeechBubbleModal(true);
         return;
       }
-      setStickers((prev) => [...prev, createStickerDescriptor(def)]);
+      const newSticker = createStickerDescriptor(def);
+      setStickers((prev) => {
+        const newStickers = [...prev, newSticker];
+        pushState(latestSnapshotRef.current ?? "");
+        stickerHistory.pushState(newStickers);
+        return newStickers;
+      });
     },
-    [createStickerDescriptor],
+    [createStickerDescriptor, pushState, stickerHistory],
   );
 
   const handleSpeechBubblePlace = useCallback(
     (text: string) => {
       const def = pendingTextStickerRef.current;
       if (def) {
-        setStickers((prev) => [...prev, createStickerDescriptor(def, text)]);
+        const newSticker = createStickerDescriptor(def, text);
+        setStickers((prev) => {
+          const newStickers = [...prev, newSticker];
+          pushState(latestSnapshotRef.current ?? "");
+          stickerHistory.pushState(newStickers);
+          return newStickers;
+        });
         pendingTextStickerRef.current = null;
       }
       setShowSpeechBubbleModal(false);
     },
-    [createStickerDescriptor],
+    [createStickerDescriptor, pushState, stickerHistory],
   );
 
   const handleSpeechBubbleCancel = useCallback(() => {
@@ -134,22 +162,46 @@ function App() {
     setShowSpeechBubbleModal(false);
   }, []);
 
-  const handleUpdateSticker = useCallback((desc: StickerDescriptor) => {
-    setStickers((prev) => prev.map((s) => (s.id === desc.id ? desc : s)));
-  }, []);
+  const handleUpdateSticker = useCallback(
+    (desc: StickerDescriptor) => {
+      setStickers((prev) => {
+        const newStickers = prev.map((s) => (s.id === desc.id ? desc : s));
+        pushState(latestSnapshotRef.current ?? "");
+        stickerHistory.pushState(newStickers);
+        return newStickers;
+      });
+    },
+    [pushState, stickerHistory],
+  );
 
-  const handleDeleteSticker = useCallback((id: string) => {
-    setStickers((prev) => prev.filter((s) => s.id !== id));
-    setSelectedStickerId((prev) => (prev === id ? null : prev));
-  }, []);
+  const handleDeleteSticker = useCallback(
+    (id: string) => {
+      setStickers((prev) => {
+        const newStickers = prev.filter((s) => s.id !== id);
+        pushState(latestSnapshotRef.current ?? "");
+        stickerHistory.pushState(newStickers);
+        return newStickers;
+      });
+      setSelectedStickerId((prev) => (prev === id ? null : prev));
+    },
+    [pushState, stickerHistory],
+  );
 
   const handleSelectSticker = useCallback((id: string | null) => {
     setSelectedStickerId(id);
   }, []);
 
-  const handleToggleFrame = useCallback((id: string) => {
-    setActiveFrameId((prev) => (prev === id ? null : id));
-  }, []);
+  const handleToggleFrame = useCallback(
+    (id: string) => {
+      setActiveFrameId((prev) => (prev === id ? null : id));
+      setStickers((prev) => {
+        pushState(latestSnapshotRef.current ?? "");
+        stickerHistory.pushState(prev);
+        return prev;
+      });
+    },
+    [pushState, stickerHistory],
+  );
 
   const selectedStickerIdRef = useRef(selectedStickerId);
   useEffect(() => {
@@ -232,6 +284,30 @@ function App() {
 
   function handleDownload(format: ExportFormat) {
     if (!image) return;
+    if (stickers.length > 0 || activeFrameId !== null) {
+      if (!stageRef.current) {
+        setSizeWarning("Export failed: canvas not ready.");
+        return;
+      }
+      exportStageAsBlob(stageRef.current).then((blob) => {
+        if (!blob) {
+          setSizeWarning(
+            "Export failed: this format is not supported by your browser.",
+          );
+          return;
+        }
+        setSizeWarning(checkFileSizeWarning(blob.size, activePreset));
+        const href = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = href;
+        a.download = buildFilename(format);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(href);
+      });
+      return;
+    }
     if (latestSnapshot) {
       const img = new window.Image();
       img.onload = () => {
