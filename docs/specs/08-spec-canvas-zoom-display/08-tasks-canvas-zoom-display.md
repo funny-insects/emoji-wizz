@@ -36,7 +36,7 @@ Wrap the Konva Stage in a CSS-scaled container so the 128×128 canvas displays a
 - [x] 1.4 Add `image-rendering: pixelated` CSS to the `<canvas>` elements inside `.konvajs-content` (add a CSS rule in `App.css` targeting `.konvajs-content canvas`). This suppresses browser interpolation and shows crisp pixel blocks.
 - [x] 1.5 Verify the outer card/container grows naturally to accommodate the 512×512 displayed canvas. Adjust any max-width constraints if needed.
 
-### [ ] 2.0 Scroll Wheel Zoom
+### [x] 2.0 Scroll Wheel Zoom
 
 Add scroll-wheel zoom on the canvas container. Each scroll step adjusts zoom by 0.5, clamped between 1x and 8x. The outer sizing div updates reactively so layout reflows. Zoom resets to preset default on preset switch.
 
@@ -48,12 +48,12 @@ Add scroll-wheel zoom on the canvas container. Each scroll step adjusts zoom by 
 
 #### 2.0 Tasks
 
-- [ ] 2.1 Add an `onWheel` handler to the outer sizing div that calls `e.preventDefault()` and adjusts `zoom` by `+0.5` (scroll up / negative deltaY) or `-0.5` (scroll down / positive deltaY).
-- [ ] 2.2 Clamp the zoom value to a minimum of `1` and a maximum of `8` inside the wheel handler.
-- [ ] 2.3 Verify the outer sizing div's width/height update reactively when zoom changes (already handled if width/height are computed from `zoom` state in task 1.2).
-- [ ] 2.4 Confirm zoom resets to the preset default when the user switches presets (already handled if the reset logic from task 1.1 works correctly). Test by switching between Slack and Apple presets.
+- [x] 2.1 Add an `onWheel` handler to the outer sizing div that calls `e.preventDefault()` and adjusts `zoom` by `+0.5` (scroll up / negative deltaY) or `-0.5` (scroll down / positive deltaY).
+- [x] 2.2 Clamp the zoom value to a minimum of `1` and a maximum of `8` inside the wheel handler.
+- [x] 2.3 Verify the outer sizing div's width/height update reactively when zoom changes (already handled if width/height are computed from `zoom` state in task 1.2).
+- [x] 2.4 Confirm zoom resets to the preset default when the user switches presets (already handled if the reset logic from task 1.1 works correctly). Test by switching between Slack and Apple presets.
 
-### [ ] 3.0 Tool Accuracy at All Zoom Levels
+### [x] 3.0 Tool Accuracy at All Zoom Levels
 
 Verify and fix brush, eraser, and text tools so they place marks at the correct canvas pixel regardless of zoom. Ensure the text input overlay is inside the scaled container so it inherits the CSS transform. Eraser feedback circle tracks cursor correctly.
 
@@ -65,10 +65,10 @@ Verify and fix brush, eraser, and text tools so they place marks at the correct 
 
 #### 3.0 Tasks
 
-- [ ] 3.1 Verify that Konva's `getPointerPosition()` auto-corrects for the CSS scale transform (it uses `getBoundingClientRect()` which reflects the CSS-scaled size). Draw brush strokes at 4x zoom and confirm they appear at the cursor position. No code change expected — this is a verification step.
-- [ ] 3.2 Verify the eraser feedback `<Circle>` tracks the cursor correctly at all zoom levels. Since the circle is rendered inside the Konva Stage (which is CSS-scaled), it should scale with the transform automatically. No code change expected.
-- [ ] 3.3 Verify the text `<input>` overlay appears at the correct position at all zoom levels. Since it was moved inside the transform div in task 1.3, it inherits the scale. Confirm that the `left`/`top` pixel values (in canvas space) map correctly to the visual position.
-- [ ] 3.4 Export a PNG at 4x zoom with brush strokes and text, then verify the exported file is 128×128 and marks are at the correct pixel positions. Confirm the export pipeline reads from `latestSnapshot` (native resolution) and is unaffected by CSS zoom.
+- [x] 3.1 Verify that Konva's `getPointerPosition()` auto-corrects for the CSS scale transform (it uses `getBoundingClientRect()` which reflects the CSS-scaled size). Draw brush strokes at 4x zoom and confirm they appear at the cursor position. No code change expected — this is a verification step.
+- [x] 3.2 Verify the eraser feedback `<Circle>` tracks the cursor correctly at all zoom levels. Since the circle is rendered inside the Konva Stage (which is CSS-scaled), it should scale with the transform automatically. No code change expected.
+- [x] 3.3 Verify the text `<input>` overlay appears at the correct position at all zoom levels. Since it was moved inside the transform div in task 1.3, it inherits the scale. Confirm that the `left`/`top` pixel values (in canvas space) map correctly to the visual position.
+- [x] 3.4 Export a PNG at 4x zoom with brush strokes and text, then verify the exported file is 128×128 and marks are at the correct pixel positions. Confirm the export pipeline reads from `latestSnapshot` (native resolution) and is unaffected by CSS zoom.
 
 ### [ ] 4.0 Tests and Quality Gate
 
