@@ -20,6 +20,8 @@ interface EmojiCanvasProps {
   brushSize?: number;
   textColor?: string;
   textSize?: number;
+  stageRef?: React.RefObject<Konva.Stage | null>;
+  fileName?: string;
 }
 
 const TILE_SIZE = 8;
@@ -53,9 +55,12 @@ export function EmojiCanvas({
   brushSize,
   textColor = "#000000",
   textSize = 18,
+  stageRef,
+  fileName,
 }: EmojiCanvasProps) {
   const { width, height, safeZonePadding } = preset;
   const tiles = buildCheckerboard(width, height);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const isRestoringRef = useRef(false);
@@ -76,12 +81,10 @@ export function EmojiCanvas({
     onPushStateRef.current = onPushState;
   });
 
-  // Track the canvas currently rendered by Konva
   const [displayCanvas, setDisplayCanvas] = useState<HTMLCanvasElement | null>(
     null,
   );
 
-  // Track previous image + stage dimensions to detect changes without useEffect setState
   const [prevImage, setPrevImage] = useState<HTMLImageElement | null>(null);
   const [prevDimensions, setPrevDimensions] = useState("");
 
@@ -106,9 +109,6 @@ export function EmojiCanvas({
   const brushStrokeWidth = brushSize ?? Math.round((width / 128) * 3);
   const scaledFontSize = Math.max(4, textSize);
 
-  // Derived state: rebuild offscreen canvas when image or stage dimensions change.
-  // Following the React "Storing information from previous renders" pattern to avoid
-  // calling setState inside a useEffect (react-hooks/set-state-in-effect).
   const currentDimensions = `${width}x${height}`;
   if (image !== prevImage || currentDimensions !== prevDimensions) {
     setPrevImage(image);
@@ -134,10 +134,6 @@ export function EmojiCanvas({
     }
   }
 
-  // Sync ref with displayCanvas and push initial snapshot when canvas is ready.
-  // Ref mutation and external function calls are allowed in effects.
-  // Skip the push when displayCanvas changed due to a snapshot restore (undo/redo),
-  // to avoid pushing duplicates onto the undo stack and clearing the redo stack.
   useEffect(() => {
     offscreenCanvasRef.current = displayCanvas;
     if (displayCanvas && !isRestoringRef.current) {
@@ -146,7 +142,6 @@ export function EmojiCanvas({
     isRestoringRef.current = false;
   }, [displayCanvas]);
 
-  // Restore snapshot (setState is inside img.onload — async, not flagged by lint rule)
   useEffect(() => {
     if (!restoreSnapshot) return;
     const img = new window.Image();
@@ -165,13 +160,11 @@ export function EmojiCanvas({
     img.src = restoreSnapshot;
   }, [restoreSnapshot]);
 
-  // Paste handler
   useEffect(() => {
     document.addEventListener("paste", handlePaste);
     return () => document.removeEventListener("paste", handlePaste);
   }, [handlePaste]);
 
-  // Clean up any in-progress brush stroke when tool changes away from brush
   useEffect(() => {
     if (activeTool !== "brush" && currentBrushLineRef.current) {
       currentBrushLineRef.current.destroy();
@@ -181,9 +174,6 @@ export function EmojiCanvas({
     }
   }, [activeTool]);
 
-  // Derived state: discard open text input when tool changes away from text.
-  // Following the "storing information from previous renders" pattern to avoid
-  // calling setState inside a useEffect (react-hooks/set-state-in-effect).
   const [prevActiveTool, setPrevActiveTool] = useState<EditorTool | undefined>(
     activeTool,
   );
@@ -209,8 +199,6 @@ export function EmojiCanvas({
     [imageRect, eraserRadius],
   );
 
-  // Flatten the current brush line onto the offscreen canvas and remove it from the
-  // overlays layer. Returns true if a line was flattened, false otherwise.
   const flattenCurrentLine = useCallback((): boolean => {
     const line = currentBrushLineRef.current;
     if (!line || !offscreenCanvasRef.current || !imageRect) return false;
@@ -418,91 +406,132 @@ export function EmojiCanvas({
   };
 
   return (
-    <div
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={handleDrop}
-      style={containerStyle}
-    >
-      <Stage
-        width={width}
-        height={height}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseLeave}
-        onClick={handleClick}
-      >
-        <Layer>
-          {tiles.map((tile, i) => (
-            <Rect
-              key={i}
-              x={tile.x}
-              y={tile.y}
-              width={TILE_SIZE}
-              height={TILE_SIZE}
-              fill={tile.fill}
-            />
-          ))}
-          <Rect
-            x={safeZonePadding}
-            y={safeZonePadding}
-            width={width - 2 * safeZonePadding}
-            height={height - 2 * safeZonePadding}
-            stroke="rgba(0, 120, 255, 0.5)"
-            strokeWidth={1}
-            dash={[4, 4]}
-            fill="transparent"
-          />
-        </Layer>
-        <Layer>
-          {image && imageRect && displayCanvas && (
-            <KonvaImage
-              image={displayCanvas}
-              x={0}
-              y={0}
-              width={width}
-              height={height}
+    <div className="section">
+      <span className="section-label">
+        Canvas — {width}×{height}px
+      </span>
+      <div className="canvas-wrapper">
+        <div
+          className={`canvas-drop-zone${image ? " has-image" : ""}`}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
+          onClick={() => !image && fileInputRef.current?.click()}
+          title={image ? undefined : "Click or drop an image"}
+          style={containerStyle}
+        >
+          <Stage
+            width={width}
+            height={height}
+            ref={stageRef}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
+            onClick={handleClick}
+          >
+            <Layer>
+              {tiles.map((tile, i) => (
+                <Rect
+                  key={i}
+                  x={tile.x}
+                  y={tile.y}
+                  width={TILE_SIZE}
+                  height={TILE_SIZE}
+                  fill={tile.fill}
+                />
+              ))}
+              <Rect
+                x={safeZonePadding}
+                y={safeZonePadding}
+                width={width - 2 * safeZonePadding}
+                height={height - 2 * safeZonePadding}
+                stroke="rgba(254, 129, 212, 0.6)"
+                strokeWidth={1}
+                dash={[4, 4]}
+                fill="transparent"
+              />
+            </Layer>
+            <Layer>
+              {image && imageRect && displayCanvas && (
+                <KonvaImage
+                  image={displayCanvas}
+                  x={0}
+                  y={0}
+                  width={width}
+                  height={height}
+                />
+              )}
+            </Layer>
+            <Layer>
+              {activeTool === "eraser" && eraserPos && image && (
+                <Circle
+                  x={eraserPos.x}
+                  y={eraserPos.y}
+                  radius={eraserRadius}
+                  stroke="rgba(0,0,0,0.7)"
+                  strokeWidth={1.5}
+                  fill="transparent"
+                  listening={false}
+                />
+              )}
+            </Layer>
+          </Stage>
+          {textInputPos && activeTool === "text" && (
+            <input
+              key={`text-${textInputPos.x}-${textInputPos.y}`}
+              style={{
+                position: "absolute",
+                left: textInputPos.x,
+                top: textInputPos.y,
+                fontSize: `${scaledFontSize}px`,
+                color: textColor,
+                background: "transparent",
+                border: "none",
+                outline: "1px dashed rgba(0,0,0,0.5)",
+                padding: 0,
+                margin: 0,
+                fontFamily: "sans-serif",
+                zIndex: 10,
+                minWidth: "50px",
+              }}
+              autoFocus
+              onKeyDown={(e) => handleTextKeyDown(e, textInputPos)}
+              onBlur={(e) => handleTextBlur(e, textInputPos)}
             />
           )}
-        </Layer>
-        <Layer>
-          {activeTool === "eraser" && eraserPos && image && (
-            <Circle
-              x={eraserPos.x}
-              y={eraserPos.y}
-              radius={eraserRadius}
-              stroke="rgba(0,0,0,0.7)"
-              strokeWidth={1.5}
-              fill="transparent"
-              listening={false}
+        </div>
+
+        <div className="file-input-row">
+          <label className="file-input-label">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            {fileName ? "Change image" : "Choose image"}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileInput}
             />
+          </label>
+          {fileName && (
+            <span className="file-name" title={fileName}>
+              {fileName}
+            </span>
           )}
-        </Layer>
-      </Stage>
-      {textInputPos && activeTool === "text" && (
-        <input
-          key={`text-${textInputPos.x}-${textInputPos.y}`}
-          style={{
-            position: "absolute",
-            left: textInputPos.x,
-            top: textInputPos.y,
-            fontSize: `${scaledFontSize}px`,
-            color: textColor,
-            background: "transparent",
-            border: "none",
-            outline: "1px dashed rgba(0,0,0,0.5)",
-            padding: 0,
-            margin: 0,
-            fontFamily: "sans-serif",
-            zIndex: 10,
-            minWidth: "50px",
-          }}
-          autoFocus
-          onKeyDown={(e) => handleTextKeyDown(e, textInputPos)}
-          onBlur={(e) => handleTextBlur(e, textInputPos)}
-        />
-      )}
-      <input type="file" accept="image/*" onChange={handleFileInput} />
+        </div>
+      </div>
     </div>
   );
 }

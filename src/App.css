@@ -1,10 +1,79 @@
 .app {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-height: 100vh;
+  padding: 40px 16px 60px;
+}
+
+/* ── Header ── */
+.app-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.app-header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.app-header h1 span {
+  color: var(--accent);
+}
+
+.app-header p {
+  margin-top: 6px;
+  font-size: 0.875rem;
+  color: var(--text-2);
+}
+
+/* ── Main card ── */
+.app-card {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
+}
+
+/* ── Section blocks ── */
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.section-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+/* ── Preset selector ── */
+.preset-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.preset-tab {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
   text-align: center;
 }
 
@@ -13,4 +82,253 @@
   flex-direction: row;
   align-items: flex-start;
   gap: 12px;
+}
+
+.preset-tab:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.preset-tab.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── Canvas area ── */
+.canvas-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.canvas-drop-zone {
+  position: relative;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease;
+}
+
+.canvas-drop-zone:hover {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.canvas-drop-zone.has-image {
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.canvas-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-3);
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+
+.canvas-hint svg {
+  opacity: 0.4;
+}
+
+.file-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.file-input-label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 16px;
+  background: var(--surface-2);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.file-input-label:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.file-input-label input {
+  display: none;
+}
+
+.file-name {
+  font-size: 0.75rem;
+  color: var(--text-2);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Analyze button ── */
+.btn-primary {
+  width: 100%;
+  padding: 11px 20px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Suggestions ── */
+.suggestions-result {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.suggestion-ok {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--green-dim);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  border-radius: var(--radius-sm);
+  color: var(--green);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--yellow-dim);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-radius: var(--radius-sm);
+  color: var(--yellow);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+/* ── Emoji comparison ── */
+.emoji-compare {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.emoji-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.emoji-frame {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emoji-frame img {
+  width: 64px;
+  height: 64px;
+  image-rendering: pixelated;
+}
+
+.emoji-caption {
+  font-size: 0.72rem;
+  color: var(--text-3);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Export controls ── */
+.export-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.format-select {
+  padding: 9px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.82rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.format-select:hover,
+.format-select:focus {
+  border-color: var(--accent);
+}
+
+.btn-download {
+  flex: 1;
+  padding: 9px 20px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-download:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.btn-download:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.export-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--red-dim);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  border-radius: var(--radius-sm);
+  color: var(--red);
+  font-size: 0.8rem;
 }

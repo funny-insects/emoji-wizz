@@ -1,5 +1,21 @@
 import "@testing-library/jest-dom";
 
+// ImageData is not available in jsdom without the optional `canvas` package.
+// Provide a minimal polyfill so utility tests can construct pixel arrays.
+if (typeof globalThis.ImageData === "undefined") {
+  class ImageDataPolyfill {
+    data: Uint8ClampedArray;
+    width: number;
+    height: number;
+    constructor(data: Uint8ClampedArray, width: number, height: number) {
+      this.data = data;
+      this.width = width;
+      this.height = height;
+    }
+  }
+  globalThis.ImageData = ImageDataPolyfill as unknown as typeof ImageData;
+}
+
 // Konva requires a canvas 2D context; jsdom doesn't implement it by default.
 // Use a Proxy that returns no-ops for most methods, but returns real values for
 // methods Konva inspects (getImageData → data array, createLinearGradient → object,
