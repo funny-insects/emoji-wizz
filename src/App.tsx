@@ -3,17 +3,25 @@ import Konva from "konva";
 import "./App.css";
 import { EmojiCanvas } from "./components/EmojiCanvas";
 import { OptimizerPanel } from "./components/OptimizerPanel";
+import { ExportControls } from "./components/ExportControls";                                                          
 import { PresetSelector } from "./components/PresetSelector";
-import { PLATFORM_PRESETS, type PlatformPreset } from "./utils/presets";
+import { PLATFORM_PRESETS, type PlatformPreset } from "./utils/presets";                                               
 import { useImageImport } from "./hooks/useImageImport";
-import { detectContentBounds } from "./utils/detectContentBounds";
-import { generateSuggestions } from "./utils/generateSuggestions";
-import referenceEmojiPng from "./assets/reference-emoji.png";
+import { detectContentBounds } from "./utils/detectContentBounds";                                                     
+import { generateSuggestions } from "./utils/generateSuggestions";                                                     
+import {
+  buildExportCanvas,                                                                                                   
+  buildFilename,         
+  checkFileSizeWarning,
+  type ExportFormat,
+} from "./utils/exportUtils";
+import referenceEmojiPng from "./assets/reference-emoji.png";   
 
 function App() {
   const [activePreset, setActivePreset] = useState<PlatformPreset>(
     PLATFORM_PRESETS[0],
   );
+  const [sizeWarning, setSizeWarning] = useState<string | null>(null);
   const { image, handleFileInput, handleDrop, handlePaste } = useImageImport();
   const stageRef = useRef<Konva.Stage | null>(null);
   const [suggestions, setSuggestions] = useState<string[] | null>(null);
@@ -47,6 +55,34 @@ function App() {
       if (!ok) return;
     }
     setActivePreset(preset);
+    setSizeWarning(null);
+  }
+
+  function handleDownload(format: ExportFormat) {
+    if (!image) return;
+    const canvas = buildExportCanvas(image, activePreset);
+    const mimeMap: Record<ExportFormat, string> = {
+      png: "image/png",
+      gif: "image/gif",
+      webp: "image/webp",
+    };
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        setSizeWarning(
+          "Export failed: this format is not supported by your browser.",
+        );
+        return;
+      }
+      setSizeWarning(checkFileSizeWarning(blob.size, activePreset));
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = href;
+      a.download = buildFilename(format);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(href);
+    }, mimeMap[format]);
   }
 
   return (
@@ -70,6 +106,12 @@ function App() {
         suggestions={suggestions}
         customEmojiDataUrl={customEmojiDataUrl}
         referenceEmojiSrc={referenceEmojiPng}
+      />
+      <ExportControls
+        image={image}
+        preset={activePreset}
+        onDownload={handleDownload}
+        sizeWarning={sizeWarning}
       />
     </div>
   );

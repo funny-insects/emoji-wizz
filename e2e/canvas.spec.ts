@@ -40,7 +40,10 @@ test("switching to Apple preset with no image resizes canvas silently", async ({
   await page.goto("/");
   await expect(bgCanvas(page)).toBeVisible();
 
-  await page.locator("select").selectOption({ label: "Apple — 512×512" });
+  await page
+    .locator("select")
+    .first()
+    .selectOption({ label: "Apple — 512×512" });
 
   const canvas = bgCanvas(page);
   await expect(canvas).toHaveAttribute("width", "512");
@@ -57,7 +60,10 @@ test("switching preset after image upload shows confirm dialog and resizes canva
   await page.locator('input[type="file"]').setInputFiles(fixturePath);
 
   page.on("dialog", (dialog) => dialog.accept());
-  await page.locator("select").selectOption({ label: "Apple — 512×512" });
+  await page
+    .locator("select")
+    .first()
+    .selectOption({ label: "Apple — 512×512" });
 
   const canvas = bgCanvas(page);
   await expect(canvas).toHaveAttribute("width", "512");

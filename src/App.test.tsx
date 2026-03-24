@@ -10,6 +10,6 @@ describe("App", () => {
 
   it("renders a select element for preset selection", () => {
     render(<App />);
-    expect(screen.getByRole("combobox")).toBeInTheDocument();
+    expect(screen.getAllByRole("combobox").length).toBeGreaterThan(0);
   });
 });
