@@ -3,26 +3,27 @@ import Konva from "konva";
 import "./App.css";
 import { EmojiCanvas } from "./components/EmojiCanvas";
 import { OptimizerPanel } from "./components/OptimizerPanel";
-import { ExportControls } from "./components/ExportControls";                                                          
+import { ExportControls } from "./components/ExportControls";
 import { PresetSelector } from "./components/PresetSelector";
-import { PLATFORM_PRESETS, type PlatformPreset } from "./utils/presets";                                               
+import { PLATFORM_PRESETS, type PlatformPreset } from "./utils/presets";
 import { useImageImport } from "./hooks/useImageImport";
-import { detectContentBounds } from "./utils/detectContentBounds";                                                     
-import { generateSuggestions } from "./utils/generateSuggestions";                                                     
+import { detectContentBounds } from "./utils/detectContentBounds";
+import { generateSuggestions } from "./utils/generateSuggestions";
 import {
-  buildExportCanvas,                                                                                                   
-  buildFilename,         
+  buildExportCanvas,
+  buildFilename,
   checkFileSizeWarning,
   type ExportFormat,
 } from "./utils/exportUtils";
-import referenceEmojiPng from "./assets/reference-emoji.png";   
+import referenceEmojiPng from "./assets/reference-emoji.png";
 
 function App() {
   const [activePreset, setActivePreset] = useState<PlatformPreset>(
     PLATFORM_PRESETS[0],
   );
   const [sizeWarning, setSizeWarning] = useState<string | null>(null);
-  const { image, handleFileInput, handleDrop, handlePaste } = useImageImport();
+  const { image, handleFileInput, handleDrop, handlePaste, fileName } =
+    useImageImport();
   const stageRef = useRef<Konva.Stage | null>(null);
   const [suggestions, setSuggestions] = useState<string[] | null>(null);
   const [customEmojiDataUrl, setCustomEmojiDataUrl] = useState<string | null>(
@@ -87,32 +88,42 @@ function App() {
 
   return (
     <div className="app">
-      <PresetSelector
-        presets={PLATFORM_PRESETS}
-        activePresetId={activePreset.id}
-        onChange={handlePresetChange}
-      />
-      <EmojiCanvas
-        preset={activePreset}
-        image={image}
-        handleFileInput={handleFileInput}
-        handleDrop={handleDrop}
-        handlePaste={handlePaste}
-        stageRef={stageRef}
-      />
-      <OptimizerPanel
-        hasImage={image !== null}
-        onAnalyze={handleAnalyze}
-        suggestions={suggestions}
-        customEmojiDataUrl={customEmojiDataUrl}
-        referenceEmojiSrc={referenceEmojiPng}
-      />
-      <ExportControls
-        image={image}
-        preset={activePreset}
-        onDownload={handleDownload}
-        sizeWarning={sizeWarning}
-      />
+      <header className="app-header">
+        <h1>
+          emoji<span>wizz</span>
+        </h1>
+        <p>Create platform-perfect custom emojis</p>
+      </header>
+
+      <div className="app-card">
+        <PresetSelector
+          presets={PLATFORM_PRESETS}
+          activePresetId={activePreset.id}
+          onChange={handlePresetChange}
+        />
+        <EmojiCanvas
+          preset={activePreset}
+          image={image}
+          handleFileInput={handleFileInput}
+          handleDrop={handleDrop}
+          handlePaste={handlePaste}
+          stageRef={stageRef}
+          fileName={fileName}
+        />
+        <OptimizerPanel
+          hasImage={image !== null}
+          onAnalyze={handleAnalyze}
+          suggestions={suggestions}
+          customEmojiDataUrl={customEmojiDataUrl}
+          referenceEmojiSrc={referenceEmojiPng}
+        />
+        <ExportControls
+          image={image}
+          preset={activePreset}
+          onDownload={handleDownload}
+          sizeWarning={sizeWarning}
+        />
+      </div>
     </div>
   );
 }

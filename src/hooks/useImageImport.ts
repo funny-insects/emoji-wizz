@@ -18,6 +18,7 @@ function loadImageFromBlob(blob: Blob): Promise<HTMLImageElement> {
 
 export function useImageImport() {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
+  const [fileName, setFileName] = useState<string | undefined>(undefined);
 
   const handleFileInput = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -25,6 +26,7 @@ export function useImageImport() {
       if (!file || !file.type.startsWith("image/")) return;
       const img = await loadImageFromBlob(file);
       setImage(img);
+      setFileName(file.name);
     },
     [],
   );
@@ -35,6 +37,7 @@ export function useImageImport() {
     if (!file || !file.type.startsWith("image/")) return;
     const img = await loadImageFromBlob(file);
     setImage(img);
+    setFileName(file.name);
   }, []);
 
   const handlePaste = useCallback(async (e: ClipboardEvent) => {
@@ -46,10 +49,11 @@ export function useImageImport() {
         if (!blob) continue;
         const img = await loadImageFromBlob(blob);
         setImage(img);
+        setFileName("pasted-image");
         return;
       }
     }
   }, []);
 
-  return { image, handleFileInput, handleDrop, handlePaste };
+  return { image, fileName, handleFileInput, handleDrop, handlePaste };
 }
