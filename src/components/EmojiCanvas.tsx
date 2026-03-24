@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import Konva from "konva";
 import { Stage, Layer, Rect, Image as KonvaImage } from "react-konva";
 import { type PlatformPreset } from "../utils/presets";
 import { computeContainRect } from "../utils/imageScaling";
@@ -9,6 +10,7 @@ interface EmojiCanvasProps {
   handleFileInput: React.ChangeEventHandler<HTMLInputElement>;
   handleDrop: React.DragEventHandler<HTMLDivElement>;
   handlePaste: (e: ClipboardEvent) => void;
+  stageRef?: React.RefObject<Konva.Stage | null>;
 }
 
 const TILE_SIZE = 8;
@@ -34,6 +36,7 @@ export function EmojiCanvas({
   handleFileInput,
   handleDrop,
   handlePaste,
+  stageRef,
 }: EmojiCanvasProps) {
   useEffect(() => {
     document.addEventListener("paste", handlePaste);
@@ -48,7 +51,7 @@ export function EmojiCanvas({
 
   return (
     <div onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
-      <Stage width={width} height={height}>
+      <Stage width={width} height={height} ref={stageRef}>
         <Layer>
           {tiles.map((tile, i) => (
             <Rect

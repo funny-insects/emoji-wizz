@@ -92,7 +92,7 @@
 
 ---
 
-### [ ] 4.0 App Integration & Quality Gates
+### [x] 4.0 App Integration & Quality Gates
 
 #### 4.0 Proof Artifact(s)
 
@@ -102,13 +102,13 @@
 
 #### 4.0 Tasks
 
-- [ ] 4.1 Source a freely licensed 128×128 yellow smiley face PNG. The Twemoji set (Apache 2.0) is a good source — the file for U+1F642 (slightly smiling face) works well. Save it to `src/assets/reference-emoji.png`. Verify the license before committing.
-- [ ] 4.2 In `src/components/EmojiCanvas.tsx`, add an optional `stageRef?: React.RefObject<Konva.Stage | null>` field to the `EmojiCanvasProps` interface. Pass it to the `<Stage ref={stageRef}>` element. Existing tests do not pass a `stageRef` and will continue to pass since the prop is optional.
-- [ ] 4.3 In `src/App.tsx`, add `import Konva from "konva"` and create a stage ref: `const stageRef = useRef<Konva.Stage | null>(null)`. Pass `stageRef={stageRef}` to `<EmojiCanvas>`.
-- [ ] 4.4 In `src/App.tsx`, add state for analysis results: `const [suggestions, setSuggestions] = useState<string[] | null>(null)` and `const [customEmojiDataUrl, setCustomEmojiDataUrl] = useState<string | null>(null)`.
-- [ ] 4.5 In `src/App.tsx`, implement a `handleAnalyze` function. Inside it: (1) guard-return if `stageRef.current` is null; (2) call `stageRef.current.toDataURL()` and save the result to `customEmojiDataUrl` state; (3) call `stageRef.current.toCanvas()` to get a native `HTMLCanvasElement`, then `.getContext("2d")!.getImageData(0, 0, preset.width, preset.height)` to get pixel data; (4) call `detectContentBounds(imageData)` — if it returns `null`, call `setSuggestions([])` and return; (5) call `generateSuggestions(bounds, activePreset)` and call `setSuggestions` with the result.
-- [ ] 4.6 In `src/App.tsx`, import `OptimizerPanel` and `referenceEmojiPng` (via `import referenceEmojiPng from "./assets/reference-emoji.png"`). Render `<OptimizerPanel>` below `<EmojiCanvas>`, passing `hasImage={image !== null}`, `onAnalyze={handleAnalyze}`, `suggestions={suggestions}`, `customEmojiDataUrl={customEmojiDataUrl}`, and `referenceEmojiSrc={referenceEmojiPng}`.
-- [ ] 4.7 Run `task typecheck` and fix any TypeScript errors before proceeding.
-- [ ] 4.8 Run `task lint` and fix any ESLint warnings or errors before proceeding.
-- [ ] 4.9 Run `task test` and confirm all tests (old and new) pass with no failures.
-- [ ] 4.10 Load the app in a browser, import a test image, click "Analyze", and take a screenshot of the results panel showing at least one suggestion and the side-by-side comparison. Save the screenshot to `docs/specs/06-spec-visual-size-optimizer/06-proofs/analyze-result.png` (create the `06-proofs/` directory first).
+- [x] 4.1 Source a freely licensed 128×128 yellow smiley face PNG. The Twemoji set (Apache 2.0) is a good source — the file for U+1F642 (slightly smiling face) works well. Save it to `src/assets/reference-emoji.png`. Verify the license before committing.
+- [x] 4.2 In `src/components/EmojiCanvas.tsx`, add an optional `stageRef?: React.RefObject<Konva.Stage | null>` field to the `EmojiCanvasProps` interface. Pass it to the `<Stage ref={stageRef}>` element. Existing tests do not pass a `stageRef` and will continue to pass since the prop is optional.
+- [x] 4.3 In `src/App.tsx`, add `import Konva from "konva"` and create a stage ref: `const stageRef = useRef<Konva.Stage | null>(null)`. Pass `stageRef={stageRef}` to `<EmojiCanvas>`.
+- [x] 4.4 In `src/App.tsx`, add state for analysis results: `const [suggestions, setSuggestions] = useState<string[] | null>(null)` and `const [customEmojiDataUrl, setCustomEmojiDataUrl] = useState<string | null>(null)`.
+- [x] 4.5 In `src/App.tsx`, implement a `handleAnalyze` function. Inside it: (1) guard-return if `stageRef.current` is null; (2) call `stageRef.current.toDataURL()` and save the result to `customEmojiDataUrl` state; (3) call `stageRef.current.toCanvas()` to get a native `HTMLCanvasElement`, then `.getContext("2d")!.getImageData(0, 0, preset.width, preset.height)` to get pixel data; (4) call `detectContentBounds(imageData)` — if it returns `null`, call `setSuggestions([])` and return; (5) call `generateSuggestions(bounds, activePreset)` and call `setSuggestions` with the result.
+- [x] 4.6 In `src/App.tsx`, import `OptimizerPanel` and `referenceEmojiPng` (via `import referenceEmojiPng from "./assets/reference-emoji.png"`). Render `<OptimizerPanel>` below `<EmojiCanvas>`, passing `hasImage={image !== null}`, `onAnalyze={handleAnalyze}`, `suggestions={suggestions}`, `customEmojiDataUrl={customEmojiDataUrl}`, and `referenceEmojiSrc={referenceEmojiPng}`.
+- [x] 4.7 Run `task typecheck` and fix any TypeScript errors before proceeding.
+- [x] 4.8 Run `task lint` and fix any ESLint warnings or errors before proceeding.
+- [x] 4.9 Run `task test` and confirm all tests (old and new) pass with no failures.
+- [x] 4.10 Load the app in a browser, import a test image, click "Analyze", and take a screenshot of the results panel showing at least one suggestion and the side-by-side comparison. Save the screenshot to `docs/specs/06-spec-visual-size-optimizer/06-proofs/analyze-result.png` (create the `06-proofs/` directory first).
