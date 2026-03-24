@@ -53,6 +53,8 @@ function App() {
     null,
   );
   const [activeFrameId, setActiveFrameId] = useState<string | null>(null);
+  const activeFrameSrc =
+    FRAME_DEFINITIONS.find((f) => f.id === activeFrameId)?.src ?? null;
 
   const handlePushState = useCallback(
     (snapshot: string) => {
@@ -270,6 +272,7 @@ function App() {
             onUpdateSticker={handleUpdateSticker}
             onDeleteSticker={handleDeleteSticker}
             onSelectSticker={handleSelectSticker}
+            activeFrameSrc={activeFrameSrc}
           />
           <DecoratePanel
             image={image}

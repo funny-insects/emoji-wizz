@@ -35,6 +35,7 @@ interface EmojiCanvasProps {
   onUpdateSticker?: (desc: StickerDescriptor) => void;
   onDeleteSticker?: (id: string) => void;
   onSelectSticker?: (id: string | null) => void;
+  activeFrameSrc?: string | null;
 }
 
 const TILE_SIZE = 8;
@@ -75,6 +76,7 @@ export function EmojiCanvas({
   onUpdateSticker,
   onDeleteSticker,
   onSelectSticker,
+  activeFrameSrc = null,
 }: EmojiCanvasProps) {
   const { width, height, safeZonePadding } = preset;
   const tiles = buildCheckerboard(width, height);
@@ -84,6 +86,7 @@ export function EmojiCanvas({
   const [stickerImages, setStickerImages] = useState<
     Record<string, HTMLImageElement>
   >({});
+  const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
 
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const isRestoringRef = useRef(false);
@@ -419,6 +422,19 @@ export function EmojiCanvas({
     }
   }, [activeTool, flattenCurrentLine]);
 
+  // Load frame image when activeFrameSrc changes
+  useEffect(() => {
+    if (!activeFrameSrc) {
+      return;
+    }
+    const img = new window.Image();
+    img.onload = () => setFrameImage(img);
+    img.src = activeFrameSrc;
+    return () => {
+      setFrameImage(null);
+    };
+  }, [activeFrameSrc]);
+
   // Load images for stickers that haven't been loaded yet
   useEffect(() => {
     stickers.forEach((s) => {
@@ -577,6 +593,18 @@ export function EmojiCanvas({
                 );
               })}
               <Transformer ref={transformerRef} />
+            </Layer>
+            <Layer>
+              {frameImage && (
+                <KonvaImage
+                  image={frameImage}
+                  x={0}
+                  y={0}
+                  width={width}
+                  height={height}
+                  listening={false}
+                />
+              )}
             </Layer>
           </Stage>
           {selectedSticker && selectedStickerId && (

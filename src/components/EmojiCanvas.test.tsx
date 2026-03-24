@@ -42,8 +42,8 @@ describe("EmojiCanvas", () => {
     expect(canvas!.height).toBe(128);
   });
 
-  // 3.2 / 4.9 — verify layer structure: background, image, overlays, stickers
-  it("renders four layers in order: background, image, overlays, stickers", () => {
+  // 3.2 / 4.9 — verify layer structure: background, image, overlays, stickers, frames
+  it("renders five layers in order: background, image, overlays, stickers, frames", () => {
     render(
       <EmojiCanvas
         preset={slackPreset}
@@ -54,7 +54,7 @@ describe("EmojiCanvas", () => {
       />,
     );
     const stage = Konva.stages[0];
-    expect(stage.getLayers().length).toBe(4);
+    expect(stage.getLayers().length).toBe(5);
   });
 
   // 3.3a — verify checkerboard tile count

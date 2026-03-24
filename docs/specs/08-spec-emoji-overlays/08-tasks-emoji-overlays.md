@@ -107,7 +107,7 @@
 
 ---
 
-### [ ] 3.0 Build frame system (Reactions category)
+### [x] 3.0 Build frame system (Reactions category)
 
 **Purpose:** Adds the Frames tab to DecoratePanel, renders the active frame as a full-canvas Konva Image on Layer 4 (in front of everything), and handles toggle on/off plus preset-aware scaling.
 
@@ -119,13 +119,13 @@
 
 #### 3.0 Tasks
 
-- [ ] 3.1 Add a fifth `<Layer>` (frame layer) inside the `<Stage>` in `EmojiCanvas.tsx`, placed after the sticker layer (Layer 4). This layer will render the active frame.
-- [ ] 3.2 Add `activeFrameId: string | null` and `activeFrameSrc: string | null` props to `EmojiCanvas`. Inside the frame layer, when `activeFrameSrc` is set, render a `<KonvaImage>` with `x={0}`, `y={0}`, `width={preset.width}`, `height={preset.height}`, `listening={false}` (frames are not interactive). Load the image with `useImage` from `use-konva` or manually with a `useEffect` + `new Image()`.
-- [ ] 3.3 In `App.tsx`, add `activeFrameId: string | null` state (default `null`). Implement `handleToggleFrame(id: string)`: if `activeFrameId === id`, set to `null`; otherwise set to `id`. Pass `activeFrameId` and the resolved `activeFrameSrc` (looked up from the frames registry) to `EmojiCanvas`.
-- [ ] 3.4 Implement the Frames tab in `DecoratePanel.tsx`. Render the 4 Reactions frames as a thumbnail grid. The currently active frame (matching `activeFrameId`) should have a visible highlight border (e.g., `outline: 2px solid hotpink`). Clicking a frame calls `onToggleFrame(id)`.
-- [ ] 3.5 Verify preset-aware scaling: since the frame `<KonvaImage>` uses `width={preset.width}` and `height={preset.height}` as props, it will automatically resize when the preset changes. Manually test this by switching presets with a frame active.
-- [ ] 3.6 Update `DecoratePanel.test.tsx`: add tests for (a) Frames tab renders 4 frame thumbnails; (b) clicking a frame calls `onToggleFrame` with the correct ID; (c) active frame has an active CSS class.
-- [ ] 3.7 Run `task lint`, `task typecheck`, and `task test` — fix any errors before moving on.
+- [x] 3.1 Add a fifth `<Layer>` (frame layer) inside the `<Stage>` in `EmojiCanvas.tsx`, placed after the sticker layer (Layer 4). This layer will render the active frame.
+- [x] 3.2 Add `activeFrameId: string | null` and `activeFrameSrc: string | null` props to `EmojiCanvas`. Inside the frame layer, when `activeFrameSrc` is set, render a `<KonvaImage>` with `x={0}`, `y={0}`, `width={preset.width}`, `height={preset.height}`, `listening={false}` (frames are not interactive). Load the image with `useImage` from `use-konva` or manually with a `useEffect` + `new Image()`.
+- [x] 3.3 In `App.tsx`, add `activeFrameId: string | null` state (default `null`). Implement `handleToggleFrame(id: string)`: if `activeFrameId === id`, set to `null`; otherwise set to `id`. Pass `activeFrameId` and the resolved `activeFrameSrc` (looked up from the frames registry) to `EmojiCanvas`.
+- [x] 3.4 Implement the Frames tab in `DecoratePanel.tsx`. Render the 4 Reactions frames as a thumbnail grid. The currently active frame (matching `activeFrameId`) should have a visible highlight border (e.g., `outline: 2px solid hotpink`). Clicking a frame calls `onToggleFrame(id)`.
+- [x] 3.5 Verify preset-aware scaling: since the frame `<KonvaImage>` uses `width={preset.width}` and `height={preset.height}` as props, it will automatically resize when the preset changes. Manually test this by switching presets with a frame active.
+- [x] 3.6 Update `DecoratePanel.test.tsx`: add tests for (a) Frames tab renders 4 frame thumbnails; (b) clicking a frame calls `onToggleFrame` with the correct ID; (c) active frame has an active CSS class.
+- [x] 3.7 Run `task lint`, `task typecheck`, and `task test` — fix any errors before moving on.
 
 ---
 
