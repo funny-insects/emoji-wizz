@@ -70,7 +70,7 @@ Verify and fix brush, eraser, and text tools so they place marks at the correct 
 - [x] 3.3 Verify the text `<input>` overlay appears at the correct position at all zoom levels. Since it was moved inside the transform div in task 1.3, it inherits the scale. Confirm that the `left`/`top` pixel values (in canvas space) map correctly to the visual position.
 - [x] 3.4 Export a PNG at 4x zoom with brush strokes and text, then verify the exported file is 128×128 and marks are at the correct pixel positions. Confirm the export pipeline reads from `latestSnapshot` (native resolution) and is unaffected by CSS zoom.
 
-### [ ] 4.0 Tests and Quality Gate
+### [x] 4.0 Tests and Quality Gate
 
 Add/update unit tests covering zoom state, wrapper rendering, scroll-wheel zoom behavior, and preset-switch reset. Ensure all existing tests still pass and no regressions are introduced.
 
@@ -83,10 +83,10 @@ Add/update unit tests covering zoom state, wrapper rendering, scroll-wheel zoom 
 
 #### 4.0 Tasks
 
-- [ ] 4.1 Add a test that verifies the default zoom for the Slack (128×128) preset renders the outer sizing div at 512×512 (`128 * 4`).
-- [ ] 4.2 Add a test that verifies the default zoom for the Apple (512×512) preset renders the outer sizing div at 512×512 (`512 * 1`, no additional scaling).
-- [ ] 4.3 Add a test that verifies the inner transform div has `transform: scale(4)` for the Slack preset.
-- [ ] 4.4 Add a test that simulates `wheel` events and verifies zoom increments/decrements by 0.5 and the outer div dimensions update accordingly.
-- [ ] 4.5 Add a test that verifies zoom is clamped at min=1 and max=8 (fire many scroll events in one direction and check bounds).
-- [ ] 4.6 Add a test that verifies zoom resets to the preset default when the preset prop changes (rerender with Apple preset, check zoom=1).
-- [ ] 4.7 Run `task lint`, `task typecheck`, and `task test` and fix any failures or warnings.
+- [x] 4.1 Add a test that verifies the default zoom for the Slack (128×128) preset renders the outer sizing div at 512×512 (`128 * 4`).
+- [x] 4.2 Add a test that verifies the default zoom for the Apple (512×512) preset renders the outer sizing div at 512×512 (`512 * 1`, no additional scaling).
+- [x] 4.3 Add a test that verifies the inner transform div has `transform: scale(4)` for the Slack preset.
+- [x] 4.4 Add a test that simulates `wheel` events and verifies zoom increments/decrements by 0.5 and the outer div dimensions update accordingly.
+- [x] 4.5 Add a test that verifies zoom is clamped at min=1 and max=8 (fire many scroll events in one direction and check bounds).
+- [x] 4.6 Add a test that verifies zoom resets to the preset default when the preset prop changes (rerender with Apple preset, check zoom=1).
+- [x] 4.7 Run `task lint`, `task typecheck`, and `task test` and fix any failures or warnings.
