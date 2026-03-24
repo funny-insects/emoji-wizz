@@ -36,6 +36,23 @@
   padding: 8px 6px;
 }
 
+.decorate-panel__upload {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 5px 6px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.decorate-panel__upload:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
 .decorate-panel__grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

@@ -6,6 +6,7 @@ import {
   Image as KonvaImage,
   Circle,
   Transformer,
+  Text as KonvaText,
 } from "react-konva";
 import Konva from "konva";
 import { type PlatformPreset } from "../utils/presets";
@@ -552,44 +553,62 @@ export function EmojiCanvas({
                 const img = stickerImages[sticker.src];
                 if (!img) return null;
                 return (
-                  <KonvaImage
-                    key={sticker.id}
-                    ref={(node: Konva.Image | null) => {
-                      if (node) {
-                        stickerNodeRefs.current.set(sticker.id, node);
-                      } else {
-                        stickerNodeRefs.current.delete(sticker.id);
-                      }
-                    }}
-                    image={img}
-                    x={sticker.x}
-                    y={sticker.y}
-                    width={sticker.width}
-                    height={sticker.height}
-                    scaleX={sticker.scaleX}
-                    scaleY={sticker.scaleY}
-                    rotation={sticker.rotation}
-                    draggable
-                    onClick={() => onSelectSticker?.(sticker.id)}
-                    onDragEnd={(e) => {
-                      onUpdateSticker?.({
-                        ...sticker,
-                        x: e.target.x(),
-                        y: e.target.y(),
-                      });
-                    }}
-                    onTransformEnd={(e) => {
-                      const node = e.target;
-                      onUpdateSticker?.({
-                        ...sticker,
-                        x: node.x(),
-                        y: node.y(),
-                        scaleX: node.scaleX(),
-                        scaleY: node.scaleY(),
-                        rotation: node.rotation(),
-                      });
-                    }}
-                  />
+                  <>
+                    <KonvaImage
+                      key={sticker.id}
+                      ref={(node: Konva.Image | null) => {
+                        if (node) {
+                          stickerNodeRefs.current.set(sticker.id, node);
+                        } else {
+                          stickerNodeRefs.current.delete(sticker.id);
+                        }
+                      }}
+                      image={img}
+                      x={sticker.x}
+                      y={sticker.y}
+                      width={sticker.width}
+                      height={sticker.height}
+                      scaleX={sticker.scaleX}
+                      scaleY={sticker.scaleY}
+                      rotation={sticker.rotation}
+                      draggable
+                      onClick={() => onSelectSticker?.(sticker.id)}
+                      onDragEnd={(e) => {
+                        onUpdateSticker?.({
+                          ...sticker,
+                          x: e.target.x(),
+                          y: e.target.y(),
+                        });
+                      }}
+                      onTransformEnd={(e) => {
+                        const node = e.target;
+                        onUpdateSticker?.({
+                          ...sticker,
+                          x: node.x(),
+                          y: node.y(),
+                          scaleX: node.scaleX(),
+                          scaleY: node.scaleY(),
+                          rotation: node.rotation(),
+                        });
+                      }}
+                    />
+                    {sticker.text && (
+                      <KonvaText
+                        x={sticker.x + sticker.width * sticker.scaleX * 0.1}
+                        y={sticker.y + sticker.height * sticker.scaleY * 0.3}
+                        width={sticker.width * sticker.scaleX * 0.8}
+                        text={sticker.text}
+                        fontSize={Math.max(
+                          10,
+                          sticker.width * sticker.scaleX * 0.15,
+                        )}
+                        fill="#222"
+                        align="center"
+                        wrap="word"
+                        listening={false}
+                      />
+                    )}
+                  </>
                 );
               })}
               <Transformer ref={transformerRef} />

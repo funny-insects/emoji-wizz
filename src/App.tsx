@@ -7,6 +7,7 @@ import { OptimizerPanel } from "./components/OptimizerPanel";
 import { ExportControls } from "./components/ExportControls";
 import { PresetSelector } from "./components/PresetSelector";
 import { DecoratePanel } from "./components/DecoratePanel";
+import { SpeechBubbleModal } from "./components/SpeechBubbleModal";
 import { PLATFORM_PRESETS, type PlatformPreset } from "./utils/presets";
 import { useImageImport } from "./hooks/useImageImport";
 import { useHistory } from "./hooks/useHistory";
@@ -53,6 +54,8 @@ function App() {
     null,
   );
   const [activeFrameId, setActiveFrameId] = useState<string | null>(null);
+  const [showSpeechBubbleModal, setShowSpeechBubbleModal] = useState(false);
+  const pendingTextStickerRef = useRef<StickerDefinition | null>(null);
   const activeFrameSrc =
     FRAME_DEFINITIONS.find((f) => f.id === activeFrameId)?.src ?? null;
 
@@ -84,25 +87,52 @@ function App() {
     setRestoreSnapshot(null);
   }, []);
 
-  const handlePlaceSticker = useCallback(
-    (def: StickerDefinition) => {
-      const descriptor: StickerDescriptor = {
-        id: crypto.randomUUID(),
-        src: def.src,
-        label: def.label,
-        x: activePreset.width / 2 - 32,
-        y: activePreset.height / 2 - 32,
-        width: 64,
-        height: 64,
-        scaleX: 1,
-        scaleY: 1,
-        rotation: 0,
-        requiresText: def.requiresText,
-      };
-      setStickers((prev) => [...prev, descriptor]);
-    },
+  const createStickerDescriptor = useCallback(
+    (def: StickerDefinition, text?: string): StickerDescriptor => ({
+      id: crypto.randomUUID(),
+      src: def.src,
+      label: def.label,
+      x: activePreset.width / 2 - 32,
+      y: activePreset.height / 2 - 32,
+      width: 64,
+      height: 64,
+      scaleX: 1,
+      scaleY: 1,
+      rotation: 0,
+      requiresText: def.requiresText,
+      text,
+    }),
     [activePreset],
   );
+
+  const handlePlaceSticker = useCallback(
+    (def: StickerDefinition) => {
+      if (def.requiresText) {
+        pendingTextStickerRef.current = def;
+        setShowSpeechBubbleModal(true);
+        return;
+      }
+      setStickers((prev) => [...prev, createStickerDescriptor(def)]);
+    },
+    [createStickerDescriptor],
+  );
+
+  const handleSpeechBubblePlace = useCallback(
+    (text: string) => {
+      const def = pendingTextStickerRef.current;
+      if (def) {
+        setStickers((prev) => [...prev, createStickerDescriptor(def, text)]);
+        pendingTextStickerRef.current = null;
+      }
+      setShowSpeechBubbleModal(false);
+    },
+    [createStickerDescriptor],
+  );
+
+  const handleSpeechBubbleCancel = useCallback(() => {
+    pendingTextStickerRef.current = null;
+    setShowSpeechBubbleModal(false);
+  }, []);
 
   const handleUpdateSticker = useCallback((desc: StickerDescriptor) => {
     setStickers((prev) => prev.map((s) => (s.id === desc.id ? desc : s)));
@@ -297,6 +327,12 @@ function App() {
           sizeWarning={sizeWarning}
         />
       </div>
+      {showSpeechBubbleModal && (
+        <SpeechBubbleModal
+          onPlace={handleSpeechBubblePlace}
+          onCancel={handleSpeechBubbleCancel}
+        />
+      )}
     </div>
   );
 }

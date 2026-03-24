@@ -129,7 +129,7 @@
 
 ---
 
-### [ ] 4.0 Speech bubble modal + custom PNG sticker upload
+### [x] 4.0 Speech bubble modal + custom PNG sticker upload
 
 **Purpose:** Adds the two special-case sticker interactions: a text entry modal that fires before placing the speech bubble, and a file-picker that lets users upload any PNG as a session sticker.
 
@@ -142,16 +142,16 @@
 
 #### 4.0 Tasks
 
-- [ ] 4.1 Create `src/components/SpeechBubbleModal.tsx`. It accepts props: `onPlace: (text: string) => void`, `onCancel: () => void`. Renders a centered overlay (modal backdrop) with: a text `<input>` (autofocused), a "Place" `<button>` that calls `onPlace(text)`, a "Cancel" `<button>` that calls `onCancel()`. Pressing Enter in the input also calls `onPlace`. Pressing Escape calls `onCancel`.
-- [ ] 4.2 In `App.tsx`, add `showSpeechBubbleModal: boolean` state. Modify `handlePlaceSticker`: if `def.requiresText === true`, set `showSpeechBubbleModal = true` and store the pending sticker def in a `pendingTextStickerRef` instead of placing immediately.
-- [ ] 4.3 In `App.tsx`, add `handleSpeechBubblePlace(text: string)`: create the `StickerDescriptor` from the pending def (same centering logic as 2.10) with `text` set, add to stickers, close the modal.
-- [ ] 4.4 Render `<SpeechBubbleModal>` in `App.tsx` JSX when `showSpeechBubbleModal` is true, wiring `onPlace={handleSpeechBubblePlace}` and `onCancel={() => setShowSpeechBubbleModal(false)}`.
-- [ ] 4.5 In `EmojiCanvas.tsx`, for a sticker node whose descriptor has a `text` field, render an additional Konva `Text` node in the sticker layer overlaid on top of the speech bubble image. Position the text centered within the bubble bounds (approximately `x + width * 0.1`, `y + height * 0.3`, with `width * 0.8` wrapping width).
-- [ ] 4.6 Add an "Upload PNG" `<button>` to the Stickers tab in `DecoratePanel.tsx`, above the sticker grid. Clicking it triggers a hidden `<input type="file" accept="image/png">`.
-- [ ] 4.7 In `DecoratePanel.tsx`, handle the file input `onChange`: call `URL.createObjectURL(file)`, create a new `StickerDefinition`-like object with `id = crypto.randomUUID()`, `src = objectURL`, `label = file.name`, `category = "custom"`. Add it to a `customStickers` local state array (shown at the top of the Stickers tab as session uploads). Also call `onPlaceSticker` immediately to place it centered on the canvas.
-- [ ] 4.8 In `DecoratePanel.tsx`, track custom sticker object URLs in a `useRef` and call `URL.revokeObjectURL` on each URL in a cleanup `useEffect` (runs on unmount).
-- [ ] 4.9 Create `src/components/SpeechBubbleModal.test.tsx`. Write tests for: (a) modal renders with a text input and two buttons; (b) clicking "Place" with text calls `onPlace(text)`; (c) clicking "Cancel" calls `onCancel`; (d) pressing Escape calls `onCancel`; (e) pressing Enter calls `onPlace`.
-- [ ] 4.10 Run `task lint`, `task typecheck`, and `task test` — fix any errors before moving on.
+- [x] 4.1Create `src/components/SpeechBubbleModal.tsx`. It accepts props: `onPlace: (text: string) => void`, `onCancel: () => void`. Renders a centered overlay (modal backdrop) with: a text `<input>` (autofocused), a "Place" `<button>` that calls `onPlace(text)`, a "Cancel" `<button>` that calls `onCancel()`. Pressing Enter in the input also calls `onPlace`. Pressing Escape calls `onCancel`.
+- [x] 4.2In `App.tsx`, add `showSpeechBubbleModal: boolean` state. Modify `handlePlaceSticker`: if `def.requiresText === true`, set `showSpeechBubbleModal = true` and store the pending sticker def in a `pendingTextStickerRef` instead of placing immediately.
+- [x] 4.3In `App.tsx`, add `handleSpeechBubblePlace(text: string)`: create the `StickerDescriptor` from the pending def (same centering logic as 2.10) with `text` set, add to stickers, close the modal.
+- [x] 4.4Render `<SpeechBubbleModal>` in `App.tsx` JSX when `showSpeechBubbleModal` is true, wiring `onPlace={handleSpeechBubblePlace}` and `onCancel={() => setShowSpeechBubbleModal(false)}`.
+- [x] 4.5In `EmojiCanvas.tsx`, for a sticker node whose descriptor has a `text` field, render an additional Konva `Text` node in the sticker layer overlaid on top of the speech bubble image. Position the text centered within the bubble bounds (approximately `x + width * 0.1`, `y + height * 0.3`, with `width * 0.8` wrapping width).
+- [x] 4.6Add an "Upload PNG" `<button>` to the Stickers tab in `DecoratePanel.tsx`, above the sticker grid. Clicking it triggers a hidden `<input type="file" accept="image/png">`.
+- [x] 4.7In `DecoratePanel.tsx`, handle the file input `onChange`: call `URL.createObjectURL(file)`, create a new `StickerDefinition`-like object with `id = crypto.randomUUID()`, `src = objectURL`, `label = file.name`, `category = "custom"`. Add it to a `customStickers` local state array (shown at the top of the Stickers tab as session uploads). Also call `onPlaceSticker` immediately to place it centered on the canvas.
+- [x] 4.8In `DecoratePanel.tsx`, track custom sticker object URLs in a `useRef` and call `URL.revokeObjectURL` on each URL in a cleanup `useEffect` (runs on unmount).
+- [x] 4.9Create `src/components/SpeechBubbleModal.test.tsx`. Write tests for: (a) modal renders with a text input and two buttons; (b) clicking "Place" with text calls `onPlace(text)`; (c) clicking "Cancel" calls `onCancel`; (d) pressing Escape calls `onCancel`; (e) pressing Enter calls `onPlace`.
+- [x] 4.10Run `task lint`, `task typecheck`, and `task test` — fix any errors before moving on.
 
 ---
 
