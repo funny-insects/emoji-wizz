@@ -15,31 +15,31 @@ task: [typecheck] npx tsc --noEmit
 ```
 $ task test
  Test Files  12 passed (12)
-      Tests  78 passed (78)
+      Tests  81 passed (81)
 ```
 
 ### `task lint` passes
 
 ```
-(verified — no lint errors)
+$ task lint
+(no errors)
 ```
 
 ## Implementation Summary
 
-### 1.1 — Zoom state variable
+### 1.1 — Display scale constant
 
-- Added `defaultZoom` computed as `width === 128 ? 4 : 1`
-- Added `zoom` state initialized to `defaultZoom`
-- Added preset-change detection that resets zoom when preset changes
+- Added `displayScale` derived as `width === 128 ? 4 : 1` at `EmojiCanvas.tsx:64`
+- No state needed — the scale is fixed per preset
 
 ### 1.2 — Wrapper divs
 
-- **Outer sizing div** (`data-testid="zoom-outer"`): explicit `width: ${width * zoom}px; height: ${height * zoom}px`
-- **Inner transform div** (`data-testid="zoom-inner"`): `transform: scale(${zoom}); transform-origin: top left`
+- **Outer sizing div**: `width: width * displayScale; height: height * displayScale`
+- **Inner transform div**: `transform: scale(${displayScale}); transform-origin: top left`
 
 ### 1.3 — Text input moved inside transform div
 
-- The `<input>` overlay is now inside the inner transform div, inheriting the CSS scale transform
+- The `<input>` overlay is inside the inner transform div, inheriting the CSS scale transform
 - `left`/`top` values are in canvas space and scale correctly with the transform
 
 ### 1.4 — Pixelated rendering
@@ -53,8 +53,8 @@ $ task test
 
 ## Verification
 
-- Slack preset (128×128) renders at 512×512 displayed size (4x zoom default)
-- Apple preset (512×512) renders at 512×512 displayed size (1x zoom default)
+- Slack preset (128×128) renders at 512×512 displayed size (4x scale)
+- Apple preset (512×512) renders at 512×512 displayed size (1x scale)
 - Canvas elements have `image-rendering: pixelated` for crisp pixel blocks
-- All 78 existing tests pass with no regressions
+- All 81 tests pass with no regressions
 - TypeScript compiles with no errors

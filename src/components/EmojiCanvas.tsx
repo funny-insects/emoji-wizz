@@ -61,15 +61,7 @@ export function EmojiCanvas({
   const { width, height, safeZonePadding } = preset;
   const tiles = buildCheckerboard(width, height);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const defaultZoom = width === 128 ? 4 : 1;
-  const [zoom, setZoom] = useState(defaultZoom);
-
-  const [prevPreset, setPrevPreset] = useState(preset);
-  if (preset !== prevPreset) {
-    setPrevPreset(preset);
-    setZoom(preset.width === 128 ? 4 : 1);
-  }
+  const displayScale = width === 128 ? 4 : 1;
 
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const isRestoringRef = useRef(false);
@@ -429,28 +421,18 @@ export function EmojiCanvas({
           style={containerStyle}
         >
           <div
-            data-testid="zoom-outer"
             style={{
-              width: `${width * zoom}px`,
-              height: `${height * zoom}px`,
-              overflow: "hidden",
-            }}
-            onWheel={(e) => {
-              e.preventDefault();
-              setZoom((prev) => {
-                const delta = e.deltaY < 0 ? 0.5 : -0.5;
-                return Math.min(8, Math.max(1, prev + delta));
-              });
+              width: width * displayScale,
+              height: height * displayScale,
             }}
           >
             <div
-              data-testid="zoom-inner"
               style={{
-                transform: `scale(${zoom})`,
+                transform: `scale(${displayScale})`,
                 transformOrigin: "top left",
                 position: "relative",
-                width: width,
-                height: height,
+                width,
+                height,
               }}
             >
               <Stage

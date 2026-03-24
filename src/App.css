@@ -96,7 +96,7 @@
   color: var(--accent);
 }
 
-/* ── Canvas zoom — crisp pixel rendering ── */
+/* ── Canvas — crisp pixel rendering ── */
 .konvajs-content canvas {
   image-rendering: pixelated;
 }

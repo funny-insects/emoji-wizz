@@ -662,9 +662,8 @@ describe("EmojiCanvas — brush tool", () => {
 
 const applePreset = PLATFORM_PRESETS.find((p) => p.id === "apple")!;
 
-describe("EmojiCanvas — zoom", () => {
-  // 4.1 — default zoom for Slack preset renders outer div at 512×512
-  it("renders the outer sizing div at 512×512 for the Slack (128×128) preset", () => {
+describe("EmojiCanvas — display scale", () => {
+  it("renders the outer sizing div at 512×512 for the Slack (128×128) preset (4x scale)", () => {
     const { container } = render(
       <EmojiCanvas
         preset={slackPreset}
@@ -674,16 +673,13 @@ describe("EmojiCanvas — zoom", () => {
         handlePaste={noop}
       />,
     );
-    const outer = container.querySelector(
-      '[data-testid="zoom-outer"]',
-    ) as HTMLElement;
-    expect(outer).not.toBeNull();
+    const dropZone = container.querySelector(".canvas-drop-zone")!;
+    const outer = dropZone.firstElementChild as HTMLElement;
     expect(outer.style.width).toBe("512px");
     expect(outer.style.height).toBe("512px");
   });
 
-  // 4.2 — default zoom for Apple preset renders outer div at 512×512
-  it("renders the outer sizing div at 512×512 for the Apple (512×512) preset", () => {
+  it("renders the outer sizing div at 512×512 for the Apple (512×512) preset (1x scale)", () => {
     const { container } = render(
       <EmojiCanvas
         preset={applePreset}
@@ -693,104 +689,13 @@ describe("EmojiCanvas — zoom", () => {
         handlePaste={noop}
       />,
     );
-    const outer = container.querySelector(
-      '[data-testid="zoom-outer"]',
-    ) as HTMLElement;
-    expect(outer).not.toBeNull();
+    const dropZone = container.querySelector(".canvas-drop-zone")!;
+    const outer = dropZone.firstElementChild as HTMLElement;
     expect(outer.style.width).toBe("512px");
     expect(outer.style.height).toBe("512px");
   });
 
-  // 4.3 — inner transform div has scale(4) for Slack preset
-  it("applies transform: scale(4) on the inner div for the Slack preset", () => {
-    const { container } = render(
-      <EmojiCanvas
-        preset={slackPreset}
-        image={null}
-        handleFileInput={noop}
-        handleDrop={noop}
-        handlePaste={noop}
-      />,
-    );
-    const inner = container.querySelector(
-      '[data-testid="zoom-inner"]',
-    ) as HTMLElement;
-    expect(inner).not.toBeNull();
-    expect(inner.style.transform).toBe("scale(4)");
-  });
-
-  // 4.4 — wheel events increment/decrement zoom by 0.5
-  it("increments zoom by 0.5 on scroll up and decrements on scroll down", () => {
-    const { container } = render(
-      <EmojiCanvas
-        preset={slackPreset}
-        image={null}
-        handleFileInput={noop}
-        handleDrop={noop}
-        handlePaste={noop}
-      />,
-    );
-    const outer = container.querySelector(
-      '[data-testid="zoom-outer"]',
-    ) as HTMLElement;
-    const inner = container.querySelector(
-      '[data-testid="zoom-inner"]',
-    ) as HTMLElement;
-
-    // Default zoom is 4 for Slack. Scroll up → 4.5
-    act(() => {
-      fireEvent.wheel(outer, { deltaY: -100 });
-    });
-    expect(inner.style.transform).toBe("scale(4.5)");
-    expect(outer.style.width).toBe(`${128 * 4.5}px`);
-
-    // Scroll down → 4
-    act(() => {
-      fireEvent.wheel(outer, { deltaY: 100 });
-    });
-    expect(inner.style.transform).toBe("scale(4)");
-    expect(outer.style.width).toBe("512px");
-  });
-
-  // 4.5 — zoom clamped at min=1 and max=8
-  it("clamps zoom to minimum 1 and maximum 8", () => {
-    const { container } = render(
-      <EmojiCanvas
-        preset={applePreset}
-        image={null}
-        handleFileInput={noop}
-        handleDrop={noop}
-        handlePaste={noop}
-      />,
-    );
-    const outer = container.querySelector(
-      '[data-testid="zoom-outer"]',
-    ) as HTMLElement;
-    const inner = container.querySelector(
-      '[data-testid="zoom-inner"]',
-    ) as HTMLElement;
-
-    // Apple starts at zoom=1. Scroll down many times — should stay at 1
-    for (let i = 0; i < 10; i++) {
-      act(() => {
-        fireEvent.wheel(outer, { deltaY: 100 });
-      });
-    }
-    expect(inner.style.transform).toBe("scale(1)");
-    expect(outer.style.width).toBe("512px");
-
-    // Scroll up many times — should cap at 8
-    for (let i = 0; i < 20; i++) {
-      act(() => {
-        fireEvent.wheel(outer, { deltaY: -100 });
-      });
-    }
-    expect(inner.style.transform).toBe("scale(8)");
-    expect(outer.style.width).toBe(`${512 * 8}px`);
-  });
-
-  // 4.6 — zoom resets to preset default on preset change
-  it("resets zoom to preset default when preset changes", () => {
+  it("applies transform: scale(4) for Slack and scale(1) for Apple on the inner div", () => {
     const { container, rerender } = render(
       <EmojiCanvas
         preset={slackPreset}
@@ -800,12 +705,10 @@ describe("EmojiCanvas — zoom", () => {
         handlePaste={noop}
       />,
     );
-    const inner = container.querySelector(
-      '[data-testid="zoom-inner"]',
-    ) as HTMLElement;
+    const dropZone = container.querySelector(".canvas-drop-zone")!;
+    const inner = dropZone.firstElementChild!.firstElementChild as HTMLElement;
     expect(inner.style.transform).toBe("scale(4)");
 
-    // Switch to Apple preset — zoom should reset to 1
     rerender(
       <EmojiCanvas
         preset={applePreset}
@@ -815,9 +718,8 @@ describe("EmojiCanvas — zoom", () => {
         handlePaste={noop}
       />,
     );
-    const innerAfter = container.querySelector(
-      '[data-testid="zoom-inner"]',
-    ) as HTMLElement;
+    const innerAfter = dropZone.firstElementChild!
+      .firstElementChild as HTMLElement;
     expect(innerAfter.style.transform).toBe("scale(1)");
   });
 });
