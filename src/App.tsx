@@ -6,6 +6,7 @@ import { Toolbar } from "./components/Toolbar";
 import { OptimizerPanel } from "./components/OptimizerPanel";
 import { ExportControls } from "./components/ExportControls";
 import { PresetSelector } from "./components/PresetSelector";
+import { DecoratePanel } from "./components/DecoratePanel";
 import { PLATFORM_PRESETS, type PlatformPreset } from "./utils/presets";
 import { useImageImport } from "./hooks/useImageImport";
 import { useHistory } from "./hooks/useHistory";
@@ -17,6 +18,10 @@ import {
   checkFileSizeWarning,
   type ExportFormat,
 } from "./utils/exportUtils";
+import { STICKER_DEFINITIONS } from "./assets/stickers/index";
+import { FRAME_DEFINITIONS } from "./assets/frames/index";
+import type { StickerDescriptor } from "./utils/stickerTypes";
+import type { StickerDefinition } from "./assets/stickers/index";
 import referenceEmojiPng from "./assets/reference-emoji.png";
 
 export type EditorTool = "eraser" | "brush" | "text";
@@ -42,6 +47,12 @@ function App() {
 
   const [restoreSnapshot, setRestoreSnapshot] = useState<string | null>(null);
   const [latestSnapshot, setLatestSnapshot] = useState<string | null>(null);
+
+  const [stickers, setStickers] = useState<StickerDescriptor[]>([]);
+  const [selectedStickerId, setSelectedStickerId] = useState<string | null>(
+    null,
+  );
+  const [activeFrameId, setActiveFrameId] = useState<string | null>(null);
 
   const handlePushState = useCallback(
     (snapshot: string) => {
@@ -71,6 +82,48 @@ function App() {
     setRestoreSnapshot(null);
   }, []);
 
+  const handlePlaceSticker = useCallback(
+    (def: StickerDefinition) => {
+      const descriptor: StickerDescriptor = {
+        id: crypto.randomUUID(),
+        src: def.src,
+        label: def.label,
+        x: activePreset.width / 2 - 32,
+        y: activePreset.height / 2 - 32,
+        width: 64,
+        height: 64,
+        scaleX: 1,
+        scaleY: 1,
+        rotation: 0,
+        requiresText: def.requiresText,
+      };
+      setStickers((prev) => [...prev, descriptor]);
+    },
+    [activePreset],
+  );
+
+  const handleUpdateSticker = useCallback((desc: StickerDescriptor) => {
+    setStickers((prev) => prev.map((s) => (s.id === desc.id ? desc : s)));
+  }, []);
+
+  const handleDeleteSticker = useCallback((id: string) => {
+    setStickers((prev) => prev.filter((s) => s.id !== id));
+    setSelectedStickerId((prev) => (prev === id ? null : prev));
+  }, []);
+
+  const handleSelectSticker = useCallback((id: string | null) => {
+    setSelectedStickerId(id);
+  }, []);
+
+  const handleToggleFrame = useCallback((id: string) => {
+    setActiveFrameId((prev) => (prev === id ? null : id));
+  }, []);
+
+  const selectedStickerIdRef = useRef(selectedStickerId);
+  useEffect(() => {
+    selectedStickerIdRef.current = selectedStickerId;
+  }, [selectedStickerId]);
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key === "z") {
@@ -79,11 +132,17 @@ function App() {
       } else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "z") {
         e.preventDefault();
         handleRedo();
+      } else if (e.key === "Delete" || e.key === "Backspace") {
+        const id = selectedStickerIdRef.current;
+        if (id) {
+          e.preventDefault();
+          handleDeleteSticker(id);
+        }
       }
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleUndo, handleRedo]);
+  }, [handleUndo, handleRedo, handleDeleteSticker]);
 
   function handleAnalyze() {
     if (!stageRef.current) return;
@@ -206,6 +265,19 @@ function App() {
             textSize={textSize}
             stageRef={stageRef}
             fileName={fileName}
+            stickers={stickers}
+            selectedStickerId={selectedStickerId}
+            onUpdateSticker={handleUpdateSticker}
+            onDeleteSticker={handleDeleteSticker}
+            onSelectSticker={handleSelectSticker}
+          />
+          <DecoratePanel
+            image={image}
+            stickers={STICKER_DEFINITIONS}
+            onPlaceSticker={handlePlaceSticker}
+            activeFrameId={activeFrameId}
+            frames={FRAME_DEFINITIONS}
+            onToggleFrame={handleToggleFrame}
           />
         </div>
         <OptimizerPanel

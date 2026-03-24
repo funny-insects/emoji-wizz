@@ -62,7 +62,7 @@
 
 ---
 
-### [ ] 2.0 Build DecoratePanel with sticker system (Eyes category)
+### [x] 2.0 Build DecoratePanel with sticker system (Eyes category)
 
 **Purpose:** Creates the floating Decorate sidebar, the Stickers tab with the Eyes category grid, and the full sticker interaction model — place, drag, resize, rotate, delete using Konva Layer 3 + Transformer.
 
@@ -74,7 +74,7 @@
 
 #### 2.0 Tasks
 
-- [ ] 2.1 Create `src/utils/stickerTypes.ts`. Define and export the `StickerDescriptor` type:
+- [x] 2.1 Create `src/utils/stickerTypes.ts`. Define and export the `StickerDescriptor` type:
   ```ts
   export interface StickerDescriptor {
     id: string; // unique runtime ID (e.g. crypto.randomUUID())
@@ -91,19 +91,19 @@
     text?: string; // only used by speech bubble
   }
   ```
-- [ ] 2.2 Add `stickers: StickerDescriptor[]` state and `selectedStickerId: string | null` state to `App.tsx`. Add callbacks `handlePlaceSticker`, `handleUpdateSticker`, `handleDeleteSticker`, and `handleSelectSticker` that update these state arrays and pass them as props to `EmojiCanvas`.
-- [ ] 2.3 Add a fourth `<Layer>` (sticker layer) inside the `<Stage>` in `EmojiCanvas.tsx`, placed after the existing three layers. This layer will render sticker `KonvaImage` nodes. Also add a Konva `Transformer` component inside this layer (from `react-konva`).
-- [ ] 2.4 In `EmojiCanvas.tsx`, render a `<KonvaImage>` node for each `StickerDescriptor` in the `stickers` prop inside the sticker layer. Each node should have `draggable={true}` and call `onUpdateSticker` with updated position/scale/rotation on `dragend`, `transformend`. On click, call `onSelectSticker(id)`.
-- [ ] 2.5 Wire the Konva `Transformer` to the currently selected sticker node. Use a `useRef` map from sticker ID → Konva node reference. When `selectedStickerId` changes, call `transformer.nodes([selectedNode])` and `transformer.getLayer().batchDraw()`.
-- [ ] 2.6 Add a floating HTML delete button ("×") that appears over the selected sticker. Position it absolutely inside the `canvas-drop-zone` div using the selected sticker node's `getClientRect()` (top-right corner). Clicking it calls `onDeleteSticker(selectedStickerId)`. This button should render inside `EmojiCanvas` JSX using `selectedStickerId` and the node ref.
-- [ ] 2.7 Add a `keydown` listener in `EmojiCanvas.tsx` (or in `App.tsx` alongside the existing one) for `Delete`/`Backspace` that calls `onDeleteSticker(selectedStickerId)` when a sticker is selected.
-- [ ] 2.8 Create `src/components/DecoratePanel.tsx`. It accepts props: `image: HTMLImageElement | null`, `stickers: StickerDefinition[]` (from asset registry), `onPlaceSticker: (def: StickerDefinition) => void`, `activeFrameId: string | null`, `frames: FrameDefinition[]`, `onToggleFrame: (id: string) => void`. Return `null` when `image` is null (same pattern as `Toolbar`).
-- [ ] 2.9 Implement the sidebar layout in `DecoratePanel.tsx`: a fixed or absolutely positioned panel to the right of the canvas area with two tabs ("Stickers" / "Frames"). The Stickers tab renders the Eyes category as a scrollable grid of 48×48px `<img>` thumbnails with a label below each. Clicking a thumbnail calls `onPlaceSticker(def)`.
-- [ ] 2.10 In `App.tsx`, implement `handlePlaceSticker(def: StickerDefinition)`: create a new `StickerDescriptor` centered on the canvas (`x = preset.width/2 - 32`, `y = preset.height/2 - 32`, `width = 64`, `height = 64`, `scaleX = 1`, `scaleY = 1`, `rotation = 0`, `id = crypto.randomUUID()`), and add it to the `stickers` array.
-- [ ] 2.11 Create `src/components/DecoratePanel.css` with styles for the floating sidebar (e.g., position right of the canvas, background matching the existing app card style, scrollable sticker grid).
-- [ ] 2.12 Add `<DecoratePanel>` to `App.tsx` JSX, placed inside the `editor-area` div alongside `<Toolbar>` and `<EmojiCanvas>`.
-- [ ] 2.13 Create `src/components/DecoratePanel.test.tsx`. Write tests for: (a) panel returns null when `image` is null; (b) panel renders sticker thumbnails when `image` is present; (c) clicking a sticker thumbnail calls `onPlaceSticker` with the correct definition; (d) tab switching between Stickers and Frames works.
-- [ ] 2.14 Run `task lint`, `task typecheck`, and `task test` — fix any errors before moving on.
+- [x] 2.2 Add `stickers: StickerDescriptor[]` state and `selectedStickerId: string | null` state to `App.tsx`. Add callbacks `handlePlaceSticker`, `handleUpdateSticker`, `handleDeleteSticker`, and `handleSelectSticker` that update these state arrays and pass them as props to `EmojiCanvas`.
+- [x] 2.3 Add a fourth `<Layer>` (sticker layer) inside the `<Stage>` in `EmojiCanvas.tsx`, placed after the existing three layers. This layer will render sticker `KonvaImage` nodes. Also add a Konva `Transformer` component inside this layer (from `react-konva`).
+- [x] 2.4 In `EmojiCanvas.tsx`, render a `<KonvaImage>` node for each `StickerDescriptor` in the `stickers` prop inside the sticker layer. Each node should have `draggable={true}` and call `onUpdateSticker` with updated position/scale/rotation on `dragend`, `transformend`. On click, call `onSelectSticker(id)`.
+- [x] 2.5 Wire the Konva `Transformer` to the currently selected sticker node. Use a `useRef` map from sticker ID → Konva node reference. When `selectedStickerId` changes, call `transformer.nodes([selectedNode])` and `transformer.getLayer().batchDraw()`.
+- [x] 2.6 Add a floating HTML delete button ("×") that appears over the selected sticker. Position it absolutely inside the `canvas-drop-zone` div using the selected sticker node's `getClientRect()` (top-right corner). Clicking it calls `onDeleteSticker(selectedStickerId)`. This button should render inside `EmojiCanvas` JSX using `selectedStickerId` and the node ref.
+- [x] 2.7 Add a `keydown` listener in `EmojiCanvas.tsx` (or in `App.tsx` alongside the existing one) for `Delete`/`Backspace` that calls `onDeleteSticker(selectedStickerId)` when a sticker is selected.
+- [x] 2.8 Create `src/components/DecoratePanel.tsx`. It accepts props: `image: HTMLImageElement | null`, `stickers: StickerDefinition[]` (from asset registry), `onPlaceSticker: (def: StickerDefinition) => void`, `activeFrameId: string | null`, `frames: FrameDefinition[]`, `onToggleFrame: (id: string) => void`. Return `null` when `image` is null (same pattern as `Toolbar`).
+- [x] 2.9 Implement the sidebar layout in `DecoratePanel.tsx`: a fixed or absolutely positioned panel to the right of the canvas area with two tabs ("Stickers" / "Frames"). The Stickers tab renders the Eyes category as a scrollable grid of 48×48px `<img>` thumbnails with a label below each. Clicking a thumbnail calls `onPlaceSticker(def)`.
+- [x] 2.10 In `App.tsx`, implement `handlePlaceSticker(def: StickerDefinition)`: create a new `StickerDescriptor` centered on the canvas (`x = preset.width/2 - 32`, `y = preset.height/2 - 32`, `width = 64`, `height = 64`, `scaleX = 1`, `scaleY = 1`, `rotation = 0`, `id = crypto.randomUUID()`), and add it to the `stickers` array.
+- [x] 2.11 Create `src/components/DecoratePanel.css` with styles for the floating sidebar (e.g., position right of the canvas, background matching the existing app card style, scrollable sticker grid).
+- [x] 2.12 Add `<DecoratePanel>` to `App.tsx` JSX, placed inside the `editor-area` div alongside `<Toolbar>` and `<EmojiCanvas>`.
+- [x] 2.13 Create `src/components/DecoratePanel.test.tsx`. Write tests for: (a) panel returns null when `image` is null; (b) panel renders sticker thumbnails when `image` is present; (c) clicking a sticker thumbnail calls `onPlaceSticker` with the correct definition; (d) tab switching between Stickers and Frames works.
+- [x] 2.14 Run `task lint`, `task typecheck`, and `task test` — fix any errors before moving on.
 
 ---
 

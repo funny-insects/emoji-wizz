@@ -1,0 +1,77 @@
+import { useState } from "react";
+import "./DecoratePanel.css";
+import type { StickerDefinition } from "../assets/stickers/index";
+import type { FrameDefinition } from "../assets/frames/index";
+
+interface DecoratePanelProps {
+  image: HTMLImageElement | null;
+  stickers: StickerDefinition[];
+  onPlaceSticker: (def: StickerDefinition) => void;
+  activeFrameId: string | null;
+  frames: FrameDefinition[];
+  onToggleFrame: (id: string) => void;
+}
+
+export function DecoratePanel({
+  image,
+  stickers,
+  onPlaceSticker,
+  activeFrameId,
+  frames,
+  onToggleFrame,
+}: DecoratePanelProps) {
+  const [activeTab, setActiveTab] = useState<"stickers" | "frames">("stickers");
+
+  if (!image) return null;
+
+  return (
+    <div className="decorate-panel">
+      <div className="decorate-panel__tabs">
+        <button
+          className={`decorate-panel__tab${activeTab === "stickers" ? " decorate-panel__tab--active" : ""}`}
+          onClick={() => setActiveTab("stickers")}
+        >
+          Stickers
+        </button>
+        <button
+          className={`decorate-panel__tab${activeTab === "frames" ? " decorate-panel__tab--active" : ""}`}
+          onClick={() => setActiveTab("frames")}
+        >
+          Frames
+        </button>
+      </div>
+      <div className="decorate-panel__content">
+        {activeTab === "stickers" && (
+          <div className="decorate-panel__grid">
+            {stickers.map((def) => (
+              <button
+                key={def.id}
+                className="decorate-panel__item"
+                onClick={() => onPlaceSticker(def)}
+                title={def.label}
+              >
+                <img src={def.src} alt={def.label} />
+                <span className="decorate-panel__item-label">{def.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        {activeTab === "frames" && (
+          <div className="decorate-panel__grid">
+            {frames.map((def) => (
+              <button
+                key={def.id}
+                className={`decorate-panel__item${activeFrameId === def.id ? " decorate-panel__item--active" : ""}`}
+                onClick={() => onToggleFrame(def.id)}
+                title={def.label}
+              >
+                <img src={def.src} alt={def.label} />
+                <span className="decorate-panel__item-label">{def.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
