@@ -109,7 +109,7 @@ Replace the placeholder props in `App.tsx` with a real `handleDownload` function
 
 ---
 
-### [ ] 4.0 E2E Tests
+### [x] 4.0 E2E Tests
 
 Add Playwright tests in `e2e/export.spec.ts` covering the full export flow: upload an image, click Download, verify the download is triggered with the correct filename, and verify the size warning appears when appropriate.
 
@@ -119,9 +119,9 @@ Add Playwright tests in `e2e/export.spec.ts` covering the full export flow: uplo
 
 #### 4.0 Tasks
 
-- [ ] 4.1 Create `e2e/export.spec.ts`. Add the standard imports and `__dirname` path helper matching the pattern in `canvas.spec.ts`.
-- [ ] 4.2 Write test: **"Download button is disabled before image upload"**. Navigate to `/`. Assert the Download button (`page.getByRole('button', { name: 'Download' })`) has the `disabled` attribute.
-- [ ] 4.3 Write test: **"Download button is enabled after image upload"**. Navigate to `/`. Upload `e2e/fixtures/test-emoji.png` via `page.locator('input[type="file"]').setInputFiles(fixturePath)`. Assert the Download button does not have the `disabled` attribute.
-- [ ] 4.4 Write test: **"clicking Download PNG triggers a file download with correct filename"**. Navigate to `/`, upload the test fixture. Start waiting for the download event with `page.waitForEvent('download')`, then click the Download button. Assert `download.suggestedFilename()` matches `/^emoji-\d{4}-\d{2}-\d{2}\.png$/`.
-- [ ] 4.5 Write test: **"clicking Download WebP triggers a file download with .webp extension"**. Navigate to `/`, upload the fixture, select `webp` in the format dropdown. Start waiting for the download event, click Download. Assert `download.suggestedFilename()` ends with `.webp`.
-- [ ] 4.6 Write test: **"no size warning is shown after a normal download"**. Navigate to `/`, upload the test fixture (it should be small enough for the Slack 128 KB limit). Click Download. Assert there is no element matching `.export-warning` visible on the page, or that it contains no text.
+- [x] 4.1 Create `e2e/export.spec.ts`. Add the standard imports and `__dirname` path helper matching the pattern in `canvas.spec.ts`.
+- [x] 4.2 Write test: **"Download button is disabled before image upload"**. Navigate to `/`. Assert the Download button (`page.getByRole('button', { name: 'Download' })`) has the `disabled` attribute.
+- [x] 4.3 Write test: **"Download button is enabled after image upload"**. Navigate to `/`. Upload `e2e/fixtures/test-emoji.png` via `page.locator('input[type="file"]').setInputFiles(fixturePath)`. Assert the Download button does not have the `disabled` attribute.
+- [x] 4.4 Write test: **"clicking Download PNG triggers a file download with correct filename"**. Navigate to `/`, upload the test fixture. Start waiting for the download event with `page.waitForEvent('download')`, then click the Download button. Assert `download.suggestedFilename()` matches `/^emoji-\d{4}-\d{2}-\d{2}\.png$/`.
+- [x] 4.5 Write test: **"clicking Download WebP triggers a file download with .webp extension"**. Navigate to `/`, upload the fixture, select `webp` in the format dropdown. Start waiting for the download event, click Download. Assert `download.suggestedFilename()` ends with `.webp`.
+- [x] 4.6 Write test: **"no size warning is shown after a normal download"**. Navigate to `/`, upload the test fixture (it should be small enough for the Slack 128 KB limit). Click Download. Assert there is no element matching `.export-warning` visible on the page, or that it contains no text.

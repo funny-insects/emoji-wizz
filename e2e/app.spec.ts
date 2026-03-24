@@ -7,5 +7,5 @@ test("app renders a canvas element", async ({ page }) => {
 
 test("app renders a preset selector dropdown", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("select")).toBeVisible();
+  await expect(page.locator("select").first()).toBeVisible();
 });
