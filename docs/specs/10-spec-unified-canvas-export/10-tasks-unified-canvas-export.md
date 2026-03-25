@@ -89,7 +89,7 @@ Update the analyzer to work on the 512x512 canvas while generating suggestions r
 - [x] 3.3 In `App.tsx`, update the analyzer's `customEmojiDataUrl` generation: after getting the 512x512 `stage.toDataURL()`, downscale it to the `exportPreset` dimensions for the preview image shown in the optimizer panel. Use `downscaleCanvas` from `exportUtils.ts`.
 - [x] 3.4 In `generateSuggestions.test.ts`, add test cases that verify: (a) suggestions for a Slack preset with 512x512 canvas use scaled safe zone padding (48px instead of 12px), (b) suggestions for Apple preset with 512x512 canvas use original padding (40px), (c) existing tests still pass.
 
-### [ ] 4.0 Quality Gate — Lint, Typecheck, and Test Pass
+### [x] 4.0 Quality Gate — Lint, Typecheck, and Test Pass
 
 Run all quality checks to ensure the full change set passes linting, type checking, and unit tests with no regressions.
 
@@ -101,7 +101,7 @@ Run all quality checks to ensure the full change set passes linting, type checki
 
 #### 4.0 Tasks
 
-- [ ] 4.1 Run `task lint` and fix any ESLint errors or warnings.
-- [ ] 4.2 Run `task typecheck` and fix any TypeScript errors.
-- [ ] 4.3 Run `task test` and fix any failing tests.
-- [ ] 4.4 Run `task format:check` and fix any formatting issues with `task format`.
+- [x] 4.1 Run `task lint` and fix any ESLint errors or warnings.
+- [x] 4.2 Run `task typecheck` and fix any TypeScript errors.
+- [x] 4.3 Run `task test` and fix any failing tests.
+- [x] 4.4 Run `task format:check` and fix any formatting issues with `task format`.
