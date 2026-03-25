@@ -38,7 +38,7 @@
 
 ---
 
-### [ ] 2.0 Add "Remove BG" Button and Tolerance Input to Toolbar
+### [x] 2.0 Add "Remove BG" Button and Tolerance Input to Toolbar
 
 #### 2.0 Proof Artifact(s)
 
@@ -46,24 +46,24 @@
 
 #### 2.0 Tasks
 
-- [ ] 2.1 Add three new props to the `ToolbarProps` interface in `Toolbar.tsx`:
+- [x] 2.1 Add three new props to the `ToolbarProps` interface in `Toolbar.tsx`:
   - `onRemoveBackground: (tolerance: number) => void`
   - `bgTolerance: number`
   - `onBgToleranceChange: (t: number) => void`
-- [ ] 2.2 Destructure the three new props in the `Toolbar` function signature.
-- [ ] 2.3 In the `toolbar-tools` div (alongside the pointer/eraser/brush/text buttons), add a new button:
+- [x] 2.2 Destructure the three new props in the `Toolbar` function signature.
+- [x] 2.3 In the `toolbar-tools` div (alongside the pointer/eraser/brush/text buttons), add a new button:
   - `aria-label="Remove BG"`, `title="Remove Background"`
   - `className="toolbar-btn"` (no active-state logic — this is not a toggle tool)
   - `disabled={!image}`
   - `onClick={() => onRemoveBackground(bgTolerance)}`
-- [ ] 2.4 Below the `toolbar-tools` div (and outside the existing `activeTool === "brush"` and `activeTool === "text"` blocks), add a `toolbar-bg-settings` div that is always visible when `image` is not null. Inside it, add a tolerance `<input type="number">` following the exact same structure as the existing brush-size input: a `<label>` with text `tol`, `id="bg-tolerance"`, `min={0}`, `max={128}`, `value={bgTolerance}`, and an `onChange` handler that parses the integer and calls `onBgToleranceChange` only if the value is in range.
-- [ ] 2.5 Update `defaultTextProps` in `Toolbar.test.tsx` to include the three new props: `onRemoveBackground: () => {}`, `bgTolerance: 15`, `onBgToleranceChange: () => {}`.
-- [ ] 2.6 Update the existing test `"renders all 5 buttons when image is provided"` — rename it to `"renders all tool buttons when image is provided"` and add an assertion that `screen.getByRole("button", { name: "Remove BG" })` is in the document.
-- [ ] 2.7 Add a new test: `"Remove BG button is disabled when image is null"` — render with `image={null}` and assert the "Remove BG" button is disabled.
-- [ ] 2.8 Add a new test: `"Remove BG button never has the active class"` — render with `image={mockImage}` and assert the button does not have class `toolbar-btn--active`.
-- [ ] 2.9 Add a new test: `"Remove BG button calls onRemoveBackground with current tolerance"` — render with `bgTolerance={30}` and a `vi.fn()` for `onRemoveBackground`, fire a click on the button, and assert the mock was called with `30`.
-- [ ] 2.10 Add a new test: `"tolerance input is visible when image is provided and updates on change"` — render with `image={mockImage}` and a `vi.fn()` for `onBgToleranceChange`, assert the input is in the document, fire a change with value `"20"`, and assert `onBgToleranceChange` was called with `20`.
-- [ ] 2.11 Run `task test src/components/Toolbar.test.tsx` and confirm all tests pass.
+- [x] 2.4 Below the `toolbar-tools` div (and outside the existing `activeTool === "brush"` and `activeTool === "text"` blocks), add a `toolbar-bg-settings` div that is always visible when `image` is not null. Inside it, add a tolerance `<input type="number">` following the exact same structure as the existing brush-size input: a `<label>` with text `tol`, `id="bg-tolerance"`, `min={0}`, `max={128}`, `value={bgTolerance}`, and an `onChange` handler that parses the integer and calls `onBgToleranceChange` only if the value is in range.
+- [x] 2.5 Update `defaultTextProps` in `Toolbar.test.tsx` to include the three new props: `onRemoveBackground: () => {}`, `bgTolerance: 15`, `onBgToleranceChange: () => {}`.
+- [x] 2.6 Update the existing test `"renders all 5 buttons when image is provided"` — rename it to `"renders all tool buttons when image is provided"` and add an assertion that `screen.getByRole("button", { name: "Remove BG" })` is in the document.
+- [x] 2.7 Add a new test: `"Remove BG button is disabled when image is null"` — render with `image={null}` and assert the "Remove BG" button is disabled.
+- [x] 2.8 Add a new test: `"Remove BG button never has the active class"` — render with `image={mockImage}` and assert the button does not have class `toolbar-btn--active`.
+- [x] 2.9 Add a new test: `"Remove BG button calls onRemoveBackground with current tolerance"` — render with `bgTolerance={30}` and a `vi.fn()` for `onRemoveBackground`, fire a click on the button, and assert the mock was called with `30`.
+- [x] 2.10 Add a new test: `"tolerance input is visible when image is provided and updates on change"` — render with `image={mockImage}` and a `vi.fn()` for `onBgToleranceChange`, assert the input is in the document, fire a change with value `"20"`, and assert `onBgToleranceChange` was called with `20`.
+- [x] 2.11 Run `task test src/components/Toolbar.test.tsx` and confirm all tests pass.
 
 ---
 

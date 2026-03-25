@@ -18,6 +18,9 @@ interface ToolbarProps {
   onTextColorChange: (color: string) => void;
   textSize: number;
   onTextSizeChange: (size: number) => void;
+  onRemoveBackground: (tolerance: number) => void;
+  bgTolerance: number;
+  onBgToleranceChange: (t: number) => void;
 }
 
 export function Toolbar({
@@ -36,6 +39,9 @@ export function Toolbar({
   onTextColorChange,
   textSize,
   onTextSizeChange,
+  onRemoveBackground,
+  bgTolerance,
+  onBgToleranceChange,
 }: ToolbarProps) {
   if (!image) return null;
 
@@ -73,6 +79,15 @@ export function Toolbar({
           title="Text"
         >
           T
+        </button>
+        <button
+          className="toolbar-btn"
+          aria-label="Remove BG"
+          title="Remove Background"
+          disabled={!image}
+          onClick={() => onRemoveBackground(bgTolerance)}
+        >
+          ✂
         </button>
       </div>
 
@@ -143,6 +158,24 @@ export function Toolbar({
           </div>
         </div>
       )}
+
+      <div className="toolbar-bg-settings">
+        <label className="toolbar-brush-size-label" htmlFor="bg-tolerance">
+          tol
+        </label>
+        <input
+          id="bg-tolerance"
+          type="number"
+          className="toolbar-brush-size-input"
+          value={bgTolerance}
+          min={0}
+          max={128}
+          onChange={(e) => {
+            const v = parseInt(e.target.value, 10);
+            if (!isNaN(v) && v >= 0 && v <= 128) onBgToleranceChange(v);
+          }}
+        />
+      </div>
 
       <div className="toolbar-history">
         <button
