@@ -5,11 +5,12 @@ import { EmojiCanvas } from "./components/EmojiCanvas";
 import { Toolbar } from "./components/Toolbar";
 import { OptimizerPanel } from "./components/OptimizerPanel";
 import { ExportControls } from "./components/ExportControls";
-import { PresetSelector } from "./components/PresetSelector";
 import { DecoratePanel } from "./components/DecoratePanel";
 import { SpeechBubbleModal } from "./components/SpeechBubbleModal";
-import { PLATFORM_PRESETS, type PlatformPreset } from "./utils/presets";
+import { PLATFORM_PRESETS } from "./utils/presets";
 import { useImageImport } from "./hooks/useImageImport";
+
+const CANVAS_SIZE = 512;
 import { useHistory } from "./hooks/useHistory";
 import { useStickerHistory } from "./hooks/useStickerHistory";
 import { detectContentBounds } from "./utils/detectContentBounds";
@@ -18,19 +19,21 @@ import {
   buildExportCanvas,
   buildFilename,
   checkFileSizeWarning,
+  downscaleCanvas,
   exportStageAsBlob,
   type ExportFormat,
 } from "./utils/exportUtils";
+import type { PlatformPreset } from "./utils/presets";
 import { STICKER_DEFINITIONS } from "./assets/stickers/index";
 import { FRAME_DEFINITIONS } from "./assets/frames/index";
 import type { StickerDescriptor } from "./utils/stickerTypes";
 import type { StickerDefinition } from "./assets/stickers/index";
 import referenceEmojiPng from "./assets/reference-emoji.png";
 
-export type EditorTool = "pointer" | "eraser" | "brush" | "text";
+export type EditorTool = "pointer" | "eraser" | "brush" | "text" | "crop";
 
 function App() {
-  const [activePreset, setActivePreset] = useState<PlatformPreset>(
+  const [exportPreset, setExportPreset] = useState<PlatformPreset>(
     PLATFORM_PRESETS[0]!,
   );
   const [sizeWarning, setSizeWarning] = useState<string | null>(null);
@@ -51,6 +54,11 @@ function App() {
     tolerance: number;
     seq: number;
   } | null>(null);
+  const [transformRequest, setTransformRequest] = useState<{
+    type: "rotateCW" | "rotateCCW" | "flipH" | "flipV";
+    seq: number;
+  } | null>(null);
+  const transformSeqRef = useRef(0);
   const {
     pushState,
     undo: imageUndo,
@@ -115,13 +123,40 @@ function App() {
     }));
   }, []);
 
+  const handleRotateLeft = useCallback(() => {
+    setTransformRequest({ type: "rotateCCW", seq: transformSeqRef.current++ });
+  }, []);
+
+  const handleRotateRight = useCallback(() => {
+    setTransformRequest({ type: "rotateCW", seq: transformSeqRef.current++ });
+  }, []);
+
+  const handleFlipHorizontal = useCallback(() => {
+    setTransformRequest({ type: "flipH", seq: transformSeqRef.current++ });
+  }, []);
+
+  const handleFlipVertical = useCallback(() => {
+    setTransformRequest({ type: "flipV", seq: transformSeqRef.current++ });
+  }, []);
+
+  const [cropConfirmSeq, setCropConfirmSeq] = useState(0);
+  const cropConfirmSeqRef = useRef(0);
+
+  const handleCropConfirm = useCallback(() => {
+    setCropConfirmSeq(++cropConfirmSeqRef.current);
+  }, []);
+
+  const handleCropCancel = useCallback(() => {
+    setActiveTool("pointer");
+  }, []);
+
   const createStickerDescriptor = useCallback(
     (def: StickerDefinition, text?: string): StickerDescriptor => ({
       id: crypto.randomUUID(),
       src: def.src,
       label: def.label,
-      x: activePreset.width / 2 - 32,
-      y: activePreset.height / 2 - 32,
+      x: CANVAS_SIZE / 2 - 32,
+      y: CANVAS_SIZE / 2 - 32,
       width: 64,
       height: 64,
       scaleX: 1,
@@ -130,7 +165,7 @@ function App() {
       requiresText: def.requiresText,
       text,
     }),
-    [activePreset],
+    [],
   );
 
   const handlePlaceSticker = useCallback(
@@ -141,14 +176,12 @@ function App() {
         return;
       }
       const newSticker = createStickerDescriptor(def);
-      setStickers((prev) => {
-        const newStickers = [...prev, newSticker];
-        pushState(latestSnapshotRef.current ?? "");
-        stickerHistory.pushState(newStickers);
-        return newStickers;
-      });
+      const newStickers = [...stickers, newSticker];
+      setStickers(newStickers);
+      pushState(latestSnapshotRef.current ?? "");
+      stickerHistory.pushState(newStickers);
     },
-    [createStickerDescriptor, pushState, stickerHistory],
+    [stickers, createStickerDescriptor, pushState, stickerHistory],
   );
 
   const handleSpeechBubblePlace = useCallback(
@@ -156,17 +189,15 @@ function App() {
       const def = pendingTextStickerRef.current;
       if (def) {
         const newSticker = createStickerDescriptor(def, text);
-        setStickers((prev) => {
-          const newStickers = [...prev, newSticker];
-          pushState(latestSnapshotRef.current ?? "");
-          stickerHistory.pushState(newStickers);
-          return newStickers;
-        });
+        const newStickers = [...stickers, newSticker];
+        setStickers(newStickers);
+        pushState(latestSnapshotRef.current ?? "");
+        stickerHistory.pushState(newStickers);
         pendingTextStickerRef.current = null;
       }
       setShowSpeechBubbleModal(false);
     },
-    [createStickerDescriptor, pushState, stickerHistory],
+    [stickers, createStickerDescriptor, pushState, stickerHistory],
   );
 
   const handleSpeechBubbleCancel = useCallback(() => {
@@ -176,27 +207,23 @@ function App() {
 
   const handleUpdateSticker = useCallback(
     (desc: StickerDescriptor) => {
-      setStickers((prev) => {
-        const newStickers = prev.map((s) => (s.id === desc.id ? desc : s));
-        pushState(latestSnapshotRef.current ?? "");
-        stickerHistory.pushState(newStickers);
-        return newStickers;
-      });
+      const newStickers = stickers.map((s) => (s.id === desc.id ? desc : s));
+      setStickers(newStickers);
+      pushState(latestSnapshotRef.current ?? "");
+      stickerHistory.pushState(newStickers);
     },
-    [pushState, stickerHistory],
+    [stickers, pushState, stickerHistory],
   );
 
   const handleDeleteSticker = useCallback(
     (id: string) => {
-      setStickers((prev) => {
-        const newStickers = prev.filter((s) => s.id !== id);
-        pushState(latestSnapshotRef.current ?? "");
-        stickerHistory.pushState(newStickers);
-        return newStickers;
-      });
+      const newStickers = stickers.filter((s) => s.id !== id);
+      setStickers(newStickers);
+      pushState(latestSnapshotRef.current ?? "");
+      stickerHistory.pushState(newStickers);
       setSelectedStickerId((prev) => (prev === id ? null : prev));
     },
-    [pushState, stickerHistory],
+    [stickers, pushState, stickerHistory],
   );
 
   const handleSelectSticker = useCallback((id: string | null) => {
@@ -206,13 +233,10 @@ function App() {
   const handleToggleFrame = useCallback(
     (id: string) => {
       setActiveFrameId((prev) => (prev === id ? null : id));
-      setStickers((prev) => {
-        pushState(latestSnapshotRef.current ?? "");
-        stickerHistory.pushState(prev);
-        return prev;
-      });
+      pushState(latestSnapshotRef.current ?? "");
+      stickerHistory.pushState(stickers);
     },
-    [pushState, stickerHistory],
+    [stickers, pushState, stickerHistory],
   );
 
   const selectedStickerIdRef = useRef(selectedStickerId);
@@ -234,39 +258,56 @@ function App() {
           e.preventDefault();
           handleDeleteSticker(id);
         }
+      } else if (activeTool === "crop" && e.key === "Enter") {
+        e.preventDefault();
+        handleCropConfirm();
+      } else if (activeTool === "crop" && e.key === "Escape") {
+        e.preventDefault();
+        handleCropCancel();
       }
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleUndo, handleRedo, handleDeleteSticker]);
+  }, [
+    handleUndo,
+    handleRedo,
+    handleDeleteSticker,
+    activeTool,
+    handleCropConfirm,
+    handleCropCancel,
+  ]);
 
   function handleAnalyze() {
     if (!stageRef.current) return;
     const dataUrl = stageRef.current.toDataURL();
-    setCustomEmojiDataUrl(dataUrl);
     const canvas = stageRef.current.toCanvas();
     const imageData = canvas
       .getContext("2d")!
-      .getImageData(0, 0, activePreset.width, activePreset.height);
+      .getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE);
     const bounds = detectContentBounds(imageData);
     if (!bounds) {
       setSuggestions([]);
-      return;
+    } else {
+      setSuggestions(generateSuggestions(bounds, exportPreset, CANVAS_SIZE));
     }
-    setSuggestions(generateSuggestions(bounds, activePreset));
-  }
-
-  function handlePresetChange(id: string) {
-    const preset = PLATFORM_PRESETS.find((p) => p.id === id);
-    if (!preset) return;
-    if (image) {
-      const ok = window.confirm(
-        `Switching to ${preset.label} will resize the canvas. Your image will be re-scaled to fit. Continue?`,
-      );
-      if (!ok) return;
+    if (exportPreset.width < CANVAS_SIZE) {
+      const img = new window.Image();
+      img.onload = () => {
+        const sourceCanvas = document.createElement("canvas");
+        sourceCanvas.width = CANVAS_SIZE;
+        sourceCanvas.height = CANVAS_SIZE;
+        sourceCanvas.getContext("2d")!.drawImage(img, 0, 0);
+        const scaled = downscaleCanvas(
+          sourceCanvas,
+          exportPreset.width,
+          exportPreset.height,
+        );
+        setCustomEmojiDataUrl(scaled.toDataURL());
+      };
+      img.src = dataUrl;
+    } else {
+      setCustomEmojiDataUrl(dataUrl);
     }
-    setActivePreset(preset);
-    setSizeWarning(null);
   }
 
   function triggerDownload(canvas: HTMLCanvasElement, format: ExportFormat) {
@@ -282,11 +323,11 @@ function App() {
         );
         return;
       }
-      setSizeWarning(checkFileSizeWarning(blob.size, activePreset));
+      setSizeWarning(checkFileSizeWarning(blob.size, exportPreset));
       const href = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = href;
-      a.download = buildFilename(format);
+      a.download = buildFilename(format, exportPreset.id);
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -301,18 +342,18 @@ function App() {
         setSizeWarning("Export failed: canvas not ready.");
         return;
       }
-      exportStageAsBlob(stageRef.current).then((blob) => {
+      exportStageAsBlob(stageRef.current, exportPreset).then((blob) => {
         if (!blob) {
           setSizeWarning(
             "Export failed: this format is not supported by your browser.",
           );
           return;
         }
-        setSizeWarning(checkFileSizeWarning(blob.size, activePreset));
+        setSizeWarning(checkFileSizeWarning(blob.size, exportPreset));
         const href = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = href;
-        a.download = buildFilename(format);
+        a.download = buildFilename(format, exportPreset.id);
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -324,14 +365,19 @@ function App() {
       const img = new window.Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        canvas.width = activePreset.width;
-        canvas.height = activePreset.height;
+        canvas.width = CANVAS_SIZE;
+        canvas.height = CANVAS_SIZE;
         canvas.getContext("2d")!.drawImage(img, 0, 0);
-        triggerDownload(canvas, format);
+        const exportCanvas = downscaleCanvas(
+          canvas,
+          exportPreset.width,
+          exportPreset.height,
+        );
+        triggerDownload(exportCanvas, format);
       };
       img.src = latestSnapshot;
     } else {
-      triggerDownload(buildExportCanvas(image, activePreset), format);
+      triggerDownload(buildExportCanvas(image, exportPreset), format);
     }
   }
 
@@ -345,11 +391,6 @@ function App() {
       </header>
 
       <div className="app-card">
-        <PresetSelector
-          presets={PLATFORM_PRESETS}
-          activePresetId={activePreset.id}
-          onChange={handlePresetChange}
-        />
         <div className="editor-area">
           <Toolbar
             image={image}
@@ -370,9 +411,14 @@ function App() {
             bgTolerance={bgTolerance}
             onBgToleranceChange={setBgTolerance}
             onRemoveBackground={handleRemoveBackground}
+            onRotateLeft={handleRotateLeft}
+            onRotateRight={handleRotateRight}
+            onFlipHorizontal={handleFlipHorizontal}
+            onFlipVertical={handleFlipVertical}
+            onCropConfirm={handleCropConfirm}
+            onCropCancel={handleCropCancel}
           />
           <EmojiCanvas
-            preset={activePreset}
             image={image}
             handleFileInput={handleFileInput}
             handleDrop={handleDrop}
@@ -395,6 +441,8 @@ function App() {
             onSelectSticker={handleSelectSticker}
             activeFrameSrc={activeFrameSrc}
             bgRemovalRequest={bgRemovalRequest}
+            transformRequest={transformRequest}
+            cropConfirmSeq={cropConfirmSeq}
           />
           <DecoratePanel
             image={image}
@@ -414,9 +462,14 @@ function App() {
         />
         <ExportControls
           image={image}
-          preset={activePreset}
           onDownload={handleDownload}
           sizeWarning={sizeWarning}
+          presets={PLATFORM_PRESETS}
+          activePresetId={exportPreset.id}
+          onPresetChange={(id) => {
+            const preset = PLATFORM_PRESETS.find((p) => p.id === id);
+            if (preset) setExportPreset(preset);
+          }}
         />
       </div>
       {showSpeechBubbleModal && (

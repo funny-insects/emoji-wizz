@@ -21,6 +21,12 @@ interface ToolbarProps {
   onRemoveBackground: (tolerance: number) => void;
   bgTolerance: number;
   onBgToleranceChange: (t: number) => void;
+  onRotateLeft: () => void;
+  onRotateRight: () => void;
+  onFlipHorizontal: () => void;
+  onFlipVertical: () => void;
+  onCropConfirm: () => void;
+  onCropCancel: () => void;
 }
 
 export function Toolbar({
@@ -42,6 +48,12 @@ export function Toolbar({
   onRemoveBackground,
   bgTolerance,
   onBgToleranceChange,
+  onRotateLeft,
+  onRotateRight,
+  onFlipHorizontal,
+  onFlipVertical,
+  onCropConfirm,
+  onCropCancel,
 }: ToolbarProps) {
   if (!image) return null;
 
@@ -89,7 +101,93 @@ export function Toolbar({
         >
           ✂
         </button>
+        <div className="toolbar-bg-settings">
+          <label className="toolbar-brush-size-label" htmlFor="bg-tolerance">
+            tol
+          </label>
+          <input
+            id="bg-tolerance"
+            type="number"
+            className="toolbar-brush-size-input"
+            value={bgTolerance}
+            min={0}
+            max={128}
+            onChange={(e) => {
+              const v = parseInt(e.target.value, 10);
+              if (!isNaN(v) && v >= 0 && v <= 128) onBgToleranceChange(v);
+            }}
+          />
+        </div>
+        <button
+          className={`toolbar-btn${activeTool === "crop" ? " toolbar-btn--active" : ""}`}
+          onClick={() => onToolChange("crop")}
+          disabled={!image}
+          aria-label="Crop"
+          title="Crop"
+        >
+          ⬒
+        </button>
       </div>
+
+      <div className="toolbar-transforms">
+        <button
+          className="toolbar-btn"
+          onClick={onRotateLeft}
+          disabled={!image}
+          aria-label="Rotate Left"
+          title="Rotate Left"
+        >
+          ↺
+        </button>
+        <button
+          className="toolbar-btn"
+          onClick={onRotateRight}
+          disabled={!image}
+          aria-label="Rotate Right"
+          title="Rotate Right"
+        >
+          ↻
+        </button>
+        <button
+          className="toolbar-btn"
+          onClick={onFlipHorizontal}
+          disabled={!image}
+          aria-label="Flip Horizontal"
+          title="Flip Horizontal"
+        >
+          ⇔
+        </button>
+        <button
+          className="toolbar-btn"
+          onClick={onFlipVertical}
+          disabled={!image}
+          aria-label="Flip Vertical"
+          title="Flip Vertical"
+        >
+          ⇕
+        </button>
+      </div>
+
+      {activeTool === "crop" && (
+        <div className="toolbar-crop-actions">
+          <button
+            className="toolbar-btn toolbar-btn--confirm"
+            onClick={onCropConfirm}
+            aria-label="Confirm Crop"
+            title="Confirm Crop (Enter)"
+          >
+            ✓
+          </button>
+          <button
+            className="toolbar-btn toolbar-btn--cancel"
+            onClick={onCropCancel}
+            aria-label="Cancel Crop"
+            title="Cancel Crop (Escape)"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {activeTool === "brush" && (
         <div className="toolbar-brush-settings">
@@ -158,24 +256,6 @@ export function Toolbar({
           </div>
         </div>
       )}
-
-      <div className="toolbar-bg-settings">
-        <label className="toolbar-brush-size-label" htmlFor="bg-tolerance">
-          tol
-        </label>
-        <input
-          id="bg-tolerance"
-          type="number"
-          className="toolbar-brush-size-input"
-          value={bgTolerance}
-          min={0}
-          max={128}
-          onChange={(e) => {
-            const v = parseInt(e.target.value, 10);
-            if (!isNaN(v) && v >= 0 && v <= 128) onBgToleranceChange(v);
-          }}
-        />
-      </div>
 
       <div className="toolbar-history">
         <button

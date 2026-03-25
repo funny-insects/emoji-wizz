@@ -4,15 +4,20 @@ import type { PlatformPreset } from "../utils/presets";
 
 interface ExportControlsProps {
   image: HTMLImageElement | null;
-  preset: PlatformPreset;
   onDownload: (format: ExportFormat) => void;
   sizeWarning: string | null;
+  presets: PlatformPreset[];
+  activePresetId: string;
+  onPresetChange: (id: string) => void;
 }
 
 export function ExportControls({
   image,
   onDownload,
   sizeWarning,
+  presets,
+  activePresetId,
+  onPresetChange,
 }: ExportControlsProps) {
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>("png");
 
@@ -23,8 +28,21 @@ export function ExportControls({
       <div className="export-row">
         <select
           className="format-select"
+          value={activePresetId}
+          onChange={(e) => onPresetChange(e.target.value)}
+          aria-label="Platform"
+        >
+          {presets.map((preset) => (
+            <option key={preset.id} value={preset.id}>
+              {preset.label}
+            </option>
+          ))}
+        </select>
+        <select
+          className="format-select"
           value={selectedFormat}
           onChange={(e) => setSelectedFormat(e.target.value as ExportFormat)}
+          aria-label="Format"
         >
           <option value="png">PNG</option>
           <option value="gif">GIF</option>
