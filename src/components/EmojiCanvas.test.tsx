@@ -38,7 +38,7 @@ describe("EmojiCanvas", () => {
     expect(canvas!.height).toBe(512);
   });
 
-  it("renders five layers in order: background, image, overlays, stickers, frames", () => {
+  it("renders six layers in order: background, image, overlays, crop, stickers, frames", () => {
     render(
       <EmojiCanvas
         image={null}
@@ -48,7 +48,7 @@ describe("EmojiCanvas", () => {
       />,
     );
     const stage = Konva.stages[0];
-    expect(stage.getLayers().length).toBe(5);
+    expect(stage.getLayers().length).toBe(6);
   });
 
   it("renders checkerboard tiles for the 512x512 canvas", () => {

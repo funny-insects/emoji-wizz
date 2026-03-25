@@ -11,6 +11,12 @@ import {
 import Konva from "konva";
 import { computeContainRect } from "../utils/imageScaling";
 import { removeBackground } from "../utils/removeBackground";
+import {
+  rotateCanvas90,
+  flipCanvas,
+  reframeCanvas,
+  cropCanvas,
+} from "../utils/imageTransforms";
 import type { EditorTool } from "../App";
 import type { StickerDescriptor } from "../utils/stickerTypes";
 
@@ -37,6 +43,11 @@ interface EmojiCanvasProps {
   onSelectSticker?: (id: string | null) => void;
   activeFrameSrc?: string | null;
   bgRemovalRequest?: { tolerance: number; seq: number } | null;
+  transformRequest?: {
+    type: "rotateCW" | "rotateCCW" | "flipH" | "flipV";
+    seq: number;
+  } | null;
+  cropConfirmSeq?: number;
 }
 
 const TILE_SIZE = 8;
@@ -62,6 +73,7 @@ export function EmojiCanvas({
   handleDrop,
   handlePaste,
   activeTool,
+  onToolChange,
   onPushState,
   restoreSnapshot,
   onSnapshotRestored,
@@ -78,6 +90,8 @@ export function EmojiCanvas({
   onSelectSticker,
   activeFrameSrc = null,
   bgRemovalRequest = null,
+  transformRequest = null,
+  cropConfirmSeq = 0,
 }: EmojiCanvasProps) {
   const width = 512;
   const height = 512;
@@ -102,6 +116,15 @@ export function EmojiCanvas({
     x: number;
     y: number;
   } | null>(null);
+
+  const [cropRect, setCropRect] = useState<{
+    x: number;
+    y: number;
+    size: number;
+  } | null>(null);
+  const cropRectRef = useRef<Konva.Rect | null>(null);
+  const cropTransformerRef = useRef<Konva.Transformer | null>(null);
+  const prevCropConfirmSeqRef = useRef(cropConfirmSeq);
 
   useEffect(() => {
     onSnapshotRestoredRef.current = onSnapshotRestored;
@@ -475,6 +498,74 @@ export function EmojiCanvas({
     return () => clearTimeout(id);
   }, [bgRemovalRequest]);
 
+  // Apply image transform (rotate/flip) when a new request arrives
+  useEffect(() => {
+    if (!transformRequest || !offscreenCanvasRef.current) return;
+    const src = offscreenCanvasRef.current;
+    let result: HTMLCanvasElement;
+    switch (transformRequest.type) {
+      case "rotateCW":
+        result = rotateCanvas90(src, "cw");
+        break;
+      case "rotateCCW":
+        result = rotateCanvas90(src, "ccw");
+        break;
+      case "flipH":
+        result = flipCanvas(src, "horizontal");
+        break;
+      case "flipV":
+        result = flipCanvas(src, "vertical");
+        break;
+    }
+    const reframed = reframeCanvas(result, width, height);
+    const id = setTimeout(() => setDisplayCanvas(reframed), 0);
+    return () => clearTimeout(id);
+  }, [transformRequest, width, height]);
+
+  // Initialize / clear crop overlay when crop tool is toggled (sync during render)
+  const [prevCropTool, setPrevCropTool] = useState<EditorTool | undefined>(
+    activeTool,
+  );
+  if (activeTool !== prevCropTool) {
+    setPrevCropTool(activeTool);
+    if (activeTool === "crop") {
+      const defaultSize = Math.round(width * 0.5);
+      const offset = Math.round((width - defaultSize) / 2);
+      setCropRect({ x: offset, y: offset, size: defaultSize });
+    } else if (cropRect) {
+      setCropRect(null);
+    }
+  }
+
+  // Wire crop transformer to crop rect node
+  useEffect(() => {
+    const tr = cropTransformerRef.current;
+    const node = cropRectRef.current;
+    if (!tr) return;
+    if (activeTool === "crop" && node) {
+      tr.nodes([node]);
+      tr.getLayer()?.batchDraw();
+    } else {
+      tr.nodes([]);
+      tr.getLayer()?.batchDraw();
+    }
+  }, [activeTool, cropRect]);
+
+  // Handle crop confirm
+  useEffect(() => {
+    if (cropConfirmSeq === prevCropConfirmSeqRef.current) return;
+    prevCropConfirmSeqRef.current = cropConfirmSeq;
+    if (!cropRect || !offscreenCanvasRef.current) return;
+    const cropped = cropCanvas(offscreenCanvasRef.current, cropRect);
+    const reframed = reframeCanvas(cropped, width, height);
+    const id = setTimeout(() => {
+      setDisplayCanvas(reframed);
+      setCropRect(null);
+      onToolChange?.("pointer");
+    }, 0);
+    return () => clearTimeout(id);
+  }, [cropConfirmSeq, cropRect, width, height, onToolChange]);
+
   // Wire Transformer to selected sticker node
   useEffect(() => {
     const tr = transformerRef.current;
@@ -502,7 +593,9 @@ export function EmojiCanvas({
         ? { cursor: "crosshair" }
         : image && activeTool === "text"
           ? { cursor: "text" }
-          : {}),
+          : image && activeTool === "crop"
+            ? { cursor: "crosshair" }
+            : {}),
   };
 
   return (
@@ -576,6 +669,123 @@ export function EmojiCanvas({
                       fill="transparent"
                       listening={false}
                     />
+                  )}
+                </Layer>
+                <Layer>
+                  {activeTool === "crop" && cropRect && (
+                    <>
+                      {/* Dark mask: 4 rects surrounding the crop area */}
+                      <Rect
+                        x={0}
+                        y={0}
+                        width={width}
+                        height={cropRect.y}
+                        fill="rgba(0,0,0,0.5)"
+                        listening={false}
+                      />
+                      <Rect
+                        x={0}
+                        y={cropRect.y}
+                        width={cropRect.x}
+                        height={cropRect.size}
+                        fill="rgba(0,0,0,0.5)"
+                        listening={false}
+                      />
+                      <Rect
+                        x={cropRect.x + cropRect.size}
+                        y={cropRect.y}
+                        width={width - cropRect.x - cropRect.size}
+                        height={cropRect.size}
+                        fill="rgba(0,0,0,0.5)"
+                        listening={false}
+                      />
+                      <Rect
+                        x={0}
+                        y={cropRect.y + cropRect.size}
+                        width={width}
+                        height={height - cropRect.y - cropRect.size}
+                        fill="rgba(0,0,0,0.5)"
+                        listening={false}
+                      />
+                      {/* Crop selection rect — draggable */}
+                      <Rect
+                        ref={cropRectRef}
+                        x={cropRect.x}
+                        y={cropRect.y}
+                        width={cropRect.size}
+                        height={cropRect.size}
+                        stroke="white"
+                        strokeWidth={2}
+                        dash={[6, 3]}
+                        draggable
+                        onDragEnd={(e) => {
+                          const node = e.target;
+                          const newX = Math.max(
+                            0,
+                            Math.min(node.x(), width - cropRect.size),
+                          );
+                          const newY = Math.max(
+                            0,
+                            Math.min(node.y(), height - cropRect.size),
+                          );
+                          node.x(newX);
+                          node.y(newY);
+                          setCropRect({ ...cropRect, x: newX, y: newY });
+                        }}
+                        onTransformEnd={(e) => {
+                          const node = e.target;
+                          const scaleX = node.scaleX();
+                          const newSize = Math.max(
+                            20,
+                            Math.round(cropRect.size * scaleX),
+                          );
+                          const newX = Math.max(
+                            0,
+                            Math.min(Math.round(node.x()), width - newSize),
+                          );
+                          const newY = Math.max(
+                            0,
+                            Math.min(Math.round(node.y()), height - newSize),
+                          );
+                          node.scaleX(1);
+                          node.scaleY(1);
+                          node.width(newSize);
+                          node.height(newSize);
+                          node.x(newX);
+                          node.y(newY);
+                          setCropRect({ x: newX, y: newY, size: newSize });
+                        }}
+                      />
+                      <Transformer
+                        ref={cropTransformerRef}
+                        keepRatio={true}
+                        enabledAnchors={[
+                          "top-left",
+                          "top-right",
+                          "bottom-left",
+                          "bottom-right",
+                        ]}
+                        rotateEnabled={false}
+                        boundBoxFunc={(oldBox, newBox) => {
+                          const minSize = 20;
+                          if (
+                            newBox.width < minSize ||
+                            newBox.height < minSize
+                          ) {
+                            return oldBox;
+                          }
+                          if (
+                            newBox.x < 0 ||
+                            newBox.y < 0 ||
+                            newBox.x + newBox.width > width ||
+                            newBox.y + newBox.height > height
+                          ) {
+                            return oldBox;
+                          }
+                          return newBox;
+                        }}
+                      />
+                    </>
                   )}
                 </Layer>
                 <Layer>
