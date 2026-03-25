@@ -73,7 +73,7 @@ Add a platform format dropdown (Slack 128x128, Discord 128x128, Apple 512x512) t
 - [x] 2.8 In `exportUtils.test.ts`, add tests for `downscaleCanvas`: verify output dimensions match target, verify it handles same-size input (512→512 passthrough). Add test for `buildFilename` with platform ID.
 - [x] 2.9 Update `ExportControls.test.tsx` to verify the platform dropdown renders with all three platform options.
 
-### [ ] 3.0 Analyzer with Export-Format-Aware Suggestions
+### [x] 3.0 Analyzer with Export-Format-Aware Suggestions
 
 Update the analyzer to work on the 512x512 canvas while generating suggestions relative to the selected export format's constraints. Scale safe zone padding proportionally (e.g., Slack 12px at 128 becomes 48px at 512). Show the emoji preview at the selected export format's resolution in the optimizer panel.
 
@@ -84,10 +84,10 @@ Update the analyzer to work on the 512x512 canvas while generating suggestions r
 
 #### 3.0 Tasks
 
-- [ ] 3.1 In `generateSuggestions.ts`, update `generateSuggestions` to accept an optional `canvasSize` parameter (default 512). When `canvasSize` differs from `preset.width`, scale `safeZonePadding` proportionally: `scaledPadding = preset.safeZonePadding * (canvasSize / preset.width)`. Use `canvasSize` instead of `preset.width`/`preset.height` for the canvas boundary checks.
-- [ ] 3.2 In `App.tsx`, update `handleAnalyze` to pass `exportPreset` (instead of the old `activePreset`) to `generateSuggestions`, along with the canvas size (512). Update `getImageData` to use 512x512 dimensions.
-- [ ] 3.3 In `App.tsx`, update the analyzer's `customEmojiDataUrl` generation: after getting the 512x512 `stage.toDataURL()`, downscale it to the `exportPreset` dimensions for the preview image shown in the optimizer panel. Use `downscaleCanvas` from `exportUtils.ts`.
-- [ ] 3.4 In `generateSuggestions.test.ts`, add test cases that verify: (a) suggestions for a Slack preset with 512x512 canvas use scaled safe zone padding (48px instead of 12px), (b) suggestions for Apple preset with 512x512 canvas use original padding (40px), (c) existing tests still pass.
+- [x] 3.1 In `generateSuggestions.ts`, update `generateSuggestions` to accept an optional `canvasSize` parameter (default 512). When `canvasSize` differs from `preset.width`, scale `safeZonePadding` proportionally: `scaledPadding = preset.safeZonePadding * (canvasSize / preset.width)`. Use `canvasSize` instead of `preset.width`/`preset.height` for the canvas boundary checks.
+- [x] 3.2 In `App.tsx`, update `handleAnalyze` to pass `exportPreset` (instead of the old `activePreset`) to `generateSuggestions`, along with the canvas size (512). Update `getImageData` to use 512x512 dimensions.
+- [x] 3.3 In `App.tsx`, update the analyzer's `customEmojiDataUrl` generation: after getting the 512x512 `stage.toDataURL()`, downscale it to the `exportPreset` dimensions for the preview image shown in the optimizer panel. Use `downscaleCanvas` from `exportUtils.ts`.
+- [x] 3.4 In `generateSuggestions.test.ts`, add test cases that verify: (a) suggestions for a Slack preset with 512x512 canvas use scaled safe zone padding (48px instead of 12px), (b) suggestions for Apple preset with 512x512 canvas use original padding (40px), (c) existing tests still pass.
 
 ### [ ] 4.0 Quality Gate — Lint, Typecheck, and Test Pass
 

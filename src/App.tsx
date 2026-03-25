@@ -246,7 +246,6 @@ function App() {
   function handleAnalyze() {
     if (!stageRef.current) return;
     const dataUrl = stageRef.current.toDataURL();
-    setCustomEmojiDataUrl(dataUrl);
     const canvas = stageRef.current.toCanvas();
     const imageData = canvas
       .getContext("2d")!
@@ -254,9 +253,27 @@ function App() {
     const bounds = detectContentBounds(imageData);
     if (!bounds) {
       setSuggestions([]);
-      return;
+    } else {
+      setSuggestions(generateSuggestions(bounds, exportPreset, CANVAS_SIZE));
     }
-    setSuggestions(generateSuggestions(bounds, PLATFORM_PRESETS[0]!));
+    if (exportPreset.width < CANVAS_SIZE) {
+      const img = new window.Image();
+      img.onload = () => {
+        const sourceCanvas = document.createElement("canvas");
+        sourceCanvas.width = CANVAS_SIZE;
+        sourceCanvas.height = CANVAS_SIZE;
+        sourceCanvas.getContext("2d")!.drawImage(img, 0, 0);
+        const scaled = downscaleCanvas(
+          sourceCanvas,
+          exportPreset.width,
+          exportPreset.height,
+        );
+        setCustomEmojiDataUrl(scaled.toDataURL());
+      };
+      img.src = dataUrl;
+    } else {
+      setCustomEmojiDataUrl(dataUrl);
+    }
   }
 
   function triggerDownload(canvas: HTMLCanvasElement, format: ExportFormat) {
