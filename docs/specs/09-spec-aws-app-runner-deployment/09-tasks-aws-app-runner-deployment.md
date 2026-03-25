@@ -41,7 +41,7 @@ Update the existing Dockerfile's nginx configuration to handle client-side routi
 - [x] 1.3 Delete the `apprunner.yaml` file from the repository root since image-based ECR deployment replaces source-based deployment
 - [x] 1.4 Build and run the Docker image locally (`docker build -t emoji-wizz . && docker run -p 8080:8080 emoji-wizz`) and verify the app loads at `http://localhost:8080` and that deep routes (e.g., `/some/path`) return 200 instead of 404
 
-### [ ] 2.0 AWS Infrastructure Setup Scripts
+### [x] 2.0 AWS Infrastructure Setup Scripts
 
 Create idempotent shell scripts that provision all required AWS resources from scratch: ECR private repository, IAM roles/policies for App Runner and GitHub Actions OIDC, and the App Runner service itself. Include a teardown script to remove all resources.
 
@@ -54,13 +54,13 @@ Create idempotent shell scripts that provision all required AWS resources from s
 
 #### 2.0 Tasks
 
-- [ ] 2.1 Create the `scripts/` directory and add `scripts/aws-setup.sh` with a shebang, `set -euo pipefail`, and parameter handling for `--region` (defaulting to `us-east-1`) and `--account-id` (required, no default)
-- [ ] 2.2 Add an ECR provisioning section to `aws-setup.sh` that creates a private repository named `emoji-wizz` (skip if it already exists) and adds a lifecycle policy to keep only the last 10 images
-- [ ] 2.3 Add an IAM section to `aws-setup.sh` that creates an App Runner ECR access role (`emoji-wizz-apprunner-ecr-role`) with a trust policy for `build.apprunner.amazonaws.com` and attaches the `AWSAppRunnerServicePolicyForECRAccess` managed policy (skip if role already exists)
-- [ ] 2.4 Add a GitHub Actions OIDC section to `aws-setup.sh` that creates the IAM OIDC identity provider for `token.actions.githubusercontent.com` (skip if it already exists), then creates an IAM role (`emoji-wizz-github-actions-role`) with a trust policy scoped to the specific GitHub repository, and attaches an inline policy granting ECR push and App Runner `StartDeployment`/`ListServices`/`DescribeService` permissions
-- [ ] 2.5 Add an App Runner section to `aws-setup.sh` that creates the App Runner service named `emoji-wizz` using the ECR image URI, the access role from 2.3, port 8080, health check on `/`, and minimal scaling (1 min instance). Skip if service already exists. Output the App Runner service URL on success
-- [ ] 2.6 Create `scripts/aws-teardown.sh` that deletes resources in reverse order: App Runner service, IAM roles/policies, OIDC provider (if no other roles use it), and ECR repository (with `--force` to delete images). Each step should gracefully handle resources that don't exist
-- [ ] 2.7 Make both scripts executable (`chmod +x`) and test `aws-setup.sh` followed by `aws-teardown.sh` to verify idempotency and clean teardown
+- [x] 2.1 Create the `scripts/` directory and add `scripts/aws-setup.sh` with a shebang, `set -euo pipefail`, and parameter handling for `--region` (defaulting to `us-east-1`) and `--account-id` (required, no default)
+- [x] 2.2 Add an ECR provisioning section to `aws-setup.sh` that creates a private repository named `emoji-wizz` (skip if it already exists) and adds a lifecycle policy to keep only the last 10 images
+- [x] 2.3 Add an IAM section to `aws-setup.sh` that creates an App Runner ECR access role (`emoji-wizz-apprunner-ecr-role`) with a trust policy for `build.apprunner.amazonaws.com` and attaches the `AWSAppRunnerServicePolicyForECRAccess` managed policy (skip if role already exists)
+- [x] 2.4 Add a GitHub Actions OIDC section to `aws-setup.sh` that creates the IAM OIDC identity provider for `token.actions.githubusercontent.com` (skip if it already exists), then creates an IAM role (`emoji-wizz-github-actions-role`) with a trust policy scoped to the specific GitHub repository, and attaches an inline policy granting ECR push and App Runner `StartDeployment`/`ListServices`/`DescribeService` permissions
+- [x] 2.5 Add an App Runner section to `aws-setup.sh` that creates the App Runner service named `emoji-wizz` using the ECR image URI, the access role from 2.3, port 8080, health check on `/`, and minimal scaling (1 min instance). Skip if service already exists. Output the App Runner service URL on success
+- [x] 2.6 Create `scripts/aws-teardown.sh` that deletes resources in reverse order: App Runner service, IAM roles/policies, OIDC provider (if no other roles use it), and ECR repository (with `--force` to delete images). Each step should gracefully handle resources that don't exist
+- [x] 2.7 Make both scripts executable (`chmod +x`) and test `aws-setup.sh` followed by `aws-teardown.sh` to verify idempotency and clean teardown
 
 ### [ ] 3.0 Docker Build & ECR Push Script
 
