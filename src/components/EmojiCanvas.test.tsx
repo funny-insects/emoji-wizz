@@ -659,3 +659,67 @@ describe("EmojiCanvas — brush tool", () => {
     });
   });
 });
+
+const applePreset = PLATFORM_PRESETS.find((p) => p.id === "apple")!;
+
+describe("EmojiCanvas — display scale", () => {
+  it("renders the outer sizing div at 512×512 for the Slack (128×128) preset (4x scale)", () => {
+    const { container } = render(
+      <EmojiCanvas
+        preset={slackPreset}
+        image={null}
+        handleFileInput={noop}
+        handleDrop={noop}
+        handlePaste={noop}
+      />,
+    );
+    const dropZone = container.querySelector(".canvas-drop-zone")!;
+    const outer = dropZone.firstElementChild as HTMLElement;
+    expect(outer.style.width).toBe("512px");
+    expect(outer.style.height).toBe("512px");
+  });
+
+  it("renders the outer sizing div at 512×512 for the Apple (512×512) preset (1x scale)", () => {
+    const { container } = render(
+      <EmojiCanvas
+        preset={applePreset}
+        image={null}
+        handleFileInput={noop}
+        handleDrop={noop}
+        handlePaste={noop}
+      />,
+    );
+    const dropZone = container.querySelector(".canvas-drop-zone")!;
+    const outer = dropZone.firstElementChild as HTMLElement;
+    expect(outer.style.width).toBe("512px");
+    expect(outer.style.height).toBe("512px");
+  });
+
+  it("applies transform: scale(4) for Slack and scale(1) for Apple on the inner div", () => {
+    const { container, rerender } = render(
+      <EmojiCanvas
+        preset={slackPreset}
+        image={null}
+        handleFileInput={noop}
+        handleDrop={noop}
+        handlePaste={noop}
+      />,
+    );
+    const dropZone = container.querySelector(".canvas-drop-zone")!;
+    const inner = dropZone.firstElementChild!.firstElementChild as HTMLElement;
+    expect(inner.style.transform).toBe("scale(4)");
+
+    rerender(
+      <EmojiCanvas
+        preset={applePreset}
+        image={null}
+        handleFileInput={noop}
+        handleDrop={noop}
+        handlePaste={noop}
+      />,
+    );
+    const innerAfter = dropZone.firstElementChild!
+      .firstElementChild as HTMLElement;
+    expect(innerAfter.style.transform).toBe("scale(1)");
+  });
+});
