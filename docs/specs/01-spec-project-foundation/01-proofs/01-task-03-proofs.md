@@ -90,7 +90,9 @@ import App from "./App";
 describe("App", () => {
   it("renders the Emoji Wizz heading", () => {
     render(<App />);
-    expect(screen.getByRole("heading", { name: /emoji wizz/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /emoji wizz/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders the tagline", () => {
@@ -107,7 +109,9 @@ import { test, expect } from "@playwright/test";
 
 test("placeholder page loads with app name", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /emoji wizz/i })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: /emoji wizz/i }),
+  ).toBeVisible();
 });
 
 test("placeholder page shows tagline", async ({ page }) => {
@@ -118,10 +122,10 @@ test("placeholder page shows tagline", async ({ page }) => {
 
 ## Verification
 
-| Proof Artifact | Status |
-|---|---|
-| `vitest.config.ts` exists | ✅ |
-| `playwright.config.ts` exists | ✅ |
-| `task test` — 2 unit tests pass | ✅ |
-| `task test:e2e` — 2 e2e tests pass (Chromium) | ✅ |
-| Playwright browser binary (Chromium) installed | ✅ |
+| Proof Artifact                                 | Status |
+| ---------------------------------------------- | ------ |
+| `vitest.config.ts` exists                      | ✅     |
+| `playwright.config.ts` exists                  | ✅     |
+| `task test` — 2 unit tests pass                | ✅     |
+| `task test:e2e` — 2 e2e tests pass (Chromium)  | ✅     |
+| Playwright browser binary (Chromium) installed | ✅     |
