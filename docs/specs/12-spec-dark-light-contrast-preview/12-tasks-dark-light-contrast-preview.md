@@ -63,7 +63,7 @@
 - [x] 3.2 In the `handleAnalyze` function, after calling `detectContentBounds` and `generateSuggestions`, call `detectContrastIssues(imageData, bounds)` when bounds is not null. Merge the returned contrast suggestions into the suggestions array using spread or concat (e.g., `setSuggestions([...generateSuggestions(bounds, exportPreset, CANVAS_SIZE), ...detectContrastIssues(imageData, bounds)])`).
 - [x] 3.3 Run `task lint && task typecheck && task test` to verify no regressions and all tests pass.
 
-### [ ] 4.0 Clean up removed reference emoji prop and verify full integration
+### [x] 4.0 Clean up removed reference emoji prop and verify full integration
 
 #### 4.0 Proof Artifact(s)
 
@@ -72,6 +72,6 @@
 
 #### 4.0 Tasks
 
-- [ ] 4.1 In `src/App.tsx`, remove the `import referenceEmojiPng from "./assets/reference-emoji.png"` statement (line 31) and remove the `referenceEmojiSrc={referenceEmojiPng}` prop from the `<OptimizerPanel>` JSX (line 463).
-- [ ] 4.2 Verify no other files reference `referenceEmojiPng` or `referenceEmojiSrc` in source code (excluding docs/specs). If the reference emoji asset (`src/assets/reference-emoji.png`) is no longer used anywhere, delete it.
-- [ ] 4.3 Run `task lint && task typecheck && task test` to confirm everything passes cleanly with no dead code or broken references.
+- [x] 4.1 In `src/App.tsx`, remove the `import referenceEmojiPng from "./assets/reference-emoji.png"` statement (line 31) and remove the `referenceEmojiSrc={referenceEmojiPng}` prop from the `<OptimizerPanel>` JSX (line 463).
+- [x] 4.2 Verify no other files reference `referenceEmojiPng` or `referenceEmojiSrc` in source code (excluding docs/specs). If the reference emoji asset (`src/assets/reference-emoji.png`) is no longer used anywhere, delete it.
+- [x] 4.3 Run `task lint && task typecheck && task test` to confirm everything passes cleanly with no dead code or broken references.
