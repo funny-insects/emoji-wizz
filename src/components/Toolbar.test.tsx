@@ -16,6 +16,12 @@ const defaultTextProps: {
   onRemoveBackground: () => void;
   bgTolerance: number;
   onBgToleranceChange: () => void;
+  onRotateLeft: () => void;
+  onRotateRight: () => void;
+  onFlipHorizontal: () => void;
+  onFlipVertical: () => void;
+  onCropConfirm: () => void;
+  onCropCancel: () => void;
 } = {
   brushColor: "#000000",
   onBrushColorChange: () => {},
@@ -28,6 +34,12 @@ const defaultTextProps: {
   onRemoveBackground: () => {},
   bgTolerance: 15,
   onBgToleranceChange: () => {},
+  onRotateLeft: () => {},
+  onRotateRight: () => {},
+  onFlipHorizontal: () => {},
+  onFlipVertical: () => {},
+  onCropConfirm: () => {},
+  onCropCancel: () => {},
 };
 
 describe("Toolbar", () => {
