@@ -46,6 +46,11 @@ function App() {
   const [brushSize, setBrushSize] = useState<number>(3);
   const [textColor, setTextColor] = useState<string>("#000000");
   const [textSize, setTextSize] = useState<number>(18);
+  const [bgTolerance, setBgTolerance] = useState<number>(15);
+  const [bgRemovalRequest, setBgRemovalRequest] = useState<{
+    tolerance: number;
+    seq: number;
+  } | null>(null);
   const {
     pushState,
     undo: imageUndo,
@@ -101,6 +106,13 @@ function App() {
 
   const handleSnapshotRestored = useCallback(() => {
     setRestoreSnapshot(null);
+  }, []);
+
+  const handleRemoveBackground = useCallback((tolerance: number) => {
+    setBgRemovalRequest((prev) => ({
+      tolerance,
+      seq: (prev?.seq ?? 0) + 1,
+    }));
   }, []);
 
   const createStickerDescriptor = useCallback(
@@ -355,6 +367,9 @@ function App() {
             onTextColorChange={setTextColor}
             textSize={textSize}
             onTextSizeChange={setTextSize}
+            bgTolerance={bgTolerance}
+            onBgToleranceChange={setBgTolerance}
+            onRemoveBackground={handleRemoveBackground}
           />
           <EmojiCanvas
             preset={activePreset}
@@ -381,6 +396,7 @@ function App() {
             activeFrameSrc={activeFrameSrc}
             activeFrameId={activeFrameId}
             onRemoveFrame={() => setActiveFrameId(null)}
+            bgRemovalRequest={bgRemovalRequest}
           />
           <DecoratePanel
             image={image}

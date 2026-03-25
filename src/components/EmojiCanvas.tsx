@@ -11,6 +11,7 @@ import {
 import Konva from "konva";
 import { type PlatformPreset } from "../utils/presets";
 import { computeContainRect } from "../utils/imageScaling";
+import { removeBackground } from "../utils/removeBackground";
 import type { EditorTool } from "../App";
 import type { StickerDescriptor } from "../utils/stickerTypes";
 
@@ -37,6 +38,7 @@ interface EmojiCanvasProps {
   onDeleteSticker?: (id: string) => void;
   onSelectSticker?: (id: string | null) => void;
   activeFrameSrc?: string | null;
+  bgRemovalRequest?: { tolerance: number; seq: number } | null;
 }
 
 const TILE_SIZE = 8;
@@ -78,6 +80,7 @@ export function EmojiCanvas({
   onDeleteSticker,
   onSelectSticker,
   activeFrameSrc = null,
+  bgRemovalRequest = null,
 }: EmojiCanvasProps) {
   const { width, height, safeZonePadding } = preset;
   const tiles = buildCheckerboard(width, height);
@@ -449,6 +452,24 @@ export function EmojiCanvas({
     });
   }, [stickers, stickerImages]);
 
+  // Apply background removal when a new request arrives
+  useEffect(() => {
+    if (!bgRemovalRequest || !offscreenCanvasRef.current) return;
+    const src = offscreenCanvasRef.current;
+    const ctx = src.getContext("2d");
+    if (!ctx) return;
+    const imageData = ctx.getImageData(0, 0, src.width, src.height);
+    const result = removeBackground(imageData, bgRemovalRequest.tolerance);
+    const newCanvas = document.createElement("canvas");
+    newCanvas.width = src.width;
+    newCanvas.height = src.height;
+    const newCtx = newCanvas.getContext("2d");
+    if (!newCtx) return;
+    newCtx.putImageData(result, 0, 0);
+    const id = setTimeout(() => setDisplayCanvas(newCanvas), 0);
+    return () => clearTimeout(id);
+  }, [bgRemovalRequest]);
+
   // Wire Transformer to selected sticker node
   useEffect(() => {
     const tr = transformerRef.current;
@@ -614,7 +635,9 @@ export function EmojiCanvas({
                             y={
                               sticker.y + sticker.height * sticker.scaleY * 0.3
                             }
-                            y={sticker.y + sticker.height * sticker.scaleY * 0.3}
+                            y={
+                              sticker.y + sticker.height * sticker.scaleY * 0.3
+                            }
                             width={sticker.width * sticker.scaleX * 0.8}
                             text={sticker.text}
                             fontSize={Math.max(

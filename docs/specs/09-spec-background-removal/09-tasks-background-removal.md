@@ -67,7 +67,7 @@
 
 ---
 
-### [ ] 3.0 Wire Background Removal Through App and EmojiCanvas
+### [x] 3.0 Wire Background Removal Through App and EmojiCanvas
 
 #### 3.0 Proof Artifact(s)
 
@@ -75,26 +75,26 @@
 
 #### 3.0 Tasks
 
-- [ ] 3.1 In `EmojiCanvas.tsx`, import `removeBackground` from `../utils/removeBackground`.
-- [ ] 3.2 Add `bgRemovalRequest?: { tolerance: number; seq: number } | null` to `EmojiCanvasProps` and destructure it in the function signature (default `null`).
-- [ ] 3.3 Add a `useEffect` in `EmojiCanvas.tsx` that depends on `[bgRemovalRequest]`. Inside the effect:
+- [x] 3.1 In `EmojiCanvas.tsx`, import `removeBackground` from `../utils/removeBackground`.
+- [x] 3.2 Add `bgRemovalRequest?: { tolerance: number; seq: number } | null` to `EmojiCanvasProps` and destructure it in the function signature (default `null`).
+- [x] 3.3 Add a `useEffect` in `EmojiCanvas.tsx` that depends on `[bgRemovalRequest]`. Inside the effect:
   - Guard: if `!bgRemovalRequest || !offscreenCanvasRef.current` return early.
   - Read the current canvas: `const src = offscreenCanvasRef.current`.
   - Get pixel data: `const ctx = src.getContext("2d"); const imageData = ctx.getImageData(0, 0, src.width, src.height)`.
   - Process: `const result = removeBackground(imageData, bgRemovalRequest.tolerance)`.
   - Create a new canvas of the same size, get its 2d context, and call `ctx.putImageData(result, 0, 0)`.
   - Call `setDisplayCanvas(newCanvas)` — this replaces the offscreen canvas and automatically pushes history via the existing `useEffect` that watches `displayCanvas`.
-- [ ] 3.4 In `App.tsx`, add `bgTolerance` state: `const [bgTolerance, setBgTolerance] = useState<number>(15)`.
-- [ ] 3.5 In `App.tsx`, add `bgRemovalRequest` state: `const [bgRemovalRequest, setBgRemovalRequest] = useState<{ tolerance: number; seq: number } | null>(null)`.
-- [ ] 3.6 In `App.tsx`, add a `handleRemoveBackground` callback:
+- [x] 3.4 In `App.tsx`, add `bgTolerance` state: `const [bgTolerance, setBgTolerance] = useState<number>(15)`.
+- [x] 3.5 In `App.tsx`, add `bgRemovalRequest` state: `const [bgRemovalRequest, setBgRemovalRequest] = useState<{ tolerance: number; seq: number } | null>(null)`.
+- [x] 3.6 In `App.tsx`, add a `handleRemoveBackground` callback:
   ```ts
   const handleRemoveBackground = useCallback((tolerance: number) => {
     setBgRemovalRequest((prev) => ({ tolerance, seq: (prev?.seq ?? 0) + 1 }));
   }, []);
   ```
-- [ ] 3.7 Pass the new props to `<Toolbar />` in `App.tsx`: `bgTolerance={bgTolerance}`, `onBgToleranceChange={setBgTolerance}`, `onRemoveBackground={handleRemoveBackground}`.
-- [ ] 3.8 Pass `bgRemovalRequest={bgRemovalRequest}` to `<EmojiCanvas />` in `App.tsx`.
-- [ ] 3.9 Run `task test` and confirm the full suite passes with no regressions.
+- [x] 3.7 Pass the new props to `<Toolbar />` in `App.tsx`: `bgTolerance={bgTolerance}`, `onBgToleranceChange={setBgTolerance}`, `onRemoveBackground={handleRemoveBackground}`.
+- [x] 3.8 Pass `bgRemovalRequest={bgRemovalRequest}` to `<EmojiCanvas />` in `App.tsx`.
+- [x] 3.9 Run `task test` and confirm the full suite passes with no regressions.
 
 ---
 
