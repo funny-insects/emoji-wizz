@@ -26,6 +26,11 @@ tasks:
     cmds:
       - npx vitest run
 
+  test:coverage:
+    desc: Run Vitest unit tests with coverage
+    cmds:
+      - npx vitest run --coverage
+
   test:e2e:
     desc: Run Playwright e2e tests
     cmds:
