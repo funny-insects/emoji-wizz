@@ -64,15 +64,26 @@ export function OptimizerPanel({
 
           <div className="emoji-compare">
             <div className="emoji-figure">
-              <div className="emoji-frame">
+              <div className="emoji-frame emoji-frame-dark">
                 <img
                   src={customEmojiDataUrl ?? ""}
                   width={64}
                   height={64}
-                  alt="Your emoji"
+                  alt="Your emoji on dark background"
                 />
               </div>
-              <span className="emoji-caption">Yours</span>
+              <span className="emoji-caption">Dark</span>
+            </div>
+            <div className="emoji-figure">
+              <div className="emoji-frame emoji-frame-light">
+                <img
+                  src={customEmojiDataUrl ?? ""}
+                  width={64}
+                  height={64}
+                  alt="Your emoji on light background"
+                />
+              </div>
+              <span className="emoji-caption">Light</span>
             </div>
             <div className="emoji-figure">
               <div className="emoji-frame">

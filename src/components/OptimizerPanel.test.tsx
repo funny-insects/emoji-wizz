@@ -42,4 +42,19 @@ describe("OptimizerPanel", () => {
     const item = screen.getByText("Trim transparent padding");
     expect(item).toBeInTheDocument();
   });
+
+  it("renders two images with the same src on dark and light backgrounds", () => {
+    render(
+      <OptimizerPanel
+        {...baseProps}
+        suggestions={[]}
+        customEmojiDataUrl="data:image/png;base64,test"
+      />,
+    );
+    const images = screen.getAllByRole("img");
+    expect(images).toHaveLength(3);
+    expect(images[0]).toHaveAttribute("src", "data:image/png;base64,test");
+    expect(images[1]).toHaveAttribute("src", "data:image/png;base64,test");
+    expect(images[2]).toHaveAttribute("src", "/reference.png");
+  });
 });
