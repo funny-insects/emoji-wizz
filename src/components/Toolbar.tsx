@@ -43,6 +43,14 @@ export function Toolbar({
     <div className="toolbar">
       <div className="toolbar-tools">
         <button
+          className={`toolbar-btn${activeTool === "pointer" ? " toolbar-btn--active" : ""}`}
+          onClick={() => onToolChange("pointer")}
+          aria-label="Pointer"
+          title="Pointer"
+        >
+          ↖
+        </button>
+        <button
           className={`toolbar-btn${activeTool === "eraser" ? " toolbar-btn--active" : ""}`}
           onClick={() => onToolChange("eraser")}
           aria-label="Eraser"

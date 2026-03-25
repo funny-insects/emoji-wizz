@@ -5,6 +5,11 @@ import sparkleEyesSrc from "./sparkle-eyes.png";
 import googlyEyesSrc from "./googly-eyes.png";
 import laserEyesSrc from "./laser-eyes.png";
 import speechBubbleSrc from "./speech-bubble.png";
+import crownSrc from "./crown.png";
+import fireSrc from "./fire.png";
+import partyPopperSrc from "./party-popper.png";
+import sparklesSrc from "./sparkles.png";
+import sweatSrc from "./sweat.png";
 
 export interface StickerDefinition {
   id: string;
@@ -15,6 +20,19 @@ export interface StickerDefinition {
 }
 
 export const STICKER_DEFINITIONS: StickerDefinition[] = [
+  // Eyes overlays
+  {
+    id: "googly-eyes",
+    label: "Googly Eyes",
+    src: googlyEyesSrc,
+    category: "eyes",
+  },
+  {
+    id: "laser-eyes",
+    label: "Laser Eyes",
+    src: laserEyesSrc,
+    category: "eyes",
+  },
   {
     id: "heart-eyes",
     label: "Heart Eyes",
@@ -39,23 +57,28 @@ export const STICKER_DEFINITIONS: StickerDefinition[] = [
     src: sparkleEyesSrc,
     category: "eyes",
   },
+  // Effects / accessories
+  { id: "crown", label: "Crown", src: crownSrc, category: "effects" },
+  { id: "fire", label: "Fire", src: fireSrc, category: "effects" },
   {
-    id: "googly-eyes",
-    label: "Googly Eyes",
-    src: googlyEyesSrc,
-    category: "eyes",
+    id: "party-popper",
+    label: "Party",
+    src: partyPopperSrc,
+    category: "effects",
   },
   {
-    id: "laser-eyes",
-    label: "Laser Eyes",
-    src: laserEyesSrc,
-    category: "eyes",
+    id: "sparkles",
+    label: "Sparkles",
+    src: sparklesSrc,
+    category: "effects",
   },
+  { id: "sweat", label: "Sweat", src: sweatSrc, category: "effects" },
+  // Speech bubble
   {
     id: "speech-bubble",
     label: "Speech Bubble",
     src: speechBubbleSrc,
-    category: "eyes",
+    category: "speech",
     requiresText: true,
   },
 ];
