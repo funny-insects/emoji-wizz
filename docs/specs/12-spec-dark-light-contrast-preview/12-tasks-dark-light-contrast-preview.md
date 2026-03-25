@@ -34,7 +34,7 @@
 - [x] 1.2 In `src/components/OptimizerPanel.tsx`, remove the `referenceEmojiSrc` prop from the `OptimizerPanelProps` interface and the function destructuring. Replace the two `.emoji-figure` blocks (lines 66-87) so that both figures render the user's `customEmojiDataUrl` image: the first with className `emoji-frame emoji-frame-dark` and label "Dark", the second with className `emoji-frame emoji-frame-light` and label "Light".
 - [x] 1.3 In `src/components/OptimizerPanel.test.tsx`, remove `referenceEmojiSrc` from `baseProps`. Update or add a test that renders with `suggestions={[]}` and `customEmojiDataUrl="data:image/png;base64,test"` and asserts that two `img` elements are present, both with the same `src` value.
 
-### [ ] 2.0 Implement edge-pixel contrast detection utility
+### [x] 2.0 Implement edge-pixel contrast detection utility
 
 #### 2.0 Proof Artifact(s)
 
@@ -42,11 +42,11 @@
 
 #### 2.0 Tasks
 
-- [ ] 2.1 Create `src/utils/detectContrastIssues.ts`. Export a function `detectContrastIssues(imageData: ImageData, bounds: ContentBounds): string[]`. Import `ContentBounds` from `./detectContentBounds`.
-- [ ] 2.2 Implement edge pixel sampling inside `detectContrastIssues`: walk the perimeter of the content bounding box (top edge, bottom edge, left edge, right edge) using the `bounds` parameter. For each perimeter pixel, read its RGBA values from `imageData.data`. Skip fully transparent pixels (alpha === 0).
-- [ ] 2.3 Implement contrast comparison: define the dark background as `{r: 26, g: 26, b: 26}` (#1a1a1a) and light background as `{r: 255, g: 255, b: 255}` (#ffffff). For each non-transparent edge pixel, compute the Euclidean RGB distance to each background color: `sqrt((r1-r2)^2 + (g1-g2)^2 + (b1-b2)^2)`. Use a threshold of ~55 (moderate sensitivity). Track a count of "too close" pixels for each background.
-- [ ] 2.4 Implement the decision logic: if a significant proportion (e.g., >25%) of non-transparent edge pixels are too close to the dark background, push `"Your emoji may be hard to see on dark backgrounds"` to the results array. Apply the same logic for light backgrounds with `"Your emoji may be hard to see on light backgrounds"`. Return the results array (empty if no issues).
-- [ ] 2.5 Create `src/utils/detectContrastIssues.test.ts` with tests for: (a) a nearly white emoji on a 4x4 ImageData triggers the "hard to see on light backgrounds" warning, (b) a nearly black emoji triggers the "hard to see on dark backgrounds" warning, (c) a bright red/green emoji triggers no warnings, (d) a fully transparent image returns no warnings. Use a helper similar to `makeImageData` from `detectContentBounds.test.ts` to create test fixtures.
+- [x] 2.1 Create `src/utils/detectContrastIssues.ts`. Export a function `detectContrastIssues(imageData: ImageData, bounds: ContentBounds): string[]`. Import `ContentBounds` from `./detectContentBounds`.
+- [x] 2.2 Implement edge pixel sampling inside `detectContrastIssues`: walk the perimeter of the content bounding box (top edge, bottom edge, left edge, right edge) using the `bounds` parameter. For each perimeter pixel, read its RGBA values from `imageData.data`. Skip fully transparent pixels (alpha === 0).
+- [x] 2.3 Implement contrast comparison: define the dark background as `{r: 26, g: 26, b: 26}` (#1a1a1a) and light background as `{r: 255, g: 255, b: 255}` (#ffffff). For each non-transparent edge pixel, compute the Euclidean RGB distance to each background color: `sqrt((r1-r2)^2 + (g1-g2)^2 + (b1-b2)^2)`. Use a threshold of ~55 (moderate sensitivity). Track a count of "too close" pixels for each background.
+- [x] 2.4 Implement the decision logic: if a significant proportion (e.g., >25%) of non-transparent edge pixels are too close to the dark background, push `"Your emoji may be hard to see on dark backgrounds"` to the results array. Apply the same logic for light backgrounds with `"Your emoji may be hard to see on light backgrounds"`. Return the results array (empty if no issues).
+- [x] 2.5 Create `src/utils/detectContrastIssues.test.ts` with tests for: (a) a nearly white emoji on a 4x4 ImageData triggers the "hard to see on light backgrounds" warning, (b) a nearly black emoji triggers the "hard to see on dark backgrounds" warning, (c) a bright red/green emoji triggers no warnings, (d) a fully transparent image returns no warnings. Use a helper similar to `makeImageData` from `detectContentBounds.test.ts` to create test fixtures.
 
 ### [ ] 3.0 Integrate contrast warnings into the suggestion flow
 
