@@ -91,7 +91,7 @@ export function DecoratePanel({
                   onClick={() => onPlaceSticker(def)}
                   title={def.label}
                 >
-                  <img src={def.src} alt={def.label} />
+                  <img src={def.src} alt={def.label} draggable={false} />
                   <span className="decorate-panel__item-label">
                     {def.label}
                   </span>
@@ -104,7 +104,7 @@ export function DecoratePanel({
                   onClick={() => onPlaceSticker(def)}
                   title={def.label}
                 >
-                  <img src={def.src} alt={def.label} />
+                  <img src={def.src} alt={def.label} draggable={false} />
                   <span className="decorate-panel__item-label">
                     {def.label}
                   </span>

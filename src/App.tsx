@@ -144,14 +144,12 @@ function App() {
         return;
       }
       const newSticker = createStickerDescriptor(def);
-      setStickers((prev) => {
-        const newStickers = [...prev, newSticker];
-        pushState(latestSnapshotRef.current ?? "");
-        stickerHistory.pushState(newStickers);
-        return newStickers;
-      });
+      const newStickers = [...stickers, newSticker];
+      setStickers(newStickers);
+      pushState(latestSnapshotRef.current ?? "");
+      stickerHistory.pushState(newStickers);
     },
-    [createStickerDescriptor, pushState, stickerHistory],
+    [stickers, createStickerDescriptor, pushState, stickerHistory],
   );
 
   const handleSpeechBubblePlace = useCallback(
@@ -159,17 +157,15 @@ function App() {
       const def = pendingTextStickerRef.current;
       if (def) {
         const newSticker = createStickerDescriptor(def, text);
-        setStickers((prev) => {
-          const newStickers = [...prev, newSticker];
-          pushState(latestSnapshotRef.current ?? "");
-          stickerHistory.pushState(newStickers);
-          return newStickers;
-        });
+        const newStickers = [...stickers, newSticker];
+        setStickers(newStickers);
+        pushState(latestSnapshotRef.current ?? "");
+        stickerHistory.pushState(newStickers);
         pendingTextStickerRef.current = null;
       }
       setShowSpeechBubbleModal(false);
     },
-    [createStickerDescriptor, pushState, stickerHistory],
+    [stickers, createStickerDescriptor, pushState, stickerHistory],
   );
 
   const handleSpeechBubbleCancel = useCallback(() => {
@@ -179,27 +175,23 @@ function App() {
 
   const handleUpdateSticker = useCallback(
     (desc: StickerDescriptor) => {
-      setStickers((prev) => {
-        const newStickers = prev.map((s) => (s.id === desc.id ? desc : s));
-        pushState(latestSnapshotRef.current ?? "");
-        stickerHistory.pushState(newStickers);
-        return newStickers;
-      });
+      const newStickers = stickers.map((s) => (s.id === desc.id ? desc : s));
+      setStickers(newStickers);
+      pushState(latestSnapshotRef.current ?? "");
+      stickerHistory.pushState(newStickers);
     },
-    [pushState, stickerHistory],
+    [stickers, pushState, stickerHistory],
   );
 
   const handleDeleteSticker = useCallback(
     (id: string) => {
-      setStickers((prev) => {
-        const newStickers = prev.filter((s) => s.id !== id);
-        pushState(latestSnapshotRef.current ?? "");
-        stickerHistory.pushState(newStickers);
-        return newStickers;
-      });
+      const newStickers = stickers.filter((s) => s.id !== id);
+      setStickers(newStickers);
+      pushState(latestSnapshotRef.current ?? "");
+      stickerHistory.pushState(newStickers);
       setSelectedStickerId((prev) => (prev === id ? null : prev));
     },
-    [pushState, stickerHistory],
+    [stickers, pushState, stickerHistory],
   );
 
   const handleSelectSticker = useCallback((id: string | null) => {
@@ -209,13 +201,10 @@ function App() {
   const handleToggleFrame = useCallback(
     (id: string) => {
       setActiveFrameId((prev) => (prev === id ? null : id));
-      setStickers((prev) => {
-        pushState(latestSnapshotRef.current ?? "");
-        stickerHistory.pushState(prev);
-        return prev;
-      });
+      pushState(latestSnapshotRef.current ?? "");
+      stickerHistory.pushState(stickers);
     },
-    [pushState, stickerHistory],
+    [stickers, pushState, stickerHistory],
   );
 
   const selectedStickerIdRef = useRef(selectedStickerId);

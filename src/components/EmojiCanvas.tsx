@@ -319,12 +319,19 @@ export function EmojiCanvas({
 
   const handleClick = useCallback(
     (e: Konva.KonvaEventObject<MouseEvent>) => {
-      if (e.target === e.target.getStage()) {
+      const target = e.target;
+      const isStickerNode = [...stickerNodeRefs.current.values()].some(
+        (node) => node === target,
+      );
+      const isTransformerPart =
+        target instanceof Konva.Transformer ||
+        target.getParent() instanceof Konva.Transformer;
+      if (!isStickerNode && !isTransformerPart) {
         onSelectSticker?.(null);
       }
       if (activeTool !== "text") return;
       if (textInputPos) return;
-      const stage = e.target.getStage();
+      const stage = target.getStage();
       const pos = stage?.getPointerPosition();
       if (!pos) return;
       setTextInputPos({ x: pos.x, y: pos.y });
