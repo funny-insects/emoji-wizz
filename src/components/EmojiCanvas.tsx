@@ -11,6 +11,11 @@ import {
 import Konva from "konva";
 import { computeContainRect } from "../utils/imageScaling";
 import { removeBackground } from "../utils/removeBackground";
+import {
+  rotateCanvas90,
+  flipCanvas,
+  reframeCanvas,
+} from "../utils/imageTransforms";
 import type { EditorTool } from "../App";
 import type { StickerDescriptor } from "../utils/stickerTypes";
 
@@ -37,6 +42,10 @@ interface EmojiCanvasProps {
   onSelectSticker?: (id: string | null) => void;
   activeFrameSrc?: string | null;
   bgRemovalRequest?: { tolerance: number; seq: number } | null;
+  transformRequest?: {
+    type: "rotateCW" | "rotateCCW" | "flipH" | "flipV";
+    seq: number;
+  } | null;
 }
 
 const TILE_SIZE = 8;
@@ -78,6 +87,7 @@ export function EmojiCanvas({
   onSelectSticker,
   activeFrameSrc = null,
   bgRemovalRequest = null,
+  transformRequest = null,
 }: EmojiCanvasProps) {
   const width = 512;
   const height = 512;
@@ -467,6 +477,30 @@ export function EmojiCanvas({
     const id = setTimeout(() => setDisplayCanvas(newCanvas), 0);
     return () => clearTimeout(id);
   }, [bgRemovalRequest]);
+
+  // Apply image transform (rotate/flip) when a new request arrives
+  useEffect(() => {
+    if (!transformRequest || !offscreenCanvasRef.current) return;
+    const src = offscreenCanvasRef.current;
+    let result: HTMLCanvasElement;
+    switch (transformRequest.type) {
+      case "rotateCW":
+        result = rotateCanvas90(src, "cw");
+        break;
+      case "rotateCCW":
+        result = rotateCanvas90(src, "ccw");
+        break;
+      case "flipH":
+        result = flipCanvas(src, "horizontal");
+        break;
+      case "flipV":
+        result = flipCanvas(src, "vertical");
+        break;
+    }
+    const reframed = reframeCanvas(result, width, height);
+    const id = setTimeout(() => setDisplayCanvas(reframed), 0);
+    return () => clearTimeout(id);
+  }, [transformRequest, width, height]);
 
   // Wire Transformer to selected sticker node
   useEffect(() => {

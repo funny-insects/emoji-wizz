@@ -40,7 +40,7 @@ Create pure utility functions for all three canvas transformations. These operat
 - [x] 1.4 Add a `reframeCanvas(canvas: HTMLCanvasElement, targetWidth: number, targetHeight: number): HTMLCanvasElement` function that takes any-dimension canvas content and scales+centers it onto a new `targetWidth × targetHeight` canvas using the same logic as `computeContainRect`. This encapsulates the auto-reframe step.
 - [x] 1.5 Create `src/utils/imageTransforms.test.ts` with unit tests: (a) rotate CW produces correct dimensions and pixel placement, (b) rotate CCW produces correct dimensions, (c) flip horizontal mirrors pixels, (d) flip vertical mirrors pixels, (e) crop extracts exact region, (f) reframe scales and centers content, (g) all functions return a new canvas (input canvas is unchanged). Use `document.createElement("canvas")` with small test canvases (e.g., 4×2) and verify pixel data via `getImageData`.
 
-### [ ] 2.0 Rotate and Flip Toolbar Buttons with Canvas Integration
+### [x] 2.0 Rotate and Flip Toolbar Buttons with Canvas Integration
 
 Add four action buttons (Rotate Left, Rotate Right, Flip H, Flip V) to the existing Toolbar. Wire them through App.tsx to apply the transform to the offscreen canvas, auto-reframe the result, and push an undo snapshot.
 
@@ -54,13 +54,13 @@ Add four action buttons (Rotate Left, Rotate Right, Flip H, Flip V) to the exist
 
 #### 2.0 Tasks
 
-- [ ] 2.1 In `src/components/Toolbar.tsx`, add a new `toolbar-transforms` section (between `toolbar-tools` and the brush/text settings). Add four buttons: Rotate Left (↺), Rotate Right (↻), Flip Horizontal (⇔), Flip Vertical (⇕). Each button uses the `toolbar-btn` class, has `disabled={!image}`, and calls a corresponding callback prop.
-- [ ] 2.2 Add new props to `ToolbarProps`: `onRotateLeft: () => void`, `onRotateRight: () => void`, `onFlipHorizontal: () => void`, `onFlipVertical: () => void`. Wire them to the button `onClick` handlers.
-- [ ] 2.3 In `Toolbar.css`, add a `.toolbar-transforms` rule with the same flex column layout and a `border-top: 1px solid var(--border)` separator, matching the existing `toolbar-history` pattern.
-- [ ] 2.4 In `src/components/EmojiCanvas.tsx`, add a new prop `transformRequest` of type `{ type: "rotateCW" | "rotateCCW" | "flipH" | "flipV"; seq: number } | null`. In a `useEffect` watching this prop, when it changes: (a) read `offscreenCanvasRef.current`, (b) call the appropriate utility from `imageTransforms.ts`, (c) call `reframeCanvas` on the result to scale+center it to 512×512, (d) update `displayCanvas` state with the new canvas, triggering the existing snapshot push.
-- [ ] 2.5 In `src/App.tsx`, add state `const [transformRequest, setTransformRequest] = useState<{ type: ...; seq: number } | null>(null)` and a `seqRef` counter. Create handler functions `handleRotateLeft`, `handleRotateRight`, `handleFlipHorizontal`, `handleFlipVertical` that each call `setTransformRequest({ type: "rotateCW", seq: seqRef.current++ })` (etc.). Pass these as props to `Toolbar` and pass `transformRequest` to `EmojiCanvas`.
-- [ ] 2.6 Verify undo works: after applying a rotate, pressing Ctrl+Z should restore the previous canvas state via the existing `useHistory` hook (no new code needed — the snapshot push in step 2.4 handles this automatically).
-- [ ] 2.7 Run `task lint && task typecheck && task test` and fix any issues.
+- [x] 2.1 In `src/components/Toolbar.tsx`, add a new `toolbar-transforms` section (between `toolbar-tools` and the brush/text settings). Add four buttons: Rotate Left (↺), Rotate Right (↻), Flip Horizontal (⇔), Flip Vertical (⇕). Each button uses the `toolbar-btn` class, has `disabled={!image}`, and calls a corresponding callback prop.
+- [x] 2.2 Add new props to `ToolbarProps`: `onRotateLeft: () => void`, `onRotateRight: () => void`, `onFlipHorizontal: () => void`, `onFlipVertical: () => void`. Wire them to the button `onClick` handlers.
+- [x] 2.3 In `Toolbar.css`, add a `.toolbar-transforms` rule with the same flex column layout and a `border-top: 1px solid var(--border)` separator, matching the existing `toolbar-history` pattern.
+- [x] 2.4 In `src/components/EmojiCanvas.tsx`, add a new prop `transformRequest` of type `{ type: "rotateCW" | "rotateCCW" | "flipH" | "flipV"; seq: number } | null`. In a `useEffect` watching this prop, when it changes: (a) read `offscreenCanvasRef.current`, (b) call the appropriate utility from `imageTransforms.ts`, (c) call `reframeCanvas` on the result to scale+center it to 512×512, (d) update `displayCanvas` state with the new canvas, triggering the existing snapshot push.
+- [x] 2.5 In `src/App.tsx`, add state `const [transformRequest, setTransformRequest] = useState<{ type: ...; seq: number } | null>(null)` and a `seqRef` counter. Create handler functions `handleRotateLeft`, `handleRotateRight`, `handleFlipHorizontal`, `handleFlipVertical` that each call `setTransformRequest({ type: "rotateCW", seq: seqRef.current++ })` (etc.). Pass these as props to `Toolbar` and pass `transformRequest` to `EmojiCanvas`.
+- [x] 2.6 Verify undo works: after applying a rotate, pressing Ctrl+Z should restore the previous canvas state via the existing `useHistory` hook (no new code needed — the snapshot push in step 2.4 handles this automatically).
+- [x] 2.7 Run `task lint && task typecheck && task test` and fix any issues.
 
 ### [ ] 3.0 Crop Tool — Overlay UI and Interaction
 

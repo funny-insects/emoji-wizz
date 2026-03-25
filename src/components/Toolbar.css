@@ -15,6 +15,14 @@
   gap: 4px;
 }
 
+.toolbar-transforms {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
 .toolbar-history {
   display: flex;
   flex-direction: column;

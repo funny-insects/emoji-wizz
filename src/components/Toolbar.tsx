@@ -21,6 +21,10 @@ interface ToolbarProps {
   onRemoveBackground: (tolerance: number) => void;
   bgTolerance: number;
   onBgToleranceChange: (t: number) => void;
+  onRotateLeft: () => void;
+  onRotateRight: () => void;
+  onFlipHorizontal: () => void;
+  onFlipVertical: () => void;
 }
 
 export function Toolbar({
@@ -42,6 +46,10 @@ export function Toolbar({
   onRemoveBackground,
   bgTolerance,
   onBgToleranceChange,
+  onRotateLeft,
+  onRotateRight,
+  onFlipHorizontal,
+  onFlipVertical,
 }: ToolbarProps) {
   if (!image) return null;
 
@@ -88,6 +96,45 @@ export function Toolbar({
           onClick={() => onRemoveBackground(bgTolerance)}
         >
           ✂
+        </button>
+      </div>
+
+      <div className="toolbar-transforms">
+        <button
+          className="toolbar-btn"
+          onClick={onRotateLeft}
+          disabled={!image}
+          aria-label="Rotate Left"
+          title="Rotate Left"
+        >
+          ↺
+        </button>
+        <button
+          className="toolbar-btn"
+          onClick={onRotateRight}
+          disabled={!image}
+          aria-label="Rotate Right"
+          title="Rotate Right"
+        >
+          ↻
+        </button>
+        <button
+          className="toolbar-btn"
+          onClick={onFlipHorizontal}
+          disabled={!image}
+          aria-label="Flip Horizontal"
+          title="Flip Horizontal"
+        >
+          ⇔
+        </button>
+        <button
+          className="toolbar-btn"
+          onClick={onFlipVertical}
+          disabled={!image}
+          aria-label="Flip Vertical"
+          title="Flip Vertical"
+        >
+          ⇕
         </button>
       </div>
 
