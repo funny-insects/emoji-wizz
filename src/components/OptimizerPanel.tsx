@@ -3,7 +3,6 @@ export interface OptimizerPanelProps {
   onAnalyze: () => void;
   suggestions: string[] | null;
   customEmojiDataUrl: string | null;
-  referenceEmojiSrc: string;
 }
 
 export function OptimizerPanel({
@@ -11,7 +10,6 @@ export function OptimizerPanel({
   onAnalyze,
   suggestions,
   customEmojiDataUrl,
-  referenceEmojiSrc,
 }: OptimizerPanelProps) {
   return (
     <div className="section">
@@ -64,26 +62,26 @@ export function OptimizerPanel({
 
           <div className="emoji-compare">
             <div className="emoji-figure">
-              <div className="emoji-frame">
+              <div className="emoji-frame emoji-frame-dark">
                 <img
                   src={customEmojiDataUrl ?? ""}
                   width={64}
                   height={64}
-                  alt="Your emoji"
+                  alt="Your emoji on dark background"
                 />
               </div>
-              <span className="emoji-caption">Yours</span>
+              <span className="emoji-caption">Dark</span>
             </div>
             <div className="emoji-figure">
-              <div className="emoji-frame">
+              <div className="emoji-frame emoji-frame-light">
                 <img
-                  src={referenceEmojiSrc}
+                  src={customEmojiDataUrl ?? ""}
                   width={64}
                   height={64}
-                  alt="Reference"
+                  alt="Your emoji on light background"
                 />
               </div>
-              <span className="emoji-caption">Reference</span>
+              <span className="emoji-caption">Light</span>
             </div>
           </div>
         </div>

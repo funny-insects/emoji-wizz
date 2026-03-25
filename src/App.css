@@ -270,6 +270,14 @@
   image-rendering: pixelated;
 }
 
+.emoji-frame-dark {
+  background: #1a1a1a;
+}
+
+.emoji-frame-light {
+  background: #ffffff;
+}
+
 .emoji-caption {
   font-size: 0.72rem;
   color: var(--text-3);
