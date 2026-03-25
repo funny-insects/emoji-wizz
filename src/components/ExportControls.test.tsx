@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { ExportControls } from "./ExportControls";
 import { PLATFORM_PRESETS } from "../utils/presets";
 
-const preset = PLATFORM_PRESETS[0];
+const preset = PLATFORM_PRESETS[0]!;
 
 describe("ExportControls", () => {
   it("Download button is disabled when image prop is null", () => {

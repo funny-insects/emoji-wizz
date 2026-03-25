@@ -53,7 +53,7 @@ describe("EmojiCanvas", () => {
         handlePaste={noop}
       />,
     );
-    const stage = Konva.stages[0];
+    const stage = Konva.stages[0]!;
     expect(stage.getLayers().length).toBe(5);
   });
 
@@ -68,8 +68,8 @@ describe("EmojiCanvas", () => {
         handlePaste={noop}
       />,
     );
-    const stage = Konva.stages[0];
-    const bgLayer = stage.getLayers()[0];
+    const stage = Konva.stages[0]!;
+    const bgLayer = stage.getLayers()[0]!;
     // 128/8 = 16 tiles per side → 16×16 = 256 tiles
     // Checker tiles have a solid fill; the safe-zone rect uses fill="transparent"
     const checkerRects = bgLayer
@@ -89,8 +89,8 @@ describe("EmojiCanvas", () => {
         handlePaste={noop}
       />,
     );
-    const stage = Konva.stages[0];
-    const bgLayer = stage.getLayers()[0];
+    const stage = Konva.stages[0]!;
+    const bgLayer = stage.getLayers()[0]!;
     const safeZones = bgLayer
       .find<Konva.Rect>("Rect")
       .filter((r) => r.fill() === "transparent");
@@ -525,7 +525,7 @@ describe("EmojiCanvas — brush tool", () => {
       fireEvent.mouseDown(content, { clientX: 64, clientY: 64 });
     });
 
-    const stage = Konva.stages[0];
+    const stage = Konva.stages[0]!;
     const overlaysLayer = stage.getLayers()[2];
     const lines = overlaysLayer?.find<Konva.Line>("Line") ?? [];
     expect(lines.length).toBe(1);
@@ -609,7 +609,7 @@ describe("EmojiCanvas — brush tool", () => {
 
     // Eraser mouseup pushes (for the eraser stroke), brush does not interfere
     // Active tool is eraser so brush path is not taken
-    const stage = Konva.stages[0];
+    const stage = Konva.stages[0]!;
     const overlaysLayer = stage.getLayers()[2];
     const lines = overlaysLayer?.find<Konva.Line>("Line") ?? [];
     expect(lines.length).toBe(0);
@@ -639,7 +639,7 @@ describe("EmojiCanvas — brush tool", () => {
       fireEvent.mouseDown(content, { clientX: 10, clientY: 10 });
     });
 
-    const stage = Konva.stages[0];
+    const stage = Konva.stages[0]!;
     const overlaysLayer = stage.getLayers()[2];
     const lines = overlaysLayer?.find<Konva.Line>("Line") ?? [];
     const initialPointCount = lines[0]?.points().length ?? 0;

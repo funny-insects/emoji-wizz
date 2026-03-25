@@ -17,7 +17,7 @@ export function detectContentBounds(
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4;
-      const alpha = data[i + 3];
+      const alpha = data[i + 3] ?? 0;
       if (alpha > 0) {
         if (x < minX) minX = x;
         if (y < minY) minY = y;

@@ -394,8 +394,6 @@ function App() {
             onDeleteSticker={handleDeleteSticker}
             onSelectSticker={handleSelectSticker}
             activeFrameSrc={activeFrameSrc}
-            activeFrameId={activeFrameId}
-            onRemoveFrame={() => setActiveFrameId(null)}
             bgRemovalRequest={bgRemovalRequest}
           />
           <DecoratePanel

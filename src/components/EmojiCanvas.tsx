@@ -635,9 +635,6 @@ export function EmojiCanvas({
                             y={
                               sticker.y + sticker.height * sticker.scaleY * 0.3
                             }
-                            y={
-                              sticker.y + sticker.height * sticker.scaleY * 0.3
-                            }
                             width={sticker.width * sticker.scaleX * 0.8}
                             text={sticker.text}
                             fontSize={Math.max(
