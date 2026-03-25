@@ -7,6 +7,7 @@ const baseProps = {
   onAnalyze: () => {},
   suggestions: null,
   customEmojiDataUrl: null,
+  referenceEmojiSrc: "/reference.png",
 };
 
 describe("OptimizerPanel", () => {
@@ -51,8 +52,9 @@ describe("OptimizerPanel", () => {
       />,
     );
     const images = screen.getAllByRole("img");
-    expect(images).toHaveLength(2);
+    expect(images).toHaveLength(3);
     expect(images[0]).toHaveAttribute("src", "data:image/png;base64,test");
     expect(images[1]).toHaveAttribute("src", "data:image/png;base64,test");
+    expect(images[2]).toHaveAttribute("src", "/reference.png");
   });
 });

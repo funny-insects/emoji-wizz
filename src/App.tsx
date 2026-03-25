@@ -29,6 +29,8 @@ import { STICKER_DEFINITIONS } from "./assets/stickers/index";
 import { FRAME_DEFINITIONS } from "./assets/frames/index";
 import type { StickerDescriptor } from "./utils/stickerTypes";
 import type { StickerDefinition } from "./assets/stickers/index";
+import referenceEmojiPng from "./assets/reference-emoji.png";
+
 export type EditorTool = "pointer" | "eraser" | "brush" | "text" | "crop";
 
 function App() {
@@ -462,6 +464,7 @@ function App() {
           onAnalyze={handleAnalyze}
           suggestions={suggestions}
           customEmojiDataUrl={customEmojiDataUrl}
+          referenceEmojiSrc={referenceEmojiPng}
         />
         <ExportControls
           image={image}
