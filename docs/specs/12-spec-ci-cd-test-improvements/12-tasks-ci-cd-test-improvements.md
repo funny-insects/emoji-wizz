@@ -65,7 +65,7 @@
 
 ---
 
-### [ ] 3.0 Add Parallel E2E Job to CI
+### [x] 3.0 Add Parallel E2E Job to CI
 
 #### 3.0 Proof Artifact(s)
 
@@ -75,12 +75,12 @@
 
 #### 3.0 Tasks
 
-- [ ] 3.1 Open `playwright.config.ts` and change the `reporter` field from `'list'` to an array that includes both the list reporter and the HTML reporter with `open: 'never'`:
+- [x] 3.1 Open `playwright.config.ts` and change the `reporter` field from `'list'` to an array that includes both the list reporter and the HTML reporter with `open: 'never'`:
   ```ts
   reporter: [['list'], ['html', { open: 'never' }]],
   ```
-- [ ] 3.2 Open `.github/workflows/ci.yml` and add `workflow_dispatch: {}` to the top-level `on` block alongside the existing `pull_request` trigger.
-- [ ] 3.3 Add a new job named `e2e` to `ci.yml` at the same level as the existing `ci` job (no `needs` dependency — they run in parallel). The job should use `runs-on: ubuntu-latest` and include these steps in order:
+- [x] 3.2 Open `.github/workflows/ci.yml` and add `workflow_dispatch: {}` to the top-level `on` block alongside the existing `pull_request` trigger.
+- [x] 3.3 Add a new job named `e2e` to `ci.yml` at the same level as the existing `ci` job (no `needs` dependency — they run in parallel). The job should use `runs-on: ubuntu-latest` and include these steps in order:
   1. `actions/checkout@v4`
   2. `actions/setup-node@v4` with `node-version: '22'` and `cache: 'npm'`
   3. `npm ci`
@@ -92,5 +92,5 @@
      - `name: playwright-report`
      - `path: playwright-report/`
      - `retention-days: 7`
-- [ ] 3.4 Run `task test:e2e` locally to confirm the Playwright HTML report is generated at `playwright-report/index.html` (verifies the config change in 3.1 works).
-- [ ] 3.5 Push the branch and confirm in the Actions tab that both the `ci` and `e2e` jobs appear and run in parallel on the PR.
+- [x] 3.4 Run `task test:e2e` locally to confirm the Playwright HTML report is generated at `playwright-report/index.html` (verifies the config change in 3.1 works).
+- [x] 3.5 Push the branch and confirm in the Actions tab that both the `ci` and `e2e` jobs appear and run in parallel on the PR.
