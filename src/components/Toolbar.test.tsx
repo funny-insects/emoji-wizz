@@ -13,6 +13,9 @@ const defaultTextProps: {
   onTextColorChange: () => void;
   textSize: number;
   onTextSizeChange: () => void;
+  onRemoveBackground: () => void;
+  bgTolerance: number;
+  onBgToleranceChange: () => void;
 } = {
   brushColor: "#000000",
   onBrushColorChange: () => {},
@@ -22,10 +25,13 @@ const defaultTextProps: {
   onTextColorChange: () => {},
   textSize: 18,
   onTextSizeChange: () => {},
+  onRemoveBackground: () => {},
+  bgTolerance: 15,
+  onBgToleranceChange: () => {},
 };
 
 describe("Toolbar", () => {
-  it("renders all 5 buttons when image is provided", () => {
+  it("renders all tool buttons when image is provided", () => {
     render(
       <Toolbar
         image={mockImage}
@@ -43,6 +49,9 @@ describe("Toolbar", () => {
     expect(screen.getByRole("button", { name: "Text" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Undo" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Redo" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Remove BG" }),
+    ).toBeInTheDocument();
   });
 
   it("does not render when image is null", () => {
@@ -131,6 +140,85 @@ describe("Toolbar", () => {
     );
     expect(screen.getByRole("button", { name: "Redo" })).toBeDisabled();
   });
+
+  it("Remove BG button is disabled when image is null", () => {
+    render(
+      <Toolbar
+        image={null}
+        activeTool="eraser"
+        onToolChange={() => {}}
+        canUndo={false}
+        canRedo={false}
+        onUndo={() => {}}
+        onRedo={() => {}}
+        {...defaultTextProps}
+      />,
+    );
+    // Toolbar returns null when image is null, so the button is not present
+    expect(
+      screen.queryByRole("button", { name: "Remove BG" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("Remove BG button never has the active class", () => {
+    render(
+      <Toolbar
+        image={mockImage}
+        activeTool="eraser"
+        onToolChange={() => {}}
+        canUndo={false}
+        canRedo={false}
+        onUndo={() => {}}
+        onRedo={() => {}}
+        {...defaultTextProps}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Remove BG" })).not.toHaveClass(
+      "toolbar-btn--active",
+    );
+  });
+
+  it("Remove BG button calls onRemoveBackground with current tolerance", () => {
+    const onRemoveBackground = vi.fn();
+    render(
+      <Toolbar
+        image={mockImage}
+        activeTool="eraser"
+        onToolChange={() => {}}
+        canUndo={false}
+        canRedo={false}
+        onUndo={() => {}}
+        onRedo={() => {}}
+        {...defaultTextProps}
+        bgTolerance={30}
+        onRemoveBackground={onRemoveBackground}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Remove BG" }));
+    expect(onRemoveBackground).toHaveBeenCalledWith(30);
+  });
+
+  it("tolerance input is visible when image is provided and updates on change", () => {
+    const onBgToleranceChange = vi.fn();
+    render(
+      <Toolbar
+        image={mockImage}
+        activeTool="eraser"
+        onToolChange={() => {}}
+        canUndo={false}
+        canRedo={false}
+        onUndo={() => {}}
+        onRedo={() => {}}
+        {...defaultTextProps}
+        onBgToleranceChange={onBgToleranceChange}
+      />,
+    );
+    expect(screen.getByRole("spinbutton", { name: "tol" })).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("spinbutton", { name: "tol" }), {
+      target: { value: "20" },
+    });
+    expect(onBgToleranceChange).toHaveBeenCalledWith(20);
+  });
 });
 
 describe("Toolbar — text tool settings", () => {
@@ -182,6 +270,7 @@ describe("Toolbar — text tool settings", () => {
         canRedo={false}
         onUndo={() => {}}
         onRedo={() => {}}
+        {...defaultTextProps}
         textColor="#000000"
         onTextColorChange={onTextColorChange}
         textSize={18}
@@ -203,6 +292,7 @@ describe("Toolbar — text tool settings", () => {
         canRedo={false}
         onUndo={() => {}}
         onRedo={() => {}}
+        {...defaultTextProps}
         textColor="#000000"
         onTextColorChange={() => {}}
         textSize={18}
@@ -225,6 +315,7 @@ describe("Toolbar — text tool settings", () => {
         canRedo={false}
         onUndo={() => {}}
         onRedo={() => {}}
+        {...defaultTextProps}
         textColor="#FF0000"
         onTextColorChange={() => {}}
         textSize={18}
