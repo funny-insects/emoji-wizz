@@ -15,6 +15,7 @@ import { useHistory } from "./hooks/useHistory";
 import { useStickerHistory } from "./hooks/useStickerHistory";
 import { detectContentBounds } from "./utils/detectContentBounds";
 import { generateSuggestions } from "./utils/generateSuggestions";
+import { detectContrastIssues } from "./utils/detectContrastIssues";
 import {
   buildExportCanvas,
   buildFilename,
@@ -288,7 +289,10 @@ function App() {
     if (!bounds) {
       setSuggestions([]);
     } else {
-      setSuggestions(generateSuggestions(bounds, exportPreset, CANVAS_SIZE));
+      setSuggestions([
+        ...generateSuggestions(bounds, exportPreset, CANVAS_SIZE),
+        ...detectContrastIssues(imageData, bounds),
+      ]);
     }
     if (exportPreset.width < CANVAS_SIZE) {
       const img = new window.Image();

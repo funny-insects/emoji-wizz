@@ -48,7 +48,7 @@
 - [x] 2.4 Implement the decision logic: if a significant proportion (e.g., >25%) of non-transparent edge pixels are too close to the dark background, push `"Your emoji may be hard to see on dark backgrounds"` to the results array. Apply the same logic for light backgrounds with `"Your emoji may be hard to see on light backgrounds"`. Return the results array (empty if no issues).
 - [x] 2.5 Create `src/utils/detectContrastIssues.test.ts` with tests for: (a) a nearly white emoji on a 4x4 ImageData triggers the "hard to see on light backgrounds" warning, (b) a nearly black emoji triggers the "hard to see on dark backgrounds" warning, (c) a bright red/green emoji triggers no warnings, (d) a fully transparent image returns no warnings. Use a helper similar to `makeImageData` from `detectContentBounds.test.ts` to create test fixtures.
 
-### [ ] 3.0 Integrate contrast warnings into the suggestion flow
+### [x] 3.0 Integrate contrast warnings into the suggestion flow
 
 #### 3.0 Proof Artifact(s)
 
@@ -59,9 +59,9 @@
 
 #### 3.0 Tasks
 
-- [ ] 3.1 In `src/App.tsx`, import `detectContrastIssues` from `./utils/detectContrastIssues`.
-- [ ] 3.2 In the `handleAnalyze` function, after calling `detectContentBounds` and `generateSuggestions`, call `detectContrastIssues(imageData, bounds)` when bounds is not null. Merge the returned contrast suggestions into the suggestions array using spread or concat (e.g., `setSuggestions([...generateSuggestions(bounds, exportPreset, CANVAS_SIZE), ...detectContrastIssues(imageData, bounds)])`).
-- [ ] 3.3 Run `task lint && task typecheck && task test` to verify no regressions and all tests pass.
+- [x] 3.1 In `src/App.tsx`, import `detectContrastIssues` from `./utils/detectContrastIssues`.
+- [x] 3.2 In the `handleAnalyze` function, after calling `detectContentBounds` and `generateSuggestions`, call `detectContrastIssues(imageData, bounds)` when bounds is not null. Merge the returned contrast suggestions into the suggestions array using spread or concat (e.g., `setSuggestions([...generateSuggestions(bounds, exportPreset, CANVAS_SIZE), ...detectContrastIssues(imageData, bounds)])`).
+- [x] 3.3 Run `task lint && task typecheck && task test` to verify no regressions and all tests pass.
 
 ### [ ] 4.0 Clean up removed reference emoji prop and verify full integration
 
