@@ -40,7 +40,7 @@
 
 ---
 
-### [ ] 2.0 Add Coverage Reporting to CI with PR Comment
+### [x] 2.0 Add Coverage Reporting to CI with PR Comment
 
 #### 2.0 Proof Artifact(s)
 
@@ -49,19 +49,19 @@
 
 #### 2.0 Tasks
 
-- [ ] 2.1 Open `.github/workflows/ci.yml` and add a top-level `permissions` block to the `ci` job (below `runs-on`) to allow writing PR comments:
+- [x] 2.1 Open `.github/workflows/ci.yml` and add a top-level `permissions` block to the `ci` job (below `runs-on`) to allow writing PR comments:
   ```yaml
   permissions:
     contents: read
     pull-requests: write
   ```
-- [ ] 2.2 In the `ci` job, rename the existing `Unit tests` step to `Unit tests (with coverage)` and change its command from `task test` to `task test:coverage`.
-- [ ] 2.3 Add a new step after the coverage step that uses `actions/github-script` to read `coverage/coverage-summary.json` and post a PR comment. The step should:
+- [x] 2.2 In the `ci` job, rename the existing `Unit tests` step to `Unit tests (with coverage)` and change its command from `task test` to `task test:coverage`.
+- [x] 2.3 Add a new step after the coverage step that uses `actions/github-script` to read `coverage/coverage-summary.json` and post a PR comment. The step should:
   - Only run when the workflow is triggered by a `pull_request` event (use `if: github.event_name == 'pull_request'`)
   - Read `coverage/coverage-summary.json` using `require('fs').readFileSync`
   - Extract `total.lines.pct`, `total.functions.pct`, and `total.branches.pct`
   - Post a markdown comment to the PR via `github.rest.issues.createComment` with the repo owner, repo name, PR number (`context.issue.number`), and a formatted body showing the three percentages in a table
-- [ ] 2.4 Push the branch and open a draft PR targeting `main`. Confirm in the Actions tab that the `ci` job passes and that a coverage comment appears on the PR.
+- [x] 2.4 Push the branch and open a draft PR targeting `main`. Confirm in the Actions tab that the `ci` job passes and that a coverage comment appears on the PR.
 
 ---
 

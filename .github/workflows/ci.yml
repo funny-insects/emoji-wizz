@@ -9,6 +9,9 @@ jobs:
   ci:
     name: Lint, Typecheck & Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout
@@ -35,5 +38,33 @@ jobs:
       - name: Typecheck
         run: task typecheck
 
-      - name: Unit tests
-        run: task test
+      - name: Unit tests (with coverage)
+        run: task test:coverage
+
+      - name: Post coverage comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
+            const { lines, functions, branches } = summary.total;
+            const fmt = (v) => `${v.pct.toFixed(1)}%`;
+            const icon = (v) => v.pct >= 80 ? '✅' : v.pct >= 60 ? '⚠️' : '❌';
+            const body = [
+              '## Coverage Report',
+              '',
+              '| Metric | Coverage |',
+              '|--------|----------|',
+              `| Lines | ${icon(lines)} ${fmt(lines)} (${lines.covered}/${lines.total}) |`,
+              `| Functions | ${icon(functions)} ${fmt(functions)} (${functions.covered}/${functions.total}) |`,
+              `| Branches | ${icon(branches)} ${fmt(branches)} (${branches.covered}/${branches.total}) |`,
+              '',
+              '_No thresholds enforced — report only._',
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
