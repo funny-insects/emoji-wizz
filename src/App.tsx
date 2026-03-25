@@ -27,7 +27,7 @@ import type { StickerDescriptor } from "./utils/stickerTypes";
 import type { StickerDefinition } from "./assets/stickers/index";
 import referenceEmojiPng from "./assets/reference-emoji.png";
 
-export type EditorTool = "eraser" | "brush" | "text";
+export type EditorTool = "pointer" | "eraser" | "brush" | "text";
 
 function App() {
   const [activePreset, setActivePreset] = useState<PlatformPreset>(
@@ -41,7 +41,7 @@ function App() {
   const [customEmojiDataUrl, setCustomEmojiDataUrl] = useState<string | null>(
     null,
   );
-  const [activeTool, setActiveTool] = useState<EditorTool>("eraser");
+  const [activeTool, setActiveTool] = useState<EditorTool>("pointer");
   const [brushColor, setBrushColor] = useState<string>("#000000");
   const [brushSize, setBrushSize] = useState<number>(3);
   const [textColor, setTextColor] = useState<string>("#000000");
@@ -379,6 +379,8 @@ function App() {
             onDeleteSticker={handleDeleteSticker}
             onSelectSticker={handleSelectSticker}
             activeFrameSrc={activeFrameSrc}
+            activeFrameId={activeFrameId}
+            onRemoveFrame={() => setActiveFrameId(null)}
           />
           <DecoratePanel
             image={image}
