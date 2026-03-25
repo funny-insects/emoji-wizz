@@ -5,11 +5,12 @@ import { EmojiCanvas } from "./components/EmojiCanvas";
 import { Toolbar } from "./components/Toolbar";
 import { OptimizerPanel } from "./components/OptimizerPanel";
 import { ExportControls } from "./components/ExportControls";
-import { PresetSelector } from "./components/PresetSelector";
 import { DecoratePanel } from "./components/DecoratePanel";
 import { SpeechBubbleModal } from "./components/SpeechBubbleModal";
-import { PLATFORM_PRESETS, type PlatformPreset } from "./utils/presets";
+import { PLATFORM_PRESETS } from "./utils/presets";
 import { useImageImport } from "./hooks/useImageImport";
+
+const CANVAS_SIZE = 512;
 import { useHistory } from "./hooks/useHistory";
 import { useStickerHistory } from "./hooks/useStickerHistory";
 import { detectContentBounds } from "./utils/detectContentBounds";
@@ -18,9 +19,11 @@ import {
   buildExportCanvas,
   buildFilename,
   checkFileSizeWarning,
+  downscaleCanvas,
   exportStageAsBlob,
   type ExportFormat,
 } from "./utils/exportUtils";
+import type { PlatformPreset } from "./utils/presets";
 import { STICKER_DEFINITIONS } from "./assets/stickers/index";
 import { FRAME_DEFINITIONS } from "./assets/frames/index";
 import type { StickerDescriptor } from "./utils/stickerTypes";
@@ -30,7 +33,7 @@ import referenceEmojiPng from "./assets/reference-emoji.png";
 export type EditorTool = "pointer" | "eraser" | "brush" | "text";
 
 function App() {
-  const [activePreset, setActivePreset] = useState<PlatformPreset>(
+  const [exportPreset, setExportPreset] = useState<PlatformPreset>(
     PLATFORM_PRESETS[0]!,
   );
   const [sizeWarning, setSizeWarning] = useState<string | null>(null);
@@ -120,8 +123,8 @@ function App() {
       id: crypto.randomUUID(),
       src: def.src,
       label: def.label,
-      x: activePreset.width / 2 - 32,
-      y: activePreset.height / 2 - 32,
+      x: CANVAS_SIZE / 2 - 32,
+      y: CANVAS_SIZE / 2 - 32,
       width: 64,
       height: 64,
       scaleX: 1,
@@ -130,7 +133,7 @@ function App() {
       requiresText: def.requiresText,
       text,
     }),
-    [activePreset],
+    [],
   );
 
   const handlePlaceSticker = useCallback(
@@ -243,30 +246,34 @@ function App() {
   function handleAnalyze() {
     if (!stageRef.current) return;
     const dataUrl = stageRef.current.toDataURL();
-    setCustomEmojiDataUrl(dataUrl);
     const canvas = stageRef.current.toCanvas();
     const imageData = canvas
       .getContext("2d")!
-      .getImageData(0, 0, activePreset.width, activePreset.height);
+      .getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE);
     const bounds = detectContentBounds(imageData);
     if (!bounds) {
       setSuggestions([]);
-      return;
+    } else {
+      setSuggestions(generateSuggestions(bounds, exportPreset, CANVAS_SIZE));
     }
-    setSuggestions(generateSuggestions(bounds, activePreset));
-  }
-
-  function handlePresetChange(id: string) {
-    const preset = PLATFORM_PRESETS.find((p) => p.id === id);
-    if (!preset) return;
-    if (image) {
-      const ok = window.confirm(
-        `Switching to ${preset.label} will resize the canvas. Your image will be re-scaled to fit. Continue?`,
-      );
-      if (!ok) return;
+    if (exportPreset.width < CANVAS_SIZE) {
+      const img = new window.Image();
+      img.onload = () => {
+        const sourceCanvas = document.createElement("canvas");
+        sourceCanvas.width = CANVAS_SIZE;
+        sourceCanvas.height = CANVAS_SIZE;
+        sourceCanvas.getContext("2d")!.drawImage(img, 0, 0);
+        const scaled = downscaleCanvas(
+          sourceCanvas,
+          exportPreset.width,
+          exportPreset.height,
+        );
+        setCustomEmojiDataUrl(scaled.toDataURL());
+      };
+      img.src = dataUrl;
+    } else {
+      setCustomEmojiDataUrl(dataUrl);
     }
-    setActivePreset(preset);
-    setSizeWarning(null);
   }
 
   function triggerDownload(canvas: HTMLCanvasElement, format: ExportFormat) {
@@ -282,11 +289,11 @@ function App() {
         );
         return;
       }
-      setSizeWarning(checkFileSizeWarning(blob.size, activePreset));
+      setSizeWarning(checkFileSizeWarning(blob.size, exportPreset));
       const href = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = href;
-      a.download = buildFilename(format);
+      a.download = buildFilename(format, exportPreset.id);
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -301,18 +308,18 @@ function App() {
         setSizeWarning("Export failed: canvas not ready.");
         return;
       }
-      exportStageAsBlob(stageRef.current).then((blob) => {
+      exportStageAsBlob(stageRef.current, exportPreset).then((blob) => {
         if (!blob) {
           setSizeWarning(
             "Export failed: this format is not supported by your browser.",
           );
           return;
         }
-        setSizeWarning(checkFileSizeWarning(blob.size, activePreset));
+        setSizeWarning(checkFileSizeWarning(blob.size, exportPreset));
         const href = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = href;
-        a.download = buildFilename(format);
+        a.download = buildFilename(format, exportPreset.id);
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -324,14 +331,19 @@ function App() {
       const img = new window.Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        canvas.width = activePreset.width;
-        canvas.height = activePreset.height;
+        canvas.width = CANVAS_SIZE;
+        canvas.height = CANVAS_SIZE;
         canvas.getContext("2d")!.drawImage(img, 0, 0);
-        triggerDownload(canvas, format);
+        const exportCanvas = downscaleCanvas(
+          canvas,
+          exportPreset.width,
+          exportPreset.height,
+        );
+        triggerDownload(exportCanvas, format);
       };
       img.src = latestSnapshot;
     } else {
-      triggerDownload(buildExportCanvas(image, activePreset), format);
+      triggerDownload(buildExportCanvas(image, exportPreset), format);
     }
   }
 
@@ -345,11 +357,6 @@ function App() {
       </header>
 
       <div className="app-card">
-        <PresetSelector
-          presets={PLATFORM_PRESETS}
-          activePresetId={activePreset.id}
-          onChange={handlePresetChange}
-        />
         <div className="editor-area">
           <Toolbar
             image={image}
@@ -372,7 +379,6 @@ function App() {
             onRemoveBackground={handleRemoveBackground}
           />
           <EmojiCanvas
-            preset={activePreset}
             image={image}
             handleFileInput={handleFileInput}
             handleDrop={handleDrop}
@@ -416,9 +422,14 @@ function App() {
         />
         <ExportControls
           image={image}
-          preset={activePreset}
           onDownload={handleDownload}
           sizeWarning={sizeWarning}
+          presets={PLATFORM_PRESETS}
+          activePresetId={exportPreset.id}
+          onPresetChange={(id) => {
+            const preset = PLATFORM_PRESETS.find((p) => p.id === id);
+            if (preset) setExportPreset(preset);
+          }}
         />
       </div>
       {showSpeechBubbleModal && (

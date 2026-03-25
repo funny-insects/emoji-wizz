@@ -3,18 +3,23 @@
 ## CLI Output
 
 ### task lint
+
 ```
 task: [lint] npx eslint src/
 ```
+
 Exit code: 0 (clean)
 
 ### task typecheck
+
 ```
 task: [typecheck] npx tsc --noEmit
 ```
+
 Exit code: 0 (clean)
 
 ### task format
+
 ```
 task: [format] npx prettier --write .
 .prettierrc 3ms (unchanged)
@@ -29,11 +34,13 @@ src/vite-env.d.ts 1ms (unchanged)
 Taskfile.yml 3ms (unchanged)
 vite.config.ts 1ms (unchanged)
 ```
+
 Exit code: 0 (clean)
 
 ## Configuration
 
 ### ESLint (eslint.config.js)
+
 - Flat config format (ESLint 9)
 - Extends: `@eslint/js` recommended + `typescript-eslint` recommended
 - Plugins: `react-hooks`, `react-refresh`
@@ -41,6 +48,7 @@ Exit code: 0 (clean)
 - Ignores: `dist/`
 
 ### Prettier (.prettierrc)
+
 ```json
 {
   "semi": true,
@@ -52,6 +60,7 @@ Exit code: 0 (clean)
 ```
 
 ### Taskfile (Taskfile.yml)
+
 - `task lint` → `npx eslint src/`
 - `task format` → `npx prettier --write .`
 - `task format:check` → `npx prettier --check .`
