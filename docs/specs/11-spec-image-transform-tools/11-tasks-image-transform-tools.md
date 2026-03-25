@@ -62,7 +62,7 @@ Add four action buttons (Rotate Left, Rotate Right, Flip H, Flip V) to the exist
 - [x] 2.6 Verify undo works: after applying a rotate, pressing Ctrl+Z should restore the previous canvas state via the existing `useHistory` hook (no new code needed — the snapshot push in step 2.4 handles this automatically).
 - [x] 2.7 Run `task lint && task typecheck && task test` and fix any issues.
 
-### [ ] 3.0 Crop Tool — Overlay UI and Interaction
+### [x] 3.0 Crop Tool — Overlay UI and Interaction
 
 Add a "Crop" tool mode to the Toolbar and implement the interactive crop overlay on the canvas: a draggable/resizable 1:1 square selection with a darkened mask outside, plus Confirm (Enter) and Cancel (Escape) actions.
 
@@ -75,17 +75,17 @@ Add a "Crop" tool mode to the Toolbar and implement the interactive crop overlay
 
 #### 3.0 Tasks
 
-- [ ] 3.1 In `src/App.tsx`, expand the `EditorTool` type to `"pointer" | "eraser" | "brush" | "text" | "crop"`.
-- [ ] 3.2 In `src/components/Toolbar.tsx`, add a Crop button (⬒ or similar icon) in the `toolbar-tools` section. It should toggle `activeTool` to `"crop"` and use the `toolbar-btn--active` class when `activeTool === "crop"`, matching the pattern of existing tool buttons.
-- [ ] 3.3 In `src/components/EmojiCanvas.tsx`, add crop overlay state: `const [cropRect, setCropRect] = useState<{ x: number; y: number; size: number } | null>(null)`. When `activeTool` changes to `"crop"`, initialize `cropRect` to a default centered square (e.g., 50% of canvas size, centered).
-- [ ] 3.4 Add a new Konva `<Layer>` for the crop overlay (between the overlays layer and the stickers layer). When `activeTool === "crop"` and `cropRect` is set, render: (a) a semi-transparent black `<Rect>` covering the full 512×512 canvas (`fill="rgba(0,0,0,0.5)"`), and (b) a clear `<Rect>` at the crop position using `globalCompositeOperation: "destination-out"` — or alternatively, render 4 dark rects around the crop area. Then render a white-bordered `<Rect>` at the crop position to show the selection boundary.
-- [ ] 3.5 Make the crop selection `<Rect>` draggable. On `onDragEnd`, update `cropRect` with the new position, clamping `x` and `y` so the square stays within canvas bounds (`x >= 0`, `y >= 0`, `x + size <= 512`, `y + size <= 512`).
-- [ ] 3.6 Add resize handles to the crop overlay. Use a Konva `<Transformer>` attached to the crop rect with `keepRatio: true` (enforcing 1:1), `boundBoxFunc` to enforce minimum 20×20px size and clamp within 512×512 canvas bounds. On `onTransformEnd`, read the node's position and scale to compute the new `cropRect` values.
-- [ ] 3.7 Add keyboard handlers for the crop tool. In the existing `handleKeyDown` in `App.tsx`, when `activeTool === "crop"`: Enter key triggers crop confirmation (calls a new `onCropConfirm` callback), Escape key cancels (calls a new `onCropCancel` callback that sets `activeTool` back to `"pointer"` and clears `cropRect`).
-- [ ] 3.8 Add visible Confirm/Cancel buttons as HTML elements positioned below the canvas (or in the toolbar area) when `activeTool === "crop"`. Confirm calls `onCropConfirm`, Cancel calls `onCropCancel`.
-- [ ] 3.9 While `activeTool === "crop"`, disable mouse event handlers for other tools (eraser, brush, text) in EmojiCanvas — the existing tool-checking logic in `handleMouseDown`/`handleMouseMove`/`handleClick` already gates on `activeTool`, so just ensure no `"crop"` case triggers drawing.
+- [x] 3.1 In `src/App.tsx`, expand the `EditorTool` type to `"pointer" | "eraser" | "brush" | "text" | "crop"`.
+- [x] 3.2 In `src/components/Toolbar.tsx`, add a Crop button (⬒ or similar icon) in the `toolbar-tools` section. It should toggle `activeTool` to `"crop"` and use the `toolbar-btn--active` class when `activeTool === "crop"`, matching the pattern of existing tool buttons.
+- [x] 3.3 In `src/components/EmojiCanvas.tsx`, add crop overlay state: `const [cropRect, setCropRect] = useState<{ x: number; y: number; size: number } | null>(null)`. When `activeTool` changes to `"crop"`, initialize `cropRect` to a default centered square (e.g., 50% of canvas size, centered).
+- [x] 3.4 Add a new Konva `<Layer>` for the crop overlay (between the overlays layer and the stickers layer). When `activeTool === "crop"` and `cropRect` is set, render: (a) a semi-transparent black `<Rect>` covering the full 512×512 canvas (`fill="rgba(0,0,0,0.5)"`), and (b) a clear `<Rect>` at the crop position using `globalCompositeOperation: "destination-out"` — or alternatively, render 4 dark rects around the crop area. Then render a white-bordered `<Rect>` at the crop position to show the selection boundary.
+- [x] 3.5 Make the crop selection `<Rect>` draggable. On `onDragEnd`, update `cropRect` with the new position, clamping `x` and `y` so the square stays within canvas bounds (`x >= 0`, `y >= 0`, `x + size <= 512`, `y + size <= 512`).
+- [x] 3.6 Add resize handles to the crop overlay. Use a Konva `<Transformer>` attached to the crop rect with `keepRatio: true` (enforcing 1:1), `boundBoxFunc` to enforce minimum 20×20px size and clamp within 512×512 canvas bounds. On `onTransformEnd`, read the node's position and scale to compute the new `cropRect` values.
+- [x] 3.7 Add keyboard handlers for the crop tool. In the existing `handleKeyDown` in `App.tsx`, when `activeTool === "crop"`: Enter key triggers crop confirmation (calls a new `onCropConfirm` callback), Escape key cancels (calls a new `onCropCancel` callback that sets `activeTool` back to `"pointer"` and clears `cropRect`).
+- [x] 3.8 Add visible Confirm/Cancel buttons as HTML elements positioned below the canvas (or in the toolbar area) when `activeTool === "crop"`. Confirm calls `onCropConfirm`, Cancel calls `onCropCancel`.
+- [x] 3.9 While `activeTool === "crop"`, disable mouse event handlers for other tools (eraser, brush, text) in EmojiCanvas — the existing tool-checking logic in `handleMouseDown`/`handleMouseMove`/`handleClick` already gates on `activeTool`, so just ensure no `"crop"` case triggers drawing.
 
-### [ ] 4.0 Crop Tool — Apply, Auto-Reframe, and Undo Integration
+### [x] 4.0 Crop Tool — Apply, Auto-Reframe, and Undo Integration
 
 Wire the crop confirmation action to extract the selected region from the offscreen canvas, replace canvas contents with the cropped result, auto-reframe (scale + center) to fill the 512×512 canvas, and push an undo snapshot.
 
@@ -98,8 +98,8 @@ Wire the crop confirmation action to extract the selected region from the offscr
 
 #### 4.0 Tasks
 
-- [ ] 4.1 In `src/components/EmojiCanvas.tsx`, create a `handleCropConfirm` function. When called: (a) read `cropRect` and `offscreenCanvasRef.current`, (b) call `cropCanvas(offscreenCanvas, cropRect)` to extract the region, (c) call `reframeCanvas(croppedCanvas, 512, 512)` to scale+center the result, (d) update `displayCanvas` state with the reframed canvas (this triggers the existing snapshot push via the `useEffect` on `displayCanvas`), (e) set `activeTool` back to `"pointer"` via `onToolChange`, (f) clear `cropRect`.
-- [ ] 4.2 Expose `handleCropConfirm` to App.tsx. Either: (a) pass an `onCropConfirm` prop with a crop request pattern (like `transformRequest`), or (b) handle it entirely within EmojiCanvas using internal state. The approach should match how `bgRemovalRequest` works — a request prop that EmojiCanvas processes internally.
-- [ ] 4.3 Wire the Confirm button (from task 3.8) and Enter key handler (from task 3.7) to call the crop confirm logic.
-- [ ] 4.4 Verify undo works: after confirming a crop, Ctrl+Z should restore the full uncropped canvas. The existing `useHistory` snapshot push handles this automatically since the new displayCanvas triggers `onPushState`.
-- [ ] 4.5 Run `task lint && task typecheck && task test && task format:check` and fix any issues to pass all quality gates.
+- [x] 4.1 In `src/components/EmojiCanvas.tsx`, create a `handleCropConfirm` function. When called: (a) read `cropRect` and `offscreenCanvasRef.current`, (b) call `cropCanvas(offscreenCanvas, cropRect)` to extract the region, (c) call `reframeCanvas(croppedCanvas, 512, 512)` to scale+center the result, (d) update `displayCanvas` state with the reframed canvas (this triggers the existing snapshot push via the `useEffect` on `displayCanvas`), (e) set `activeTool` back to `"pointer"` via `onToolChange`, (f) clear `cropRect`.
+- [x] 4.2 Expose `handleCropConfirm` to App.tsx. Either: (a) pass an `onCropConfirm` prop with a crop request pattern (like `transformRequest`), or (b) handle it entirely within EmojiCanvas using internal state. The approach should match how `bgRemovalRequest` works — a request prop that EmojiCanvas processes internally.
+- [x] 4.3 Wire the Confirm button (from task 3.8) and Enter key handler (from task 3.7) to call the crop confirm logic.
+- [x] 4.4 Verify undo works: after confirming a crop, Ctrl+Z should restore the full uncropped canvas. The existing `useHistory` snapshot push handles this automatically since the new displayCanvas triggers `onPushState`.
+- [x] 4.5 Run `task lint && task typecheck && task test && task format:check` and fix any issues to pass all quality gates.

@@ -63,6 +63,34 @@
   cursor: not-allowed;
 }
 
+.toolbar-crop-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.toolbar-btn--confirm {
+  color: #22c55e;
+}
+
+.toolbar-btn--confirm:hover:not(:disabled) {
+  color: #16a34a;
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.toolbar-btn--cancel {
+  color: #ef4444;
+}
+
+.toolbar-btn--cancel:hover:not(:disabled) {
+  color: #dc2626;
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
 .toolbar-brush-settings {
   display: flex;
   flex-direction: column;

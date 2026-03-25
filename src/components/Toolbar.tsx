@@ -25,6 +25,8 @@ interface ToolbarProps {
   onRotateRight: () => void;
   onFlipHorizontal: () => void;
   onFlipVertical: () => void;
+  onCropConfirm: () => void;
+  onCropCancel: () => void;
 }
 
 export function Toolbar({
@@ -50,6 +52,8 @@ export function Toolbar({
   onRotateRight,
   onFlipHorizontal,
   onFlipVertical,
+  onCropConfirm,
+  onCropCancel,
 }: ToolbarProps) {
   if (!image) return null;
 
@@ -97,6 +101,15 @@ export function Toolbar({
         >
           ✂
         </button>
+        <button
+          className={`toolbar-btn${activeTool === "crop" ? " toolbar-btn--active" : ""}`}
+          onClick={() => onToolChange("crop")}
+          disabled={!image}
+          aria-label="Crop"
+          title="Crop"
+        >
+          ⬒
+        </button>
       </div>
 
       <div className="toolbar-transforms">
@@ -137,6 +150,27 @@ export function Toolbar({
           ⇕
         </button>
       </div>
+
+      {activeTool === "crop" && (
+        <div className="toolbar-crop-actions">
+          <button
+            className="toolbar-btn toolbar-btn--confirm"
+            onClick={onCropConfirm}
+            aria-label="Confirm Crop"
+            title="Confirm Crop (Enter)"
+          >
+            ✓
+          </button>
+          <button
+            className="toolbar-btn toolbar-btn--cancel"
+            onClick={onCropCancel}
+            aria-label="Cancel Crop"
+            title="Cancel Crop (Escape)"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {activeTool === "brush" && (
         <div className="toolbar-brush-settings">

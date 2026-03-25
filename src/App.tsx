@@ -30,7 +30,7 @@ import type { StickerDescriptor } from "./utils/stickerTypes";
 import type { StickerDefinition } from "./assets/stickers/index";
 import referenceEmojiPng from "./assets/reference-emoji.png";
 
-export type EditorTool = "pointer" | "eraser" | "brush" | "text";
+export type EditorTool = "pointer" | "eraser" | "brush" | "text" | "crop";
 
 function App() {
   const [exportPreset, setExportPreset] = useState<PlatformPreset>(
@@ -137,6 +137,17 @@ function App() {
 
   const handleFlipVertical = useCallback(() => {
     setTransformRequest({ type: "flipV", seq: transformSeqRef.current++ });
+  }, []);
+
+  const [cropConfirmSeq, setCropConfirmSeq] = useState(0);
+  const cropConfirmSeqRef = useRef(0);
+
+  const handleCropConfirm = useCallback(() => {
+    setCropConfirmSeq(++cropConfirmSeqRef.current);
+  }, []);
+
+  const handleCropCancel = useCallback(() => {
+    setActiveTool("pointer");
   }, []);
 
   const createStickerDescriptor = useCallback(
@@ -258,11 +269,24 @@ function App() {
           e.preventDefault();
           handleDeleteSticker(id);
         }
+      } else if (activeTool === "crop" && e.key === "Enter") {
+        e.preventDefault();
+        handleCropConfirm();
+      } else if (activeTool === "crop" && e.key === "Escape") {
+        e.preventDefault();
+        handleCropCancel();
       }
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleUndo, handleRedo, handleDeleteSticker]);
+  }, [
+    handleUndo,
+    handleRedo,
+    handleDeleteSticker,
+    activeTool,
+    handleCropConfirm,
+    handleCropCancel,
+  ]);
 
   function handleAnalyze() {
     if (!stageRef.current) return;
@@ -402,6 +426,8 @@ function App() {
             onRotateRight={handleRotateRight}
             onFlipHorizontal={handleFlipHorizontal}
             onFlipVertical={handleFlipVertical}
+            onCropConfirm={handleCropConfirm}
+            onCropCancel={handleCropCancel}
           />
           <EmojiCanvas
             image={image}
@@ -429,6 +455,7 @@ function App() {
             onRemoveFrame={() => setActiveFrameId(null)}
             bgRemovalRequest={bgRemovalRequest}
             transformRequest={transformRequest}
+            cropConfirmSeq={cropConfirmSeq}
           />
           <DecoratePanel
             image={image}
