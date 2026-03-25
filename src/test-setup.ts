@@ -35,4 +35,5 @@ const mockCanvasContext = new Proxy(
   },
 ) as unknown as CanvasRenderingContext2D;
 
-HTMLCanvasElement.prototype.getContext = () => mockCanvasContext;
+HTMLCanvasElement.prototype.getContext = (() =>
+  mockCanvasContext) as unknown as typeof HTMLCanvasElement.prototype.getContext;

@@ -440,8 +440,6 @@ function App() {
             onDeleteSticker={handleDeleteSticker}
             onSelectSticker={handleSelectSticker}
             activeFrameSrc={activeFrameSrc}
-            activeFrameId={activeFrameId}
-            onRemoveFrame={() => setActiveFrameId(null)}
             bgRemovalRequest={bgRemovalRequest}
             transformRequest={transformRequest}
             cropConfirmSeq={cropConfirmSeq}

@@ -47,7 +47,7 @@ describe("EmojiCanvas", () => {
         handlePaste={noop}
       />,
     );
-    const stage = Konva.stages[0];
+    const stage = Konva.stages[0]!;
     expect(stage.getLayers().length).toBe(6);
   });
 
@@ -60,8 +60,8 @@ describe("EmojiCanvas", () => {
         handlePaste={noop}
       />,
     );
-    const stage = Konva.stages[0];
-    const bgLayer = stage.getLayers()[0];
+    const stage = Konva.stages[0]!;
+    const bgLayer = stage.getLayers()[0]!;
     // 512/8 = 64 tiles per side → 64×64 = 4096 tiles
     const checkerRects = bgLayer.find<Konva.Rect>("Rect");
     expect(checkerRects.length).toBe(4096);
@@ -76,8 +76,8 @@ describe("EmojiCanvas", () => {
         handlePaste={noop}
       />,
     );
-    const stage = Konva.stages[0];
-    const bgLayer = stage.getLayers()[0];
+    const stage = Konva.stages[0]!;
+    const bgLayer = stage.getLayers()[0]!;
     const transparentRects = bgLayer
       .find<Konva.Rect>("Rect")
       .filter((r) => r.fill() === "transparent");
@@ -513,7 +513,7 @@ describe("EmojiCanvas — brush tool", () => {
       fireEvent.mouseDown(content, { clientX: 64, clientY: 64 });
     });
 
-    const stage = Konva.stages[0];
+    const stage = Konva.stages[0]!;
     const overlaysLayer = stage.getLayers()[2];
     const lines = overlaysLayer?.find<Konva.Line>("Line") ?? [];
     expect(lines.length).toBe(1);
@@ -588,7 +588,7 @@ describe("EmojiCanvas — brush tool", () => {
       fireEvent.mouseUp(content);
     });
 
-    const stage = Konva.stages[0];
+    const stage = Konva.stages[0]!;
     const overlaysLayer = stage.getLayers()[2];
     const lines = overlaysLayer?.find<Konva.Line>("Line") ?? [];
     expect(lines.length).toBe(0);
@@ -617,7 +617,7 @@ describe("EmojiCanvas — brush tool", () => {
       fireEvent.mouseDown(content, { clientX: 10, clientY: 10 });
     });
 
-    const stage = Konva.stages[0];
+    const stage = Konva.stages[0]!;
     const overlaysLayer = stage.getLayers()[2];
     const lines = overlaysLayer?.find<Konva.Line>("Line") ?? [];
     const initialPointCount = lines[0]?.points().length ?? 0;
