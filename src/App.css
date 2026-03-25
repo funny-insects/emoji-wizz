@@ -32,7 +32,8 @@
 /* ── Main card ── */
 .app-card {
   width: 100%;
-  max-width: 480px;
+  max-width: fit-content;
+  min-width: 480px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -95,6 +96,11 @@
   color: var(--accent);
 }
 
+/* ── Canvas — crisp pixel rendering ── */
+.konvajs-content canvas {
+  image-rendering: pixelated;
+}
+
 /* ── Canvas area ── */
 .canvas-wrapper {
   display: flex;
@@ -106,7 +112,6 @@
 .canvas-drop-zone {
   position: relative;
   border-radius: var(--radius-sm);
-  overflow: hidden;
   cursor: pointer;
   transition: box-shadow 0.15s ease;
 }
