@@ -1,7 +1,7 @@
 .decorate-panel {
-  width: 120px;
-  background: var(--card-bg, #1e1e2e);
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  width: 180px;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -10,7 +10,7 @@
 
 .decorate-panel__tabs {
   display: flex;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--border);
 }
 
 .decorate-panel__tab {
@@ -27,7 +27,7 @@
 
 .decorate-panel__tab--active {
   color: #fff;
-  border-bottom-color: #fe81d4;
+  border-bottom-color: var(--accent);
 }
 
 .decorate-panel__content {
@@ -55,7 +55,7 @@
 
 .decorate-panel__grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 6px;
 }
 
@@ -77,12 +77,12 @@
 }
 
 .decorate-panel__item--active {
-  border-color: hotpink;
+  border-color: var(--accent);
 }
 
 .decorate-panel__item img {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
 }
 
@@ -91,7 +91,7 @@
   color: rgba(255, 255, 255, 0.6);
   text-align: center;
   line-height: 1.2;
-  max-width: 52px;
+  max-width: 44px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
