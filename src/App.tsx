@@ -19,9 +19,11 @@ import {
   buildExportCanvas,
   buildFilename,
   checkFileSizeWarning,
+  downscaleCanvas,
   exportStageAsBlob,
   type ExportFormat,
 } from "./utils/exportUtils";
+import type { PlatformPreset } from "./utils/presets";
 import { STICKER_DEFINITIONS } from "./assets/stickers/index";
 import { FRAME_DEFINITIONS } from "./assets/frames/index";
 import type { StickerDescriptor } from "./utils/stickerTypes";
@@ -31,6 +33,9 @@ import referenceEmojiPng from "./assets/reference-emoji.png";
 export type EditorTool = "pointer" | "eraser" | "brush" | "text";
 
 function App() {
+  const [exportPreset, setExportPreset] = useState<PlatformPreset>(
+    PLATFORM_PRESETS[0]!,
+  );
   const [sizeWarning, setSizeWarning] = useState<string | null>(null);
   const { image, handleFileInput, handleDrop, handlePaste, fileName } =
     useImageImport();
@@ -267,11 +272,11 @@ function App() {
         );
         return;
       }
-      setSizeWarning(checkFileSizeWarning(blob.size, PLATFORM_PRESETS[0]!));
+      setSizeWarning(checkFileSizeWarning(blob.size, exportPreset));
       const href = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = href;
-      a.download = buildFilename(format);
+      a.download = buildFilename(format, exportPreset.id);
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -286,18 +291,18 @@ function App() {
         setSizeWarning("Export failed: canvas not ready.");
         return;
       }
-      exportStageAsBlob(stageRef.current).then((blob) => {
+      exportStageAsBlob(stageRef.current, exportPreset).then((blob) => {
         if (!blob) {
           setSizeWarning(
             "Export failed: this format is not supported by your browser.",
           );
           return;
         }
-        setSizeWarning(checkFileSizeWarning(blob.size, PLATFORM_PRESETS[0]!));
+        setSizeWarning(checkFileSizeWarning(blob.size, exportPreset));
         const href = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = href;
-        a.download = buildFilename(format);
+        a.download = buildFilename(format, exportPreset.id);
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -312,11 +317,16 @@ function App() {
         canvas.width = CANVAS_SIZE;
         canvas.height = CANVAS_SIZE;
         canvas.getContext("2d")!.drawImage(img, 0, 0);
-        triggerDownload(canvas, format);
+        const exportCanvas = downscaleCanvas(
+          canvas,
+          exportPreset.width,
+          exportPreset.height,
+        );
+        triggerDownload(exportCanvas, format);
       };
       img.src = latestSnapshot;
     } else {
-      triggerDownload(buildExportCanvas(image, PLATFORM_PRESETS[0]!), format);
+      triggerDownload(buildExportCanvas(image, exportPreset), format);
     }
   }
 
@@ -397,6 +407,12 @@ function App() {
           image={image}
           onDownload={handleDownload}
           sizeWarning={sizeWarning}
+          presets={PLATFORM_PRESETS}
+          activePresetId={exportPreset.id}
+          onPresetChange={(id) => {
+            const preset = PLATFORM_PRESETS.find((p) => p.id === id);
+            if (preset) setExportPreset(preset);
+          }}
         />
       </div>
       {showSpeechBubbleModal && (

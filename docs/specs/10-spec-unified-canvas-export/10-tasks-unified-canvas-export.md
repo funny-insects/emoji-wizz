@@ -51,7 +51,7 @@ Remove the preset-driven canvas sizing and make all editing happen at a fixed 51
 - [x] 1.9 Update `App.test.tsx`: remove the test "renders a select element for preset selection" since the preset selector is removed from the editing area. Verify the canvas render test still passes.
 - [x] 1.10 Update `EmojiCanvas.test.tsx` to remove any references to the preset prop and update expectations for the 512x512 canvas.
 
-### [ ] 2.0 Export with Platform Format Dropdown and High-Quality Downscaling
+### [x] 2.0 Export with Platform Format Dropdown and High-Quality Downscaling
 
 Add a platform format dropdown (Slack 128x128, Discord 128x128, Apple 512x512) to the export controls area. Implement high-quality downscaling from 512x512 to 128x128 for Slack/Discord exports. Update filename generation to include platform name. Validate file size against platform limits.
 
@@ -63,15 +63,15 @@ Add a platform format dropdown (Slack 128x128, Discord 128x128, Apple 512x512) t
 
 #### 2.0 Tasks
 
-- [ ] 2.1 In `App.tsx`, add a new state for the selected export preset: `const [exportPreset, setExportPreset] = useState<PlatformPreset>(PLATFORM_PRESETS[0]!)`. This replaces the removed `activePreset` state from task 1.0.
-- [ ] 2.2 In `exportUtils.ts`, add a new function `downscaleCanvas(sourceCanvas: HTMLCanvasElement, targetWidth: number, targetHeight: number): HTMLCanvasElement` that creates a target-size canvas using `imageSmoothingEnabled = true` and `imageSmoothingQuality = 'high'`, drawing the source onto the target. For 512→128 (4x reduction), implement two-step downscaling (512→256→128) for best quality.
-- [ ] 2.3 In `exportUtils.ts`, update `exportStageAsBlob` to accept an optional `targetPreset: PlatformPreset` parameter. After getting the 512x512 data URL from the stage, if `targetPreset.width < 512`, convert to a canvas, downscale using `downscaleCanvas`, and return a blob from the downscaled canvas.
-- [ ] 2.4 In `exportUtils.ts`, update `buildFilename` to accept an optional `platformId: string` parameter: `buildFilename(format, platformId?)`. When provided, the filename becomes `emoji-${platformId}-${date}.${format}` (e.g., `emoji-slack-2026-03-25.png`).
-- [ ] 2.5 In `ExportControls.tsx`, add a platform dropdown `<select>` before the file format dropdown. It should list all `PLATFORM_PRESETS` and call a new `onPresetChange` callback prop when changed. Update the props interface to accept `presets: PlatformPreset[]`, `activePresetId: string`, and `onPresetChange: (id: string) => void`.
-- [ ] 2.6 In `App.tsx`, update `handleDownload` to use `exportPreset` for downscaling. For the stage export path (stickers/frames present), pass `exportPreset` to `exportStageAsBlob`. For the image-only path, downscale the 512x512 canvas/snapshot to the export preset dimensions. Pass `exportPreset.id` to `buildFilename`. Use `exportPreset` for `checkFileSizeWarning`.
-- [ ] 2.7 In `App.tsx`, pass the new props to `<ExportControls>`: `presets={PLATFORM_PRESETS}`, `activePresetId={exportPreset.id}`, `onPresetChange` handler that sets `exportPreset`.
-- [ ] 2.8 In `exportUtils.test.ts`, add tests for `downscaleCanvas`: verify output dimensions match target, verify it handles same-size input (512→512 passthrough). Add test for `buildFilename` with platform ID.
-- [ ] 2.9 Update `ExportControls.test.tsx` to verify the platform dropdown renders with all three platform options.
+- [x] 2.1 In `App.tsx`, add a new state for the selected export preset: `const [exportPreset, setExportPreset] = useState<PlatformPreset>(PLATFORM_PRESETS[0]!)`. This replaces the removed `activePreset` state from task 1.0.
+- [x] 2.2 In `exportUtils.ts`, add a new function `downscaleCanvas(sourceCanvas: HTMLCanvasElement, targetWidth: number, targetHeight: number): HTMLCanvasElement` that creates a target-size canvas using `imageSmoothingEnabled = true` and `imageSmoothingQuality = 'high'`, drawing the source onto the target. For 512→128 (4x reduction), implement two-step downscaling (512→256→128) for best quality.
+- [x] 2.3 In `exportUtils.ts`, update `exportStageAsBlob` to accept an optional `targetPreset: PlatformPreset` parameter. After getting the 512x512 data URL from the stage, if `targetPreset.width < 512`, convert to a canvas, downscale using `downscaleCanvas`, and return a blob from the downscaled canvas.
+- [x] 2.4 In `exportUtils.ts`, update `buildFilename` to accept an optional `platformId: string` parameter: `buildFilename(format, platformId?)`. When provided, the filename becomes `emoji-${platformId}-${date}.${format}` (e.g., `emoji-slack-2026-03-25.png`).
+- [x] 2.5 In `ExportControls.tsx`, add a platform dropdown `<select>` before the file format dropdown. It should list all `PLATFORM_PRESETS` and call a new `onPresetChange` callback prop when changed. Update the props interface to accept `presets: PlatformPreset[]`, `activePresetId: string`, and `onPresetChange: (id: string) => void`.
+- [x] 2.6 In `App.tsx`, update `handleDownload` to use `exportPreset` for downscaling. For the stage export path (stickers/frames present), pass `exportPreset` to `exportStageAsBlob`. For the image-only path, downscale the 512x512 canvas/snapshot to the export preset dimensions. Pass `exportPreset.id` to `buildFilename`. Use `exportPreset` for `checkFileSizeWarning`.
+- [x] 2.7 In `App.tsx`, pass the new props to `<ExportControls>`: `presets={PLATFORM_PRESETS}`, `activePresetId={exportPreset.id}`, `onPresetChange` handler that sets `exportPreset`.
+- [x] 2.8 In `exportUtils.test.ts`, add tests for `downscaleCanvas`: verify output dimensions match target, verify it handles same-size input (512→512 passthrough). Add test for `buildFilename` with platform ID.
+- [x] 2.9 Update `ExportControls.test.tsx` to verify the platform dropdown renders with all three platform options.
 
 ### [ ] 3.0 Analyzer with Export-Format-Aware Suggestions
 
