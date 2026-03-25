@@ -101,6 +101,23 @@ export function Toolbar({
         >
           ✂
         </button>
+        <div className="toolbar-bg-settings">
+          <label className="toolbar-brush-size-label" htmlFor="bg-tolerance">
+            tol
+          </label>
+          <input
+            id="bg-tolerance"
+            type="number"
+            className="toolbar-brush-size-input"
+            value={bgTolerance}
+            min={0}
+            max={128}
+            onChange={(e) => {
+              const v = parseInt(e.target.value, 10);
+              if (!isNaN(v) && v >= 0 && v <= 128) onBgToleranceChange(v);
+            }}
+          />
+        </div>
         <button
           className={`toolbar-btn${activeTool === "crop" ? " toolbar-btn--active" : ""}`}
           onClick={() => onToolChange("crop")}
@@ -239,24 +256,6 @@ export function Toolbar({
           </div>
         </div>
       )}
-
-      <div className="toolbar-bg-settings">
-        <label className="toolbar-brush-size-label" htmlFor="bg-tolerance">
-          tol
-        </label>
-        <input
-          id="bg-tolerance"
-          type="number"
-          className="toolbar-brush-size-input"
-          value={bgTolerance}
-          min={0}
-          max={128}
-          onChange={(e) => {
-            const v = parseInt(e.target.value, 10);
-            if (!isNaN(v) && v >= 0 && v <= 128) onBgToleranceChange(v);
-          }}
-        />
-      </div>
 
       <div className="toolbar-history">
         <button
