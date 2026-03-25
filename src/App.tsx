@@ -6,17 +6,25 @@ import { Toolbar } from "./components/Toolbar";
 import { OptimizerPanel } from "./components/OptimizerPanel";
 import { ExportControls } from "./components/ExportControls";
 import { PresetSelector } from "./components/PresetSelector";
+import { DecoratePanel } from "./components/DecoratePanel";
+import { SpeechBubbleModal } from "./components/SpeechBubbleModal";
 import { PLATFORM_PRESETS, type PlatformPreset } from "./utils/presets";
 import { useImageImport } from "./hooks/useImageImport";
 import { useHistory } from "./hooks/useHistory";
+import { useStickerHistory } from "./hooks/useStickerHistory";
 import { detectContentBounds } from "./utils/detectContentBounds";
 import { generateSuggestions } from "./utils/generateSuggestions";
 import {
   buildExportCanvas,
   buildFilename,
   checkFileSizeWarning,
+  exportStageAsBlob,
   type ExportFormat,
 } from "./utils/exportUtils";
+import { STICKER_DEFINITIONS } from "./assets/stickers/index";
+import { FRAME_DEFINITIONS } from "./assets/frames/index";
+import type { StickerDescriptor } from "./utils/stickerTypes";
+import type { StickerDefinition } from "./assets/stickers/index";
 import referenceEmojiPng from "./assets/reference-emoji.png";
 
 export type EditorTool = "eraser" | "brush" | "text";
@@ -38,38 +46,167 @@ function App() {
   const [brushSize, setBrushSize] = useState<number>(3);
   const [textColor, setTextColor] = useState<string>("#000000");
   const [textSize, setTextSize] = useState<number>(18);
-  const { pushState, undo, redo, canUndo, canRedo } = useHistory();
+  const {
+    pushState,
+    undo: imageUndo,
+    redo: imageRedo,
+    canUndo,
+    canRedo,
+  } = useHistory();
+  const stickerHistory = useStickerHistory();
 
   const [restoreSnapshot, setRestoreSnapshot] = useState<string | null>(null);
   const [latestSnapshot, setLatestSnapshot] = useState<string | null>(null);
+  const latestSnapshotRef = useRef<string | null>(null);
+
+  const [stickers, setStickers] = useState<StickerDescriptor[]>([]);
+  const [selectedStickerId, setSelectedStickerId] = useState<string | null>(
+    null,
+  );
+  const [activeFrameId, setActiveFrameId] = useState<string | null>(null);
+  const [showSpeechBubbleModal, setShowSpeechBubbleModal] = useState(false);
+  const pendingTextStickerRef = useRef<StickerDefinition | null>(null);
+  const activeFrameSrc =
+    FRAME_DEFINITIONS.find((f) => f.id === activeFrameId)?.src ?? null;
 
   const handlePushState = useCallback(
     (snapshot: string) => {
       pushState(snapshot);
+      stickerHistory.pushState([...stickers]);
       setLatestSnapshot(snapshot);
+      latestSnapshotRef.current = snapshot;
     },
-    [pushState],
+    [pushState, stickerHistory, stickers],
   );
 
   const handleUndo = useCallback(() => {
-    const snapshot = undo();
-    if (snapshot) {
-      setRestoreSnapshot(snapshot);
-      setLatestSnapshot(snapshot);
+    const imgSnap = imageUndo();
+    const stickerSnap = stickerHistory.undo();
+    if (imgSnap) {
+      setRestoreSnapshot(imgSnap);
+      setLatestSnapshot(imgSnap);
     }
-  }, [undo]);
+    setStickers(stickerSnap ?? []);
+  }, [imageUndo, stickerHistory]);
 
   const handleRedo = useCallback(() => {
-    const snapshot = redo();
-    if (snapshot) {
-      setRestoreSnapshot(snapshot);
-      setLatestSnapshot(snapshot);
+    const imgSnap = imageRedo();
+    const stickerSnap = stickerHistory.redo();
+    if (imgSnap) {
+      setRestoreSnapshot(imgSnap);
+      setLatestSnapshot(imgSnap);
     }
-  }, [redo]);
+    setStickers(stickerSnap ?? []);
+  }, [imageRedo, stickerHistory]);
 
   const handleSnapshotRestored = useCallback(() => {
     setRestoreSnapshot(null);
   }, []);
+
+  const createStickerDescriptor = useCallback(
+    (def: StickerDefinition, text?: string): StickerDescriptor => ({
+      id: crypto.randomUUID(),
+      src: def.src,
+      label: def.label,
+      x: activePreset.width / 2 - 32,
+      y: activePreset.height / 2 - 32,
+      width: 64,
+      height: 64,
+      scaleX: 1,
+      scaleY: 1,
+      rotation: 0,
+      requiresText: def.requiresText,
+      text,
+    }),
+    [activePreset],
+  );
+
+  const handlePlaceSticker = useCallback(
+    (def: StickerDefinition) => {
+      if (def.requiresText) {
+        pendingTextStickerRef.current = def;
+        setShowSpeechBubbleModal(true);
+        return;
+      }
+      const newSticker = createStickerDescriptor(def);
+      setStickers((prev) => {
+        const newStickers = [...prev, newSticker];
+        pushState(latestSnapshotRef.current ?? "");
+        stickerHistory.pushState(newStickers);
+        return newStickers;
+      });
+    },
+    [createStickerDescriptor, pushState, stickerHistory],
+  );
+
+  const handleSpeechBubblePlace = useCallback(
+    (text: string) => {
+      const def = pendingTextStickerRef.current;
+      if (def) {
+        const newSticker = createStickerDescriptor(def, text);
+        setStickers((prev) => {
+          const newStickers = [...prev, newSticker];
+          pushState(latestSnapshotRef.current ?? "");
+          stickerHistory.pushState(newStickers);
+          return newStickers;
+        });
+        pendingTextStickerRef.current = null;
+      }
+      setShowSpeechBubbleModal(false);
+    },
+    [createStickerDescriptor, pushState, stickerHistory],
+  );
+
+  const handleSpeechBubbleCancel = useCallback(() => {
+    pendingTextStickerRef.current = null;
+    setShowSpeechBubbleModal(false);
+  }, []);
+
+  const handleUpdateSticker = useCallback(
+    (desc: StickerDescriptor) => {
+      setStickers((prev) => {
+        const newStickers = prev.map((s) => (s.id === desc.id ? desc : s));
+        pushState(latestSnapshotRef.current ?? "");
+        stickerHistory.pushState(newStickers);
+        return newStickers;
+      });
+    },
+    [pushState, stickerHistory],
+  );
+
+  const handleDeleteSticker = useCallback(
+    (id: string) => {
+      setStickers((prev) => {
+        const newStickers = prev.filter((s) => s.id !== id);
+        pushState(latestSnapshotRef.current ?? "");
+        stickerHistory.pushState(newStickers);
+        return newStickers;
+      });
+      setSelectedStickerId((prev) => (prev === id ? null : prev));
+    },
+    [pushState, stickerHistory],
+  );
+
+  const handleSelectSticker = useCallback((id: string | null) => {
+    setSelectedStickerId(id);
+  }, []);
+
+  const handleToggleFrame = useCallback(
+    (id: string) => {
+      setActiveFrameId((prev) => (prev === id ? null : id));
+      setStickers((prev) => {
+        pushState(latestSnapshotRef.current ?? "");
+        stickerHistory.pushState(prev);
+        return prev;
+      });
+    },
+    [pushState, stickerHistory],
+  );
+
+  const selectedStickerIdRef = useRef(selectedStickerId);
+  useEffect(() => {
+    selectedStickerIdRef.current = selectedStickerId;
+  }, [selectedStickerId]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -79,11 +216,17 @@ function App() {
       } else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "z") {
         e.preventDefault();
         handleRedo();
+      } else if (e.key === "Delete" || e.key === "Backspace") {
+        const id = selectedStickerIdRef.current;
+        if (id) {
+          e.preventDefault();
+          handleDeleteSticker(id);
+        }
       }
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleUndo, handleRedo]);
+  }, [handleUndo, handleRedo, handleDeleteSticker]);
 
   function handleAnalyze() {
     if (!stageRef.current) return;
@@ -141,6 +284,30 @@ function App() {
 
   function handleDownload(format: ExportFormat) {
     if (!image) return;
+    if (stickers.length > 0 || activeFrameId !== null) {
+      if (!stageRef.current) {
+        setSizeWarning("Export failed: canvas not ready.");
+        return;
+      }
+      exportStageAsBlob(stageRef.current).then((blob) => {
+        if (!blob) {
+          setSizeWarning(
+            "Export failed: this format is not supported by your browser.",
+          );
+          return;
+        }
+        setSizeWarning(checkFileSizeWarning(blob.size, activePreset));
+        const href = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = href;
+        a.download = buildFilename(format);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(href);
+      });
+      return;
+    }
     if (latestSnapshot) {
       const img = new window.Image();
       img.onload = () => {
@@ -206,6 +373,20 @@ function App() {
             textSize={textSize}
             stageRef={stageRef}
             fileName={fileName}
+            stickers={stickers}
+            selectedStickerId={selectedStickerId}
+            onUpdateSticker={handleUpdateSticker}
+            onDeleteSticker={handleDeleteSticker}
+            onSelectSticker={handleSelectSticker}
+            activeFrameSrc={activeFrameSrc}
+          />
+          <DecoratePanel
+            image={image}
+            stickers={STICKER_DEFINITIONS}
+            onPlaceSticker={handlePlaceSticker}
+            activeFrameId={activeFrameId}
+            frames={FRAME_DEFINITIONS}
+            onToggleFrame={handleToggleFrame}
           />
         </div>
         <OptimizerPanel
@@ -222,6 +403,12 @@ function App() {
           sizeWarning={sizeWarning}
         />
       </div>
+      {showSpeechBubbleModal && (
+        <SpeechBubbleModal
+          onPlace={handleSpeechBubblePlace}
+          onCancel={handleSpeechBubbleCancel}
+        />
+      )}
     </div>
   );
 }

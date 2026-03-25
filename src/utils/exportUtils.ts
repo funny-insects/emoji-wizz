@@ -1,3 +1,4 @@
+import Konva from "konva";
 import { computeContainRect } from "./imageScaling";
 import type { PlatformPreset } from "./presets";
 
@@ -25,6 +26,17 @@ export function buildExportCanvas(
 export function buildFilename(format: ExportFormat): string {
   const date = new Date().toISOString().slice(0, 10);
   return `emoji-${date}.${format}`;
+}
+
+export async function exportStageAsBlob(
+  stage: Konva.Stage,
+): Promise<Blob | null> {
+  const bgLayer = stage.getLayers()[0];
+  if (bgLayer) bgLayer.visible(false);
+  const dataUrl = stage.toDataURL({ pixelRatio: 1 });
+  if (bgLayer) bgLayer.visible(true);
+  const blob = await fetch(dataUrl).then((r) => r.blob());
+  return blob;
 }
 
 export function checkFileSizeWarning(

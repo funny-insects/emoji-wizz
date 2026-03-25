@@ -1,9 +1,18 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { Stage, Layer, Rect, Image as KonvaImage, Circle } from "react-konva";
+import {
+  Stage,
+  Layer,
+  Rect,
+  Image as KonvaImage,
+  Circle,
+  Transformer,
+  Text as KonvaText,
+} from "react-konva";
 import Konva from "konva";
 import { type PlatformPreset } from "../utils/presets";
 import { computeContainRect } from "../utils/imageScaling";
 import type { EditorTool } from "../App";
+import type { StickerDescriptor } from "../utils/stickerTypes";
 
 interface EmojiCanvasProps {
   preset: PlatformPreset;
@@ -22,6 +31,12 @@ interface EmojiCanvasProps {
   textSize?: number;
   stageRef?: React.RefObject<Konva.Stage | null>;
   fileName?: string;
+  stickers?: StickerDescriptor[];
+  selectedStickerId?: string | null;
+  onUpdateSticker?: (desc: StickerDescriptor) => void;
+  onDeleteSticker?: (id: string) => void;
+  onSelectSticker?: (id: string | null) => void;
+  activeFrameSrc?: string | null;
 }
 
 const TILE_SIZE = 8;
@@ -57,10 +72,22 @@ export function EmojiCanvas({
   textSize = 18,
   stageRef,
   fileName,
+  stickers = [],
+  selectedStickerId = null,
+  onUpdateSticker,
+  onDeleteSticker,
+  onSelectSticker,
+  activeFrameSrc = null,
 }: EmojiCanvasProps) {
   const { width, height, safeZonePadding } = preset;
   const tiles = buildCheckerboard(width, height);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const transformerRef = useRef<Konva.Transformer | null>(null);
+  const stickerNodeRefs = useRef<Map<string, Konva.Image>>(new Map());
+  const [stickerImages, setStickerImages] = useState<
+    Record<string, HTMLImageElement>
+  >({});
+  const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
   const displayScale = width === 128 ? 4 : 1;
 
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -291,6 +318,9 @@ export function EmojiCanvas({
 
   const handleClick = useCallback(
     (e: Konva.KonvaEventObject<MouseEvent>) => {
+      if (e.target === e.target.getStage()) {
+        onSelectSticker?.(null);
+      }
       if (activeTool !== "text") return;
       if (textInputPos) return;
       const stage = e.target.getStage();
@@ -298,7 +328,7 @@ export function EmojiCanvas({
       if (!pos) return;
       setTextInputPos({ x: pos.x, y: pos.y });
     },
-    [activeTool, textInputPos],
+    [activeTool, textInputPos, onSelectSticker],
   );
 
   const handleMouseDown = useCallback(
@@ -393,6 +423,49 @@ export function EmojiCanvas({
       }
     }
   }, [activeTool, flattenCurrentLine]);
+
+  // Load frame image when activeFrameSrc changes
+  useEffect(() => {
+    if (!activeFrameSrc) {
+      return;
+    }
+    const img = new window.Image();
+    img.onload = () => setFrameImage(img);
+    img.src = activeFrameSrc;
+    return () => {
+      setFrameImage(null);
+    };
+  }, [activeFrameSrc]);
+
+  // Load images for stickers that haven't been loaded yet
+  useEffect(() => {
+    stickers.forEach((s) => {
+      if (!stickerImages[s.src]) {
+        const img = new window.Image();
+        img.onload = () =>
+          setStickerImages((prev) => ({ ...prev, [s.src]: img }));
+        img.src = s.src;
+      }
+    });
+  }, [stickers, stickerImages]);
+
+  // Wire Transformer to selected sticker node
+  useEffect(() => {
+    const tr = transformerRef.current;
+    if (!tr) return;
+    if (selectedStickerId) {
+      const node = stickerNodeRefs.current.get(selectedStickerId);
+      if (node) {
+        tr.nodes([node]);
+        tr.getLayer()?.batchDraw();
+      }
+    } else {
+      tr.nodes([]);
+      tr.getLayer()?.batchDraw();
+    }
+  }, [selectedStickerId]);
+
+  const selectedSticker = stickers.find((s) => s.id === selectedStickerId);
 
   const containerStyle: React.CSSProperties = {
     position: "relative",
@@ -491,7 +564,114 @@ export function EmojiCanvas({
                     />
                   )}
                 </Layer>
+                <Layer>
+                  {stickers.map((sticker) => {
+                    const img = stickerImages[sticker.src];
+                    if (!img) return null;
+                    return (
+                      <>
+                        <KonvaImage
+                          key={sticker.id}
+                          ref={(node: Konva.Image | null) => {
+                            if (node) {
+                              stickerNodeRefs.current.set(sticker.id, node);
+                            } else {
+                              stickerNodeRefs.current.delete(sticker.id);
+                            }
+                          }}
+                          image={img}
+                          x={sticker.x}
+                          y={sticker.y}
+                          width={sticker.width}
+                          height={sticker.height}
+                          scaleX={sticker.scaleX}
+                          scaleY={sticker.scaleY}
+                          rotation={sticker.rotation}
+                          draggable
+                          onClick={() => onSelectSticker?.(sticker.id)}
+                          onDragEnd={(e) => {
+                            onUpdateSticker?.({
+                              ...sticker,
+                              x: e.target.x(),
+                              y: e.target.y(),
+                            });
+                          }}
+                          onTransformEnd={(e) => {
+                            const node = e.target;
+                            onUpdateSticker?.({
+                              ...sticker,
+                              x: node.x(),
+                              y: node.y(),
+                              scaleX: node.scaleX(),
+                              scaleY: node.scaleY(),
+                              rotation: node.rotation(),
+                            });
+                          }}
+                        />
+                        {sticker.text && (
+                          <KonvaText
+                            x={sticker.x + sticker.width * sticker.scaleX * 0.1}
+                            y={sticker.y + sticker.height * sticker.scaleY * 0.3}
+                            width={sticker.width * sticker.scaleX * 0.8}
+                            text={sticker.text}
+                            fontSize={Math.max(
+                              10,
+                              sticker.width * sticker.scaleX * 0.15,
+                            )}
+                            fill="#222"
+                            align="center"
+                            wrap="word"
+                            listening={false}
+                          />
+                        )}
+                      </>
+                    );
+                  })}
+                  <Transformer ref={transformerRef} />
+                </Layer>
+                <Layer>
+                  {frameImage && (
+                    <KonvaImage
+                      image={frameImage}
+                      x={0}
+                      y={0}
+                      width={width}
+                      height={height}
+                      listening={false}
+                    />
+                  )}
+                </Layer>
               </Stage>
+              {selectedSticker && selectedStickerId && (
+                <button
+                  style={{
+                    position: "absolute",
+                    left:
+                      selectedSticker.x +
+                      selectedSticker.width * selectedSticker.scaleX,
+                    top: selectedSticker.y,
+                    transform: "translate(-50%, -50%)",
+                    width: 20,
+                    height: 20,
+                    borderRadius: "50%",
+                    background: "#ff4444",
+                    color: "#fff",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: 14,
+                    lineHeight: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 20,
+                    padding: 0,
+                  }}
+                  onClick={() => onDeleteSticker?.(selectedStickerId)}
+                  aria-label="Delete sticker"
+                >
+                  ×
+                </button>
+              )}
               {textInputPos && activeTool === "text" && (
                 <input
                   key={`text-${textInputPos.x}-${textInputPos.y}`}
