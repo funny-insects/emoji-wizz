@@ -1,10 +1,8 @@
 import { useState } from "react";
 import type { ExportFormat } from "../utils/exportUtils";
-import type { PlatformPreset } from "../utils/presets";
 
 interface ExportControlsProps {
   image: HTMLImageElement | null;
-  preset: PlatformPreset;
   onDownload: (format: ExportFormat) => void;
   sizeWarning: string | null;
 }

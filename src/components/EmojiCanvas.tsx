@@ -9,14 +9,12 @@ import {
   Text as KonvaText,
 } from "react-konva";
 import Konva from "konva";
-import { type PlatformPreset } from "../utils/presets";
 import { computeContainRect } from "../utils/imageScaling";
 import { removeBackground } from "../utils/removeBackground";
 import type { EditorTool } from "../App";
 import type { StickerDescriptor } from "../utils/stickerTypes";
 
 interface EmojiCanvasProps {
-  preset: PlatformPreset;
   image: HTMLImageElement | null;
   handleFileInput: React.ChangeEventHandler<HTMLInputElement>;
   handleDrop: React.DragEventHandler<HTMLDivElement>;
@@ -59,7 +57,6 @@ function buildCheckerboard(
 }
 
 export function EmojiCanvas({
-  preset,
   image,
   handleFileInput,
   handleDrop,
@@ -82,7 +79,8 @@ export function EmojiCanvas({
   activeFrameSrc = null,
   bgRemovalRequest = null,
 }: EmojiCanvasProps) {
-  const { width, height, safeZonePadding } = preset;
+  const width = 512;
+  const height = 512;
   const tiles = buildCheckerboard(width, height);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const transformerRef = useRef<Konva.Transformer | null>(null);
@@ -91,7 +89,7 @@ export function EmojiCanvas({
     Record<string, HTMLImageElement>
   >({});
   const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
-  const displayScale = width === 128 ? 4 : 1;
+  const displayScale = 1;
 
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const isRestoringRef = useRef(false);
@@ -502,9 +500,7 @@ export function EmojiCanvas({
 
   return (
     <div className="section">
-      <span className="section-label">
-        Canvas — {width}×{height}px
-      </span>
+      <span className="section-label">Canvas</span>
       <div className="canvas-wrapper">
         <div
           className={`canvas-drop-zone${image ? " has-image" : ""}`}
@@ -550,16 +546,6 @@ export function EmojiCanvas({
                       fill={tile.fill}
                     />
                   ))}
-                  <Rect
-                    x={safeZonePadding}
-                    y={safeZonePadding}
-                    width={width - 2 * safeZonePadding}
-                    height={height - 2 * safeZonePadding}
-                    stroke="rgba(254, 129, 212, 0.6)"
-                    strokeWidth={1}
-                    dash={[4, 4]}
-                    fill="transparent"
-                  />
                 </Layer>
                 <Layer>
                   {image && imageRect && displayCanvas && (
