@@ -79,14 +79,8 @@ jobs:
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
         run: |
-          PREV_TAG=$(aws ecr describe-images \
-            --repository-name emoji-wizz \
-            --image-ids imageTag=latest \
-            --region "${AWS_REGION}" \
-            --output json 2>/dev/null \
-            | jq -r '.imageDetails[0].imageTags[]? | select(. != "latest")' \
-            | head -1 || echo "")
-          echo "Previous image tag: ${PREV_TAG:-none}"
+          PREV_TAG=$(git rev-parse HEAD~1 | cut -c1-7)
+          echo "Previous image tag: ${PREV_TAG}"
           echo "previous-tag=${PREV_TAG}" >> "$GITHUB_OUTPUT"
 
       - name: Build Docker image
