@@ -81,7 +81,7 @@ Display a live preview thumbnail inside the modal that updates as the user adjus
 - [ ] 3.7 Update `App.tsx` `handleBgRemovalConfirm` to use `strengthToTolerance(strength)` when creating the `bgRemovalRequest`, replacing the old direct tolerance value.
 - [ ] 3.8 Run `task test` and `task typecheck` to verify no regressions.
 
-### [ ] 4.0 Clean up unused code and verify all checks pass
+### [x] 4.0 Clean up unused code and verify all checks pass
 
 Remove any remaining dead code related to the old tolerance flow (unused state, props, types). Run `task lint`, `task typecheck`, and `task test` to verify everything passes. Ensure no regressions in existing functionality.
 
