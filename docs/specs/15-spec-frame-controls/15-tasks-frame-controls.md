@@ -199,7 +199,7 @@
 
 ---
 
-### [ ] 4.0 Add frame remove button and verify all three remove methods
+### [x] 4.0 Add frame remove button and verify all three remove methods
 
 **Purpose:** Add a visible × button on the active frame thumbnail so users can clearly remove a frame, and confirm that all three removal paths (click-toggle, × button, Cmd/Ctrl+Z) work correctly.
 
@@ -210,8 +210,8 @@
 
 #### 4.0 Tasks
 
-- [ ] 4.1 In `DecoratePanel.tsx`, add `onRemoveFrame: () => void` to `DecoratePanelProps`.
-- [ ] 4.2 In the Frames tab JSX, update the `frames.map(...)` block so that the active frame's `<button>` contains a nested × button overlaid in the top-right corner. Use `position: relative` on the parent button and `position: absolute` on the × button. Render the × button only when `activeFrameId === def.id`:
+- [x] 4.1 In `DecoratePanel.tsx`, add `onRemoveFrame: () => void` to `DecoratePanelProps`.
+- [x] 4.2 In the Frames tab JSX, update the `frames.map(...)` block so that the active frame's `<button>` contains a nested × button overlaid in the top-right corner. Use `position: relative` on the parent button and `position: absolute` on the × button. Render the × button only when `activeFrameId === def.id`:
   ```tsx
   <button
     key={def.id}
@@ -237,7 +237,7 @@
     )}
   </button>
   ```
-- [ ] 4.3 In `DecoratePanel.css`, add styles for the remove button:
+- [x] 4.3 In `DecoratePanel.css`, add styles for the remove button:
 
   ```css
   .decorate-panel__frame-remove {
@@ -264,7 +264,7 @@
   }
   ```
 
-- [ ] 4.4 In `App.tsx`, add `handleRemoveFrame` — a dedicated callback that removes the active frame and pushes an undo snapshot:
+- [x] 4.4 In `App.tsx`, add `handleRemoveFrame` — a dedicated callback that removes the active frame and pushes an undo snapshot:
   ```ts
   const handleRemoveFrame = useCallback(() => {
     pushState(latestSnapshotRef.current ?? "");
@@ -277,8 +277,8 @@
     setFrameThickness(50);
   }, [stickers, pushState, stickerHistory]);
   ```
-- [ ] 4.5 In `App.tsx`, pass `onRemoveFrame={handleRemoveFrame}` to `<DecoratePanel>`.
-- [ ] 4.6 Manually verify the three removal flows in the dev server (`npm run dev`): (1) click active frame thumbnail → deselects, (2) click × button → deselects, (3) apply frame then Cmd+Z → frame is removed.
+- [x] 4.5 In `App.tsx`, pass `onRemoveFrame={handleRemoveFrame}` to `<DecoratePanel>`.
+- [x] 4.6 Manually verify the three removal flows in the dev server (`npm run dev`): (1) click active frame thumbnail → deselects, (2) click × button → deselects, (3) apply frame then Cmd+Z → frame is removed.
 
 ---
 

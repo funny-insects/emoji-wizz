@@ -13,6 +13,7 @@ interface DecoratePanelProps {
   frameThickness: number;
   onFrameThicknessChange: (value: number) => void;
   onFrameThicknessCommit: (value: number) => void;
+  onRemoveFrame: () => void;
 }
 
 export function DecoratePanel({
@@ -25,6 +26,7 @@ export function DecoratePanel({
   frameThickness,
   onFrameThicknessChange,
   onFrameThicknessCommit,
+  onRemoveFrame,
 }: DecoratePanelProps) {
   const [activeTab, setActiveTab] = useState<"stickers" | "frames">("stickers");
   const [customStickers, setCustomStickers] = useState<StickerDefinition[]>([]);
@@ -129,11 +131,25 @@ export function DecoratePanel({
                   className={`decorate-panel__item${activeFrameId === def.id ? " decorate-panel__item--active" : ""}`}
                   onClick={() => onToggleFrame(def.id)}
                   title={def.label}
+                  style={{ position: "relative" }}
                 >
                   <img src={def.src} alt={def.label} />
                   <span className="decorate-panel__item-label">
                     {def.label}
                   </span>
+                  {activeFrameId === def.id && (
+                    <button
+                      className="decorate-panel__frame-remove"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveFrame();
+                      }}
+                      aria-label="Remove frame"
+                      title="Remove frame"
+                    >
+                      ×
+                    </button>
+                  )}
                 </button>
               ))}
             </div>

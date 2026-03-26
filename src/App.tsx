@@ -339,6 +339,17 @@ function App() {
     [stickers, activeFrameId, pushState, stickerHistory],
   );
 
+  const handleRemoveFrame = useCallback(() => {
+    pushState(latestSnapshotRef.current ?? "");
+    stickerHistory.pushState({
+      stickers,
+      activeFrameId: null,
+      frameThickness: 50,
+    });
+    setActiveFrameId(null);
+    setFrameThickness(50);
+  }, [stickers, pushState, stickerHistory]);
+
   const selectedStickerIdRef = useRef(selectedStickerId);
   useEffect(() => {
     selectedStickerIdRef.current = selectedStickerId;
@@ -557,6 +568,7 @@ function App() {
             frameThickness={frameThickness}
             onFrameThicknessChange={handleFrameThicknessChange}
             onFrameThicknessCommit={handleFrameThicknessCommit}
+            onRemoveFrame={handleRemoveFrame}
           />
         </div>
         <OptimizerPanel
