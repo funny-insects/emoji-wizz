@@ -193,8 +193,8 @@ jobs:
             --repository-name emoji-wizz \
             --image-ids imageTag="${PREVIOUS_IMAGE_TAG}" \
             --region "${AWS_REGION}" \
-            --output text \
-            --query 'images[0].imageManifest')
+            --output json \
+            | jq -r '.images[0].imageManifest')
           aws ecr put-image \
             --repository-name emoji-wizz \
             --image-tag latest \
