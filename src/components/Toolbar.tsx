@@ -18,9 +18,7 @@ interface ToolbarProps {
   onTextColorChange: (color: string) => void;
   textSize: number;
   onTextSizeChange: (size: number) => void;
-  onRemoveBackground: (tolerance: number) => void;
-  bgTolerance: number;
-  onBgToleranceChange: (t: number) => void;
+  onOpenBgRemoval: () => void;
   onRotateLeft: () => void;
   onRotateRight: () => void;
   onFlipHorizontal: () => void;
@@ -45,9 +43,7 @@ export function Toolbar({
   onTextColorChange,
   textSize,
   onTextSizeChange,
-  onRemoveBackground,
-  bgTolerance,
-  onBgToleranceChange,
+  onOpenBgRemoval,
   onRotateLeft,
   onRotateRight,
   onFlipHorizontal,
@@ -97,27 +93,10 @@ export function Toolbar({
           aria-label="Remove BG"
           title="Remove Background"
           disabled={!image}
-          onClick={() => onRemoveBackground(bgTolerance)}
+          onClick={onOpenBgRemoval}
         >
           ✂
         </button>
-        <div className="toolbar-bg-settings">
-          <label className="toolbar-brush-size-label" htmlFor="bg-tolerance">
-            tol
-          </label>
-          <input
-            id="bg-tolerance"
-            type="number"
-            className="toolbar-brush-size-input"
-            value={bgTolerance}
-            min={0}
-            max={128}
-            onChange={(e) => {
-              const v = parseInt(e.target.value, 10);
-              if (!isNaN(v) && v >= 0 && v <= 128) onBgToleranceChange(v);
-            }}
-          />
-        </div>
         <button
           className={`toolbar-btn${activeTool === "crop" ? " toolbar-btn--active" : ""}`}
           onClick={() => onToolChange("crop")}

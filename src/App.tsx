@@ -7,6 +7,8 @@ import { OptimizerPanel } from "./components/OptimizerPanel";
 import { ExportControls } from "./components/ExportControls";
 import { DecoratePanel } from "./components/DecoratePanel";
 import { SpeechBubbleModal } from "./components/SpeechBubbleModal";
+import { BackgroundRemovalModal } from "./components/BackgroundRemovalModal";
+import { strengthToTolerance } from "./utils/strengthToTolerance";
 import { PLATFORM_PRESETS } from "./utils/presets";
 import { useImageImport } from "./hooks/useImageImport";
 
@@ -50,7 +52,10 @@ function App() {
   const [brushSize, setBrushSize] = useState<number>(3);
   const [textColor, setTextColor] = useState<string>("#000000");
   const [textSize, setTextSize] = useState<number>(18);
-  const [bgTolerance, setBgTolerance] = useState<number>(15);
+  const [showBgRemovalModal, setShowBgRemovalModal] = useState(false);
+  const [bgRemovalImageData, setBgRemovalImageData] =
+    useState<ImageData | null>(null);
+  const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [bgRemovalRequest, setBgRemovalRequest] = useState<{
     tolerance: number;
     seq: number;
@@ -117,11 +122,31 @@ function App() {
     setRestoreSnapshot(null);
   }, []);
 
-  const handleRemoveBackground = useCallback((tolerance: number) => {
+  const handleOpenBgRemoval = useCallback(() => {
+    const canvas = offscreenCanvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        setBgRemovalImageData(
+          ctx.getImageData(0, 0, canvas.width, canvas.height),
+        );
+      }
+    }
+    setShowBgRemovalModal(true);
+  }, []);
+
+  const handleBgRemovalConfirm = useCallback((strength: number) => {
     setBgRemovalRequest((prev) => ({
-      tolerance,
+      tolerance: strengthToTolerance(strength),
       seq: (prev?.seq ?? 0) + 1,
     }));
+    setShowBgRemovalModal(false);
+    setBgRemovalImageData(null);
+  }, []);
+
+  const handleBgRemovalCancel = useCallback(() => {
+    setShowBgRemovalModal(false);
+    setBgRemovalImageData(null);
   }, []);
 
   const handleRotateLeft = useCallback(() => {
@@ -412,9 +437,7 @@ function App() {
             onTextColorChange={setTextColor}
             textSize={textSize}
             onTextSizeChange={setTextSize}
-            bgTolerance={bgTolerance}
-            onBgToleranceChange={setBgTolerance}
-            onRemoveBackground={handleRemoveBackground}
+            onOpenBgRemoval={handleOpenBgRemoval}
             onRotateLeft={handleRotateLeft}
             onRotateRight={handleRotateRight}
             onFlipHorizontal={handleFlipHorizontal}
@@ -449,6 +472,7 @@ function App() {
             bgRemovalRequest={bgRemovalRequest}
             transformRequest={transformRequest}
             cropConfirmSeq={cropConfirmSeq}
+            canvasRef={offscreenCanvasRef}
           />
           <DecoratePanel
             image={image}
@@ -491,6 +515,13 @@ function App() {
         <SpeechBubbleModal
           onPlace={handleSpeechBubblePlace}
           onCancel={handleSpeechBubbleCancel}
+        />
+      )}
+      {showBgRemovalModal && (
+        <BackgroundRemovalModal
+          onConfirm={handleBgRemovalConfirm}
+          onCancel={handleBgRemovalCancel}
+          imageData={bgRemovalImageData}
         />
       )}
     </div>

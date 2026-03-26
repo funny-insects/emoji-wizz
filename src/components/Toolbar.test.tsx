@@ -13,9 +13,7 @@ const defaultTextProps: {
   onTextColorChange: () => void;
   textSize: number;
   onTextSizeChange: () => void;
-  onRemoveBackground: () => void;
-  bgTolerance: number;
-  onBgToleranceChange: () => void;
+  onOpenBgRemoval: () => void;
   onRotateLeft: () => void;
   onRotateRight: () => void;
   onFlipHorizontal: () => void;
@@ -31,9 +29,7 @@ const defaultTextProps: {
   onTextColorChange: () => {},
   textSize: 18,
   onTextSizeChange: () => {},
-  onRemoveBackground: () => {},
-  bgTolerance: 15,
-  onBgToleranceChange: () => {},
+  onOpenBgRemoval: () => {},
   onRotateLeft: () => {},
   onRotateRight: () => {},
   onFlipHorizontal: () => {},
@@ -190,8 +186,8 @@ describe("Toolbar", () => {
     );
   });
 
-  it("Remove BG button calls onRemoveBackground with current tolerance", () => {
-    const onRemoveBackground = vi.fn();
+  it("Remove BG button calls onOpenBgRemoval", () => {
+    const onOpenBgRemoval = vi.fn();
     render(
       <Toolbar
         image={mockImage}
@@ -202,34 +198,11 @@ describe("Toolbar", () => {
         onUndo={() => {}}
         onRedo={() => {}}
         {...defaultTextProps}
-        bgTolerance={30}
-        onRemoveBackground={onRemoveBackground}
+        onOpenBgRemoval={onOpenBgRemoval}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Remove BG" }));
-    expect(onRemoveBackground).toHaveBeenCalledWith(30);
-  });
-
-  it("tolerance input is visible when image is provided and updates on change", () => {
-    const onBgToleranceChange = vi.fn();
-    render(
-      <Toolbar
-        image={mockImage}
-        activeTool="eraser"
-        onToolChange={() => {}}
-        canUndo={false}
-        canRedo={false}
-        onUndo={() => {}}
-        onRedo={() => {}}
-        {...defaultTextProps}
-        onBgToleranceChange={onBgToleranceChange}
-      />,
-    );
-    expect(screen.getByRole("spinbutton", { name: "tol" })).toBeInTheDocument();
-    fireEvent.change(screen.getByRole("spinbutton", { name: "tol" }), {
-      target: { value: "20" },
-    });
-    expect(onBgToleranceChange).toHaveBeenCalledWith(20);
+    expect(onOpenBgRemoval).toHaveBeenCalledTimes(1);
   });
 });
 
