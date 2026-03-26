@@ -90,12 +90,10 @@ export function DecoratePanel({
             />
             <div className="decorate-panel__grid">
               {customStickers.map((def) => {
-                // codeql[js/xss-through-dom] -- src is always a blob: URL from URL.createObjectURL; sanitizeImgSrc blocks other protocols
                 const imgSrc = sanitizeImgSrc(def.src);
-                // codeql[js/xss-through-dom]
-                const img = (
-                  <img src={imgSrc} alt={def.label} draggable={false} />
-                );
+                // prettier-ignore
+                // codeql[js/xss-through-dom] -- src is always a blob: URL from URL.createObjectURL; sanitizeImgSrc blocks other protocols
+                const img = <img src={imgSrc} alt={def.label} draggable={false} />;
                 return (
                   <button
                     key={def.id}
@@ -111,12 +109,10 @@ export function DecoratePanel({
                 );
               })}
               {stickers.map((def) => {
-                // codeql[js/xss-through-dom] -- src is a bundled static asset path; sanitizeImgSrc blocks other protocols
                 const imgSrc = sanitizeImgSrc(def.src);
-                // codeql[js/xss-through-dom]
-                const img = (
-                  <img src={imgSrc} alt={def.label} draggable={false} />
-                );
+                // prettier-ignore
+                // codeql[js/xss-through-dom] -- src is a bundled static asset path; sanitizeImgSrc blocks other protocols
+                const img = <img src={imgSrc} alt={def.label} draggable={false} />;
                 return (
                   <button
                     key={def.id}
@@ -137,9 +133,9 @@ export function DecoratePanel({
         {activeTab === "frames" && (
           <div className="decorate-panel__grid">
             {frames.map((def) => {
-              // codeql[js/xss-through-dom] -- src is a bundled static asset path; sanitizeImgSrc blocks other protocols
               const imgSrc = sanitizeImgSrc(def.src);
-              // codeql[js/xss-through-dom]
+              // prettier-ignore
+              // codeql[js/xss-through-dom] -- src is a bundled static asset path; sanitizeImgSrc blocks other protocols
               const img = <img src={imgSrc} alt={def.label} />;
               return (
                 <button
