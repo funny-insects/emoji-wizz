@@ -37,7 +37,7 @@ Add a `post-deploy` job to the deploy workflow that queries the App Runner servi
 - [x] 1.4 Add a step named "Log deployment status on timeout" with `if: failure()` that runs `aws apprunner list-operations --service-arn <SERVICE_ARN> --region <REGION>` to query and log the App Runner deployment status when the smoke test fails. The service ARN should be queried the same way as in the `deploy` job.
 - [ ] 1.5 Push the workflow changes to a branch, trigger a deployment, and verify in GitHub Actions logs that the `post-deploy` job runs after `deploy` and the smoke test passes with HTTP 200.
 
-### [~] 2.0 Production E2E Tests with Playwright
+### [x] 2.0 Production E2E Tests with Playwright
 
 Create a production-specific Playwright configuration and test suite in `e2e/prod/` that runs against the live production URL. Add a `test:e2e:prod` task to `Taskfile.yml` for local execution. Wire the E2E tests into the `post-deploy` job after the smoke test step.
 
