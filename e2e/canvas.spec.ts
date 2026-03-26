@@ -12,8 +12,8 @@ test("canvas renders with Slack preset dimensions", async ({ page }) => {
   await page.goto("/");
   const canvas = bgCanvas(page);
   await expect(canvas).toBeVisible();
-  expect(await canvas.getAttribute("width")).toBe("128");
-  expect(await canvas.getAttribute("height")).toBe("128");
+  expect(await canvas.getAttribute("width")).toBe("512");
+  expect(await canvas.getAttribute("height")).toBe("512");
 });
 
 test("canvas renders non-empty pixel data (checkerboard is drawing)", async ({

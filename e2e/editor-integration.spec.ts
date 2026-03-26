@@ -6,9 +6,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Transparent fixture: 32×32 RGBA PNG, top half (rows 0-15) opaque orange
 // (255, 165, 0, 255), bottom half (rows 16-31) fully transparent.
-// When rendered in a 128×128 Konva stage, the image is scaled 4×:
-//   canvas y 0–63  → opaque orange
-//   canvas y 64–127 → transparent (alpha = 0)
+// When rendered in a 512×512 Konva stage, the image is scaled 16×:
+//   canvas y 0–255  → opaque orange
+//   canvas y 256–511 → transparent (alpha = 0)
 const TRANSPARENT_FIXTURE = path.join(
   __dirname,
   "fixtures",
@@ -61,7 +61,7 @@ test("transparency preservation: transparent areas remain alpha=0 after eraser, 
   const initOpaque = await getImageLayerPixel(page, 64, 40);
   expect(initOpaque.a).toBeGreaterThan(0);
 
-  const initTransparent = await getImageLayerPixel(page, 64, 96);
+  const initTransparent = await getImageLayerPixel(page, 64, 300);
   expect(initTransparent.a).toBe(0);
 
   const stageBox = await page.locator(".konvajs-content").first().boundingBox();
@@ -95,11 +95,11 @@ test("transparency preservation: transparent areas remain alpha=0 after eraser, 
   await page.waitForTimeout(100);
 
   // After all edits: transparent area (bottom half) must still be alpha=0
-  const afterEdits = await getImageLayerPixel(page, 64, 96);
+  const afterEdits = await getImageLayerPixel(page, 64, 300);
   expect(afterEdits.a).toBe(0);
 
   // Also verify another transparent point
-  const afterEdits2 = await getImageLayerPixel(page, 20, 100);
+  const afterEdits2 = await getImageLayerPixel(page, 20, 300);
   expect(afterEdits2.a).toBe(0);
 
   // Undo all three actions (text → brush → eraser)
@@ -111,7 +111,7 @@ test("transparency preservation: transparent areas remain alpha=0 after eraser, 
   await page.waitForTimeout(200);
 
   // After full undo: transparent area remains transparent
-  const afterUndo = await getImageLayerPixel(page, 64, 96);
+  const afterUndo = await getImageLayerPixel(page, 64, 300);
   expect(afterUndo.a).toBe(0);
 
   // Opaque area is restored
