@@ -44,6 +44,7 @@ interface EmojiCanvasProps {
   onDeleteSticker?: (id: string) => void;
   onSelectSticker?: (id: string | null) => void;
   activeFrameSrc?: string | null;
+  frameThickness?: number;
   bgRemovalRequest?: { tolerance: number; seq: number } | null;
   transformRequest?: {
     type: "rotateCW" | "rotateCCW" | "flipH" | "flipV";
@@ -94,6 +95,7 @@ export function EmojiCanvas({
   onDeleteSticker,
   onSelectSticker,
   activeFrameSrc = null,
+  frameThickness = 100,
   bgRemovalRequest = null,
   transformRequest = null,
   cropConfirmSeq = 0,
@@ -864,16 +866,24 @@ export function EmojiCanvas({
                   <Transformer ref={transformerRef} />
                 </Layer>
                 <Layer>
-                  {frameImage && (
-                    <KonvaImage
-                      image={frameImage}
-                      x={0}
-                      y={0}
-                      width={width}
-                      height={height}
-                      listening={false}
-                    />
-                  )}
+                  {frameImage &&
+                    (() => {
+                      const frameScale = 100 / frameThickness;
+                      const frameW = width * frameScale;
+                      const frameH = height * frameScale;
+                      const frameX = -(frameW - width) / 2;
+                      const frameY = -(frameH - height) / 2;
+                      return (
+                        <KonvaImage
+                          image={frameImage}
+                          x={frameX}
+                          y={frameY}
+                          width={frameW}
+                          height={frameH}
+                          listening={false}
+                        />
+                      );
+                    })()}
                 </Layer>
               </Stage>
               {selectedSticker && selectedStickerId && (

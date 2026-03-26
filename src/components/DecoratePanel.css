@@ -96,3 +96,42 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.decorate-panel__frame-controls {
+  padding: 8px 4px 0;
+}
+
+.decorate-panel__frame-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary, #888);
+}
+
+.decorate-panel__frame-slider {
+  flex: 1;
+}
+
+.decorate-panel__frame-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.decorate-panel__frame-remove:hover {
+  background: rgba(200, 0, 0, 0.8);
+}

@@ -10,6 +10,10 @@ interface DecoratePanelProps {
   activeFrameId: string | null;
   frames: FrameDefinition[];
   onToggleFrame: (id: string) => void;
+  frameThickness: number;
+  onFrameThicknessChange: (value: number) => void;
+  onFrameThicknessCommit: (value: number) => void;
+  onRemoveFrame: () => void;
 }
 
 export function DecoratePanel({
@@ -19,6 +23,10 @@ export function DecoratePanel({
   activeFrameId,
   frames,
   onToggleFrame,
+  frameThickness,
+  onFrameThicknessChange,
+  onFrameThicknessCommit,
+  onRemoveFrame,
 }: DecoratePanelProps) {
   const [activeTab, setActiveTab] = useState<"stickers" | "frames">("stickers");
   const [customStickers, setCustomStickers] = useState<StickerDefinition[]>([]);
@@ -115,19 +123,59 @@ export function DecoratePanel({
           </>
         )}
         {activeTab === "frames" && (
-          <div className="decorate-panel__grid">
-            {frames.map((def) => (
-              <button
-                key={def.id}
-                className={`decorate-panel__item${activeFrameId === def.id ? " decorate-panel__item--active" : ""}`}
-                onClick={() => onToggleFrame(def.id)}
-                title={def.label}
-              >
-                <img src={def.src} alt={def.label} />
-                <span className="decorate-panel__item-label">{def.label}</span>
-              </button>
-            ))}
-          </div>
+          <>
+            <div className="decorate-panel__grid">
+              {frames.map((def) => (
+                <button
+                  key={def.id}
+                  className={`decorate-panel__item${activeFrameId === def.id ? " decorate-panel__item--active" : ""}`}
+                  onClick={() => onToggleFrame(def.id)}
+                  title={def.label}
+                  style={{ position: "relative" }}
+                >
+                  <img src={def.src} alt={def.label} />
+                  <span className="decorate-panel__item-label">
+                    {def.label}
+                  </span>
+                  {activeFrameId === def.id && (
+                    <button
+                      className="decorate-panel__frame-remove"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveFrame();
+                      }}
+                      aria-label="Remove frame"
+                      title="Remove frame"
+                    >
+                      ×
+                    </button>
+                  )}
+                </button>
+              ))}
+            </div>
+            {activeFrameId !== null && (
+              <div className="decorate-panel__frame-controls">
+                <label className="decorate-panel__frame-label">
+                  Size
+                  <input
+                    type="range"
+                    min={10}
+                    max={100}
+                    value={frameThickness}
+                    className="decorate-panel__frame-slider"
+                    onChange={(e) =>
+                      onFrameThicknessChange(Number(e.target.value))
+                    }
+                    onPointerUp={(e) =>
+                      onFrameThicknessCommit(
+                        Number((e.target as HTMLInputElement).value),
+                      )
+                    }
+                  />
+                </label>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

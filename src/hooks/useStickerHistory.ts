@@ -1,20 +1,26 @@
 import { useRef, useState, useCallback } from "react";
 import type { StickerDescriptor } from "../utils/stickerTypes";
 
+export interface StickerSnapshot {
+  stickers: StickerDescriptor[];
+  activeFrameId: string | null;
+  frameThickness: number;
+}
+
 export function useStickerHistory() {
-  const undoStackRef = useRef<StickerDescriptor[][]>([]);
-  const redoStackRef = useRef<StickerDescriptor[][]>([]);
+  const undoStackRef = useRef<StickerSnapshot[]>([]);
+  const redoStackRef = useRef<StickerSnapshot[]>([]);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
 
-  const pushState = useCallback((snapshot: StickerDescriptor[]) => {
+  const pushState = useCallback((snapshot: StickerSnapshot) => {
     undoStackRef.current.push(snapshot);
     redoStackRef.current = [];
     setCanUndo(undoStackRef.current.length > 1);
     setCanRedo(false);
   }, []);
 
-  const undo = useCallback((): StickerDescriptor[] | null => {
+  const undo = useCallback((): StickerSnapshot | null => {
     if (undoStackRef.current.length <= 1) return null;
     const popped = undoStackRef.current.pop()!;
     redoStackRef.current.push(popped);
@@ -24,7 +30,7 @@ export function useStickerHistory() {
     return previous ?? null;
   }, []);
 
-  const redo = useCallback((): StickerDescriptor[] | null => {
+  const redo = useCallback((): StickerSnapshot | null => {
     if (redoStackRef.current.length === 0) return null;
     const snapshot = redoStackRef.current.pop()!;
     undoStackRef.current.push(snapshot);
