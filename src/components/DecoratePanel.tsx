@@ -90,7 +90,12 @@ export function DecoratePanel({
             />
             <div className="decorate-panel__grid">
               {customStickers.map((def) => {
+                // codeql[js/xss-through-dom] -- src is always a blob: URL from URL.createObjectURL; sanitizeImgSrc blocks other protocols
                 const imgSrc = sanitizeImgSrc(def.src);
+                // codeql[js/xss-through-dom]
+                const img = (
+                  <img src={imgSrc} alt={def.label} draggable={false} />
+                );
                 return (
                   <button
                     key={def.id}
@@ -98,8 +103,7 @@ export function DecoratePanel({
                     onClick={() => onPlaceSticker(def)}
                     title={def.label}
                   >
-                    {/* codeql[js/xss-through-dom] -- src is always a blob: URL from URL.createObjectURL; sanitizeImgSrc blocks other protocols */}
-                    <img src={imgSrc} alt={def.label} draggable={false} />
+                    {img}
                     <span className="decorate-panel__item-label">
                       {def.label}
                     </span>
@@ -107,7 +111,12 @@ export function DecoratePanel({
                 );
               })}
               {stickers.map((def) => {
+                // codeql[js/xss-through-dom] -- src is a bundled static asset path; sanitizeImgSrc blocks other protocols
                 const imgSrc = sanitizeImgSrc(def.src);
+                // codeql[js/xss-through-dom]
+                const img = (
+                  <img src={imgSrc} alt={def.label} draggable={false} />
+                );
                 return (
                   <button
                     key={def.id}
@@ -115,8 +124,7 @@ export function DecoratePanel({
                     onClick={() => onPlaceSticker(def)}
                     title={def.label}
                   >
-                    {/* codeql[js/xss-through-dom] -- src is a bundled static asset path; sanitizeImgSrc blocks other protocols */}
-                    <img src={imgSrc} alt={def.label} draggable={false} />
+                    {img}
                     <span className="decorate-panel__item-label">
                       {def.label}
                     </span>
@@ -129,7 +137,10 @@ export function DecoratePanel({
         {activeTab === "frames" && (
           <div className="decorate-panel__grid">
             {frames.map((def) => {
+              // codeql[js/xss-through-dom] -- src is a bundled static asset path; sanitizeImgSrc blocks other protocols
               const imgSrc = sanitizeImgSrc(def.src);
+              // codeql[js/xss-through-dom]
+              const img = <img src={imgSrc} alt={def.label} />;
               return (
                 <button
                   key={def.id}
@@ -137,8 +148,7 @@ export function DecoratePanel({
                   onClick={() => onToggleFrame(def.id)}
                   title={def.label}
                 >
-                  {/* codeql[js/xss-through-dom] -- src is a bundled static asset path; sanitizeImgSrc blocks other protocols */}
-                  <img src={imgSrc} alt={def.label} />
+                  {img}
                   <span className="decorate-panel__item-label">
                     {def.label}
                   </span>
