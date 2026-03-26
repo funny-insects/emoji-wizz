@@ -10,6 +10,10 @@ import fireSrc from "./fire.png";
 import partyPopperSrc from "./party-popper.png";
 import sparklesSrc from "./sparkles.png";
 import sweatSrc from "./sweat.png";
+import knifeSrc from "./knife.png";
+import eagleSrc from "./eagle.png";
+import pigSrc from "./pig.png";
+import burgerSrc from "./burger.png";
 
 export interface StickerDefinition {
   id: string;
@@ -73,6 +77,10 @@ export const STICKER_DEFINITIONS: StickerDefinition[] = [
     category: "effects",
   },
   { id: "sweat", label: "Sweat", src: sweatSrc, category: "effects" },
+  { id: "knife", label: "Knife", src: knifeSrc, category: "effects" },
+  { id: "eagle", label: "Eagle", src: eagleSrc, category: "effects" },
+  { id: "pig", label: "Pig", src: pigSrc, category: "effects" },
+  { id: "burger", label: "Burger", src: burgerSrc, category: "effects" },
   // Speech bubble
   {
     id: "speech-bubble",
