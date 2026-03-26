@@ -89,56 +89,62 @@ export function DecoratePanel({
               onChange={handleUploadChange}
             />
             <div className="decorate-panel__grid">
-              {customStickers.map((def) => (
-                <button
-                  key={def.id}
-                  className="decorate-panel__item"
-                  onClick={() => onPlaceSticker(def)}
-                  title={def.label}
-                >
-                  <img
-                    src={sanitizeImgSrc(def.src)}
-                    alt={def.label}
-                    draggable={false}
-                  />
-                  <span className="decorate-panel__item-label">
-                    {def.label}
-                  </span>
-                </button>
-              ))}
-              {stickers.map((def) => (
-                <button
-                  key={def.id}
-                  className="decorate-panel__item"
-                  onClick={() => onPlaceSticker(def)}
-                  title={def.label}
-                >
-                  <img
-                    src={sanitizeImgSrc(def.src)}
-                    alt={def.label}
-                    draggable={false}
-                  />
-                  <span className="decorate-panel__item-label">
-                    {def.label}
-                  </span>
-                </button>
-              ))}
+              {customStickers.map((def) => {
+                // codeql[js/xss-through-dom] -- src is always a blob: URL from URL.createObjectURL; sanitizeImgSrc blocks other protocols
+                const imgSrc = sanitizeImgSrc(def.src);
+                return (
+                  <button
+                    key={def.id}
+                    className="decorate-panel__item"
+                    onClick={() => onPlaceSticker(def)}
+                    title={def.label}
+                  >
+                    <img src={imgSrc} alt={def.label} draggable={false} />
+                    <span className="decorate-panel__item-label">
+                      {def.label}
+                    </span>
+                  </button>
+                );
+              })}
+              {stickers.map((def) => {
+                // codeql[js/xss-through-dom] -- src is a bundled static asset path; sanitizeImgSrc blocks other protocols
+                const imgSrc = sanitizeImgSrc(def.src);
+                return (
+                  <button
+                    key={def.id}
+                    className="decorate-panel__item"
+                    onClick={() => onPlaceSticker(def)}
+                    title={def.label}
+                  >
+                    <img src={imgSrc} alt={def.label} draggable={false} />
+                    <span className="decorate-panel__item-label">
+                      {def.label}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </>
         )}
         {activeTab === "frames" && (
           <div className="decorate-panel__grid">
-            {frames.map((def) => (
-              <button
-                key={def.id}
-                className={`decorate-panel__item${activeFrameId === def.id ? " decorate-panel__item--active" : ""}`}
-                onClick={() => onToggleFrame(def.id)}
-                title={def.label}
-              >
-                <img src={sanitizeImgSrc(def.src)} alt={def.label} />
-                <span className="decorate-panel__item-label">{def.label}</span>
-              </button>
-            ))}
+            {frames.map((def) => {
+              // codeql[js/xss-through-dom] -- src is a bundled static asset path; sanitizeImgSrc blocks other protocols
+              const imgSrc = sanitizeImgSrc(def.src);
+              return (
+                <button
+                  key={def.id}
+                  className={`decorate-panel__item${activeFrameId === def.id ? " decorate-panel__item--active" : ""}`}
+                  onClick={() => onToggleFrame(def.id)}
+                  title={def.label}
+                >
+                  <img src={imgSrc} alt={def.label} />
+                  <span className="decorate-panel__item-label">
+                    {def.label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
