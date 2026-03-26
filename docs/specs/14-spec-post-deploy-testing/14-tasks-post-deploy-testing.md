@@ -19,7 +19,7 @@
 
 ## Tasks
 
-### [~] 1.0 Smoke Test with Deployment Wait
+### [x] 1.0 Smoke Test with Deployment Wait
 
 Add a `post-deploy` job to the deploy workflow that queries the App Runner service URL dynamically and uses `curl` to poll the production URL until it returns HTTP 200. If `curl` times out after 600s, query the App Runner deployment status via AWS CLI, log it, and fail the job.
 
@@ -37,7 +37,7 @@ Add a `post-deploy` job to the deploy workflow that queries the App Runner servi
 - [x] 1.4 Add a step named "Log deployment status on timeout" with `if: failure()` that runs `aws apprunner list-operations --service-arn <SERVICE_ARN> --region <REGION>` to query and log the App Runner deployment status when the smoke test fails. The service ARN should be queried the same way as in the `deploy` job.
 - [ ] 1.5 Push the workflow changes to a branch, trigger a deployment, and verify in GitHub Actions logs that the `post-deploy` job runs after `deploy` and the smoke test passes with HTTP 200.
 
-### [ ] 2.0 Production E2E Tests with Playwright
+### [~] 2.0 Production E2E Tests with Playwright
 
 Create a production-specific Playwright configuration and test suite in `e2e/prod/` that runs against the live production URL. Add a `test:e2e:prod` task to `Taskfile.yml` for local execution. Wire the E2E tests into the `post-deploy` job after the smoke test step.
 
@@ -50,11 +50,11 @@ Create a production-specific Playwright configuration and test suite in `e2e/pro
 
 #### 2.0 Tasks
 
-- [ ] 2.1 Create `playwright.prod.config.ts` in the project root. Model it after the existing `playwright.config.ts` but: set `baseURL` to `process.env.PROD_URL` (throw an error if not set), set `testDir` to `./e2e/prod`, remove the `webServer` section entirely, keep Chromium-only project, keep CI retry/worker settings, and use `list` + `html` reporters.
-- [ ] 2.2 Create the `e2e/prod/` directory and add `prod.spec.ts` with three tests following existing `e2e/app.spec.ts` patterns: (1) "app loads successfully" — navigate to `/` and verify the page title or a root element is visible; (2) "canvas element renders" — verify `.konvajs-content canvas` is visible; (3) "preset selector is functional" — verify the `select` element is visible and has selectable options.
-- [ ] 2.3 Add a `test:e2e:prod` task to `Taskfile.yml` with the command `npx playwright test --config playwright.prod.config.ts` and description "Run Playwright production E2E tests (requires PROD_URL env var)".
+- [x] 2.1 Create `playwright.prod.config.ts` in the project root. Model it after the existing `playwright.config.ts` but: set `baseURL` to `process.env.PROD_URL` (throw an error if not set), set `testDir` to `./e2e/prod`, remove the `webServer` section entirely, keep Chromium-only project, keep CI retry/worker settings, and use `list` + `html` reporters.
+- [x] 2.2 Create the `e2e/prod/` directory and add `prod.spec.ts` with three tests following existing `e2e/app.spec.ts` patterns: (1) "app loads successfully" — navigate to `/` and verify the page title or a root element is visible; (2) "canvas element renders" — verify `.konvajs-content canvas` is visible; (3) "preset selector is functional" — verify the `select` element is visible and has selectable options.
+- [x] 2.3 Add a `test:e2e:prod` task to `Taskfile.yml` with the command `npx playwright test --config playwright.prod.config.ts` and description "Run Playwright production E2E tests (requires PROD_URL env var)".
 - [ ] 2.4 Verify the production tests work locally by running `PROD_URL=<your-prod-url> task test:e2e:prod` and confirming all three tests pass.
-- [ ] 2.5 Add steps to the `post-deploy` job in `.github/workflows/deploy.yml` after the smoke test: (1) "Setup Node.js" using `actions/setup-node@v4` with node-version 22 and npm cache; (2) "Install dependencies" running `npm ci`; (3) "Install Playwright browsers" running `npx playwright install --with-deps chromium`; (4) "Run production E2E tests" running `npx playwright test --config playwright.prod.config.ts` with `PROD_URL` set from the dynamically queried URL.
+- [x] 2.5 Add steps to the `post-deploy` job in `.github/workflows/deploy.yml` after the smoke test: (1) "Setup Node.js" using `actions/setup-node@v4` with node-version 22 and npm cache; (2) "Install dependencies" running `npm ci`; (3) "Install Playwright browsers" running `npx playwright install --with-deps chromium`; (4) "Run production E2E tests" running `npx playwright test --config playwright.prod.config.ts` with `PROD_URL` set from the dynamically queried URL.
 - [ ] 2.6 Push the changes, trigger a deployment, and verify in GitHub Actions logs that the production E2E tests run and pass in the `post-deploy` job after the smoke test.
 
 ### [ ] 3.0 Automatic Rollback on Failure

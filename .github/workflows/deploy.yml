@@ -143,3 +143,23 @@ jobs:
           aws apprunner list-operations \
             --service-arn "${SERVICE_ARN}" \
             --region "${AWS_REGION}"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run production E2E tests
+        env:
+          PROD_URL: ${{ env.PROD_URL }}
+        run: npx playwright test --config playwright.prod.config.ts
