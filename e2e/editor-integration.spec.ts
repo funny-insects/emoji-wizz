@@ -88,7 +88,7 @@ test("transparency preservation: transparent areas remain alpha=0 after eraser, 
   // 3. Text in the opaque area
   await page.getByRole("button", { name: "Text" }).click();
   await page.mouse.click(sx + 20, sy + 20);
-  const textInput = page.locator("input:not([type='file'])");
+  const textInput = page.getByRole("textbox");
   await expect(textInput).toBeVisible();
   await textInput.fill("Hi");
   await textInput.press("Enter");
@@ -189,7 +189,7 @@ test("tool switching: switching from text tool discards open text input", async 
 
   await page.mouse.click(sx + 50, sy + 30);
 
-  const textInput = page.locator("input:not([type='file'])");
+  const textInput = page.getByRole("textbox");
   await expect(textInput).toBeVisible();
 
   // Record pixel before any text is placed
