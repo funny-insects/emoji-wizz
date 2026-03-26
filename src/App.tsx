@@ -331,7 +331,7 @@ function App() {
       const href = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = href;
-      a.download = buildFilename(format, exportPreset.id);
+      a.download = buildFilename(format);
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -357,7 +357,7 @@ function App() {
         const href = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = href;
-        a.download = buildFilename(format, exportPreset.id);
+        a.download = buildFilename(format);
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -436,6 +436,8 @@ function App() {
             brushSize={brushSize}
             textColor={textColor}
             textSize={textSize}
+            canvasWidth={exportPreset.width}
+            canvasHeight={exportPreset.height}
             stageRef={stageRef}
             fileName={fileName}
             stickers={stickers}
@@ -472,7 +474,16 @@ function App() {
           activePresetId={exportPreset.id}
           onPresetChange={(id) => {
             const preset = PLATFORM_PRESETS.find((p) => p.id === id);
-            if (preset) setExportPreset(preset);
+            if (preset) {
+              if (
+                image &&
+                !window.confirm(
+                  `Resize canvas to ${preset.label}? This will rescale the image.`,
+                )
+              )
+                return;
+              setExportPreset(preset);
+            }
           }}
         />
       </div>

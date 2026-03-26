@@ -253,7 +253,7 @@ describe("Toolbar — text tool settings", () => {
     expect(screen.queryByLabelText("px")).not.toBeInTheDocument();
   });
 
-  it("renders 8 color swatches and size input when text tool is active", () => {
+  it("renders 8 color swatches and size buttons when text tool is active", () => {
     render(
       <Toolbar
         image={mockImage}
@@ -268,7 +268,9 @@ describe("Toolbar — text tool settings", () => {
     );
     const swatches = screen.getAllByRole("button", { name: /Color #/ });
     expect(swatches).toHaveLength(8);
-    expect(screen.getByRole("spinbutton", { name: "px" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Small" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Medium" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Large" })).toBeInTheDocument();
   });
 
   it("calls onTextColorChange when a color swatch is clicked", () => {
@@ -293,7 +295,7 @@ describe("Toolbar — text tool settings", () => {
     expect(onTextColorChange).toHaveBeenCalledWith("#FF0000");
   });
 
-  it("calls onTextSizeChange when size input changes", () => {
+  it("calls onTextSizeChange when a size button is clicked", () => {
     const onTextSizeChange = vi.fn();
     render(
       <Toolbar
@@ -311,9 +313,7 @@ describe("Toolbar — text tool settings", () => {
         onTextSizeChange={onTextSizeChange}
       />,
     );
-    fireEvent.change(screen.getByRole("spinbutton", { name: "px" }), {
-      target: { value: "32" },
-    });
+    fireEvent.click(screen.getByRole("button", { name: "Large" }));
     expect(onTextSizeChange).toHaveBeenCalledWith(32);
   });
 
@@ -342,7 +342,7 @@ describe("Toolbar — text tool settings", () => {
     ).not.toHaveClass("toolbar-color-swatch--active");
   });
 
-  it("size input displays the current textSize value", () => {
+  it("active size button reflects the current textSize value", () => {
     render(
       <Toolbar
         image={mockImage}
@@ -353,9 +353,17 @@ describe("Toolbar — text tool settings", () => {
         onUndo={() => {}}
         onRedo={() => {}}
         {...defaultTextProps}
-        textSize={28}
+        textSize={32}
       />,
     );
-    expect(screen.getByRole("spinbutton", { name: "px" })).toHaveValue(28);
+    expect(screen.getByRole("button", { name: "Large" })).toHaveClass(
+      "toolbar-btn--active",
+    );
+    expect(screen.getByRole("button", { name: "Small" })).not.toHaveClass(
+      "toolbar-btn--active",
+    );
+    expect(screen.getByRole("button", { name: "Medium" })).not.toHaveClass(
+      "toolbar-btn--active",
+    );
   });
 });

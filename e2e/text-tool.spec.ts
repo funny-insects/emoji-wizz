@@ -60,7 +60,7 @@ test("text tool: typing and pressing Enter renders text on canvas", async ({
   await page.mouse.click(cx, cy);
 
   // A text input should appear
-  const textInput = page.locator("input:not([type='file'])");
+  const textInput = page.getByRole("textbox");
   await expect(textInput).toBeVisible();
 
   // Type "LGTM" and press Enter
@@ -109,7 +109,7 @@ test("text tool: undo removes placed text", async ({ page }) => {
   // Click canvas, type text, finalize
   await page.mouse.click(stageBox!.x + 64, stageBox!.y + 64);
 
-  const textInput = page.locator("input:not([type='file'])");
+  const textInput = page.getByRole("textbox");
   await expect(textInput).toBeVisible();
   await textInput.fill("LGTM");
   await textInput.press("Enter");
@@ -155,7 +155,7 @@ test("text tool: changing color affects new text placement", async ({
   // Place text in an area that was previously transparent/background
   await page.mouse.click(stageBox!.x + 20, stageBox!.y + 20);
 
-  const textInput = page.locator("input:not([type='file'])");
+  const textInput = page.getByRole("textbox");
   await expect(textInput).toBeVisible();
   await textInput.fill("R");
   await textInput.press("Enter");
