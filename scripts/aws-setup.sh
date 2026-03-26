@@ -207,11 +207,16 @@ aws iam put-role-policy \
         \"Resource\": \"arn:aws:ecr:${REGION}:${ACCOUNT_ID}:repository/${APP_NAME}\"
       },
       {
+        \"Sid\": \"AppRunnerList\",
+        \"Effect\": \"Allow\",
+        \"Action\": \"apprunner:ListServices\",
+        \"Resource\": \"*\"
+      },
+      {
         \"Sid\": \"AppRunnerDeploy\",
         \"Effect\": \"Allow\",
         \"Action\": [
           \"apprunner:StartDeployment\",
-          \"apprunner:ListServices\",
           \"apprunner:DescribeService\"
         ],
         \"Resource\": \"arn:aws:apprunner:${REGION}:${ACCOUNT_ID}:service/${APP_NAME}/*\"
@@ -321,7 +326,7 @@ if [[ -z "${EXISTING_SERVICE_ARN}" || "${EXISTING_SERVICE_ARN}" == "None" ]]; th
     --output text \
     --query 'Service.ServiceArn')
   echo "    Service created: ${SERVICE_ARN}"
-  echo "    Waiting for service to become RUNNING (this may take 2-3 minutes) ..."
+  echo "    Waiting for service to become RUNNING (this may take 2-5 minutes) ..."
   for i in $(seq 1 40); do
     STATUS=$(aws apprunner describe-service \
       --service-arn "${SERVICE_ARN}" \
