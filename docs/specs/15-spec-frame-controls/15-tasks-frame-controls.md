@@ -282,7 +282,7 @@
 
 ---
 
-### [ ] 5.0 Tests and quality gates
+### [x] 5.0 Tests and quality gates
 
 **Purpose:** Add unit tests covering the new slider, remove button, and frame rendering behavior. Ensure all existing tests pass and all quality gates are green.
 
@@ -294,31 +294,31 @@
 
 #### 5.0 Tasks
 
-- [ ] 5.1 In `DecoratePanel.test.tsx`, update every existing `render(<DecoratePanel ... />)` call to include the three new required props:
+- [x] 5.1 In `DecoratePanel.test.tsx`, update every existing `render(<DecoratePanel ... />)` call to include the three new required props:
   ```tsx
   frameThickness={100}
   onFrameThicknessChange={vi.fn()}
   onFrameThicknessCommit={vi.fn()}
   onRemoveFrame={vi.fn()}
   ```
-- [ ] 5.2 Add a test: "renders thickness slider below active frame thumbnail in Frames tab":
+- [x] 5.2 Add a test: "renders thickness slider below active frame thumbnail in Frames tab":
   - Render `DecoratePanel` with `activeFrameId="approved"`, switch to the Frames tab.
   - Assert that a slider input (`type="range"`) is present in the document.
-- [ ] 5.3 Add a test: "does not render thickness slider when no frame is active":
+- [x] 5.3 Add a test: "does not render thickness slider when no frame is active":
   - Render `DecoratePanel` with `activeFrameId={null}`, switch to the Frames tab.
   - Assert that no slider input (`type="range"`) is present.
-- [ ] 5.4 Add a test: "calls onFrameThicknessChange when slider is dragged":
+- [x] 5.4 Add a test: "calls onFrameThicknessChange when slider is dragged":
   - Render with `activeFrameId="approved"`, switch to Frames tab.
   - Fire a `change` event on the slider with value `30`.
   - Assert `onFrameThicknessChange` was called with `30`.
-- [ ] 5.5 Add a test: "renders remove button on the active frame thumbnail":
+- [x] 5.5 Add a test: "renders remove button on the active frame thumbnail":
   - Render with `activeFrameId="approved"`, switch to Frames tab.
   - Assert an element with `aria-label="Remove frame"` is present.
-- [ ] 5.6 Add a test: "does not render remove button when no frame is active":
+- [x] 5.6 Add a test: "does not render remove button when no frame is active":
   - Render with `activeFrameId={null}`, switch to Frames tab.
   - Assert no element with `aria-label="Remove frame"` is present.
-- [ ] 5.7 Add a test: "calls onRemoveFrame when the × button is clicked":
+- [x] 5.7 Add a test: "calls onRemoveFrame when the × button is clicked":
   - Render with `activeFrameId="approved"`, switch to Frames tab.
   - Fire a `click` event on the remove button (`aria-label="Remove frame"`).
   - Assert `onRemoveFrame` was called once and `onToggleFrame` was NOT called (because `stopPropagation` prevents the parent click).
-- [ ] 5.8 Run `task test` and fix any failures. Run `task lint` and `task typecheck` and fix any issues reported.
+- [x] 5.8 Run `task test` and fix any failures. Run `task lint` and `task typecheck` and fix any issues reported.

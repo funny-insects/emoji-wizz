@@ -50,6 +50,10 @@ describe("DecoratePanel", () => {
         activeFrameId={null}
         frames={mockFrames}
         onToggleFrame={vi.fn()}
+        frameThickness={100}
+        onFrameThicknessChange={vi.fn()}
+        onFrameThicknessCommit={vi.fn()}
+        onRemoveFrame={vi.fn()}
       />,
     );
     expect(container.firstChild).toBeNull();
@@ -64,6 +68,10 @@ describe("DecoratePanel", () => {
         activeFrameId={null}
         frames={mockFrames}
         onToggleFrame={vi.fn()}
+        frameThickness={100}
+        onFrameThicknessChange={vi.fn()}
+        onFrameThicknessCommit={vi.fn()}
+        onRemoveFrame={vi.fn()}
       />,
     );
     expect(getByAltText("Laser Eyes")).not.toBeNull();
@@ -80,6 +88,10 @@ describe("DecoratePanel", () => {
         activeFrameId={null}
         frames={mockFrames}
         onToggleFrame={vi.fn()}
+        frameThickness={100}
+        onFrameThicknessChange={vi.fn()}
+        onFrameThicknessCommit={vi.fn()}
+        onRemoveFrame={vi.fn()}
       />,
     );
     fireEvent.click(getByTitle("Laser Eyes"));
@@ -96,6 +108,10 @@ describe("DecoratePanel", () => {
         activeFrameId={null}
         frames={mockFrames}
         onToggleFrame={vi.fn()}
+        frameThickness={100}
+        onFrameThicknessChange={vi.fn()}
+        onFrameThicknessCommit={vi.fn()}
+        onRemoveFrame={vi.fn()}
       />,
     );
     // Initially on Stickers tab — sticker thumbnails visible
@@ -118,6 +134,10 @@ describe("DecoratePanel", () => {
         activeFrameId="approved"
         frames={mockFrames}
         onToggleFrame={vi.fn()}
+        frameThickness={100}
+        onFrameThicknessChange={vi.fn()}
+        onFrameThicknessCommit={vi.fn()}
+        onRemoveFrame={vi.fn()}
       />,
     );
     // Switch to Frames tab first
@@ -137,6 +157,10 @@ describe("DecoratePanel", () => {
         activeFrameId={null}
         frames={mockFrames}
         onToggleFrame={vi.fn()}
+        frameThickness={100}
+        onFrameThicknessChange={vi.fn()}
+        onFrameThicknessCommit={vi.fn()}
+        onRemoveFrame={vi.fn()}
       />,
     );
     fireEvent.click(getByText("Frames"));
@@ -157,11 +181,138 @@ describe("DecoratePanel", () => {
         activeFrameId={null}
         frames={mockFrames}
         onToggleFrame={onToggleFrame}
+        frameThickness={100}
+        onFrameThicknessChange={vi.fn()}
+        onFrameThicknessCommit={vi.fn()}
+        onRemoveFrame={vi.fn()}
       />,
     );
     fireEvent.click(getByText("Frames"));
     fireEvent.click(getByTitle("Nice"));
     expect(onToggleFrame).toHaveBeenCalledTimes(1);
     expect(onToggleFrame).toHaveBeenCalledWith("nice");
+  });
+
+  it("renders thickness slider below active frame thumbnail in Frames tab", () => {
+    const { getByText, container } = render(
+      <DecoratePanel
+        image={makeMockImage()}
+        stickers={mockStickers}
+        onPlaceSticker={vi.fn()}
+        activeFrameId="approved"
+        frames={mockFrames}
+        onToggleFrame={vi.fn()}
+        frameThickness={100}
+        onFrameThicknessChange={vi.fn()}
+        onFrameThicknessCommit={vi.fn()}
+        onRemoveFrame={vi.fn()}
+      />,
+    );
+    fireEvent.click(getByText("Frames"));
+    const slider = container.querySelector('input[type="range"]');
+    expect(slider).not.toBeNull();
+  });
+
+  it("does not render thickness slider when no frame is active", () => {
+    const { getByText, container } = render(
+      <DecoratePanel
+        image={makeMockImage()}
+        stickers={mockStickers}
+        onPlaceSticker={vi.fn()}
+        activeFrameId={null}
+        frames={mockFrames}
+        onToggleFrame={vi.fn()}
+        frameThickness={100}
+        onFrameThicknessChange={vi.fn()}
+        onFrameThicknessCommit={vi.fn()}
+        onRemoveFrame={vi.fn()}
+      />,
+    );
+    fireEvent.click(getByText("Frames"));
+    const slider = container.querySelector('input[type="range"]');
+    expect(slider).toBeNull();
+  });
+
+  it("calls onFrameThicknessChange when slider is dragged", () => {
+    const onFrameThicknessChange = vi.fn();
+    const { getByText, container } = render(
+      <DecoratePanel
+        image={makeMockImage()}
+        stickers={mockStickers}
+        onPlaceSticker={vi.fn()}
+        activeFrameId="approved"
+        frames={mockFrames}
+        onToggleFrame={vi.fn()}
+        frameThickness={100}
+        onFrameThicknessChange={onFrameThicknessChange}
+        onFrameThicknessCommit={vi.fn()}
+        onRemoveFrame={vi.fn()}
+      />,
+    );
+    fireEvent.click(getByText("Frames"));
+    const slider = container.querySelector('input[type="range"]')!;
+    fireEvent.change(slider, { target: { value: "30" } });
+    expect(onFrameThicknessChange).toHaveBeenCalledWith(30);
+  });
+
+  it("renders remove button on the active frame thumbnail", () => {
+    const { getByText, getByLabelText } = render(
+      <DecoratePanel
+        image={makeMockImage()}
+        stickers={mockStickers}
+        onPlaceSticker={vi.fn()}
+        activeFrameId="approved"
+        frames={mockFrames}
+        onToggleFrame={vi.fn()}
+        frameThickness={100}
+        onFrameThicknessChange={vi.fn()}
+        onFrameThicknessCommit={vi.fn()}
+        onRemoveFrame={vi.fn()}
+      />,
+    );
+    fireEvent.click(getByText("Frames"));
+    expect(getByLabelText("Remove frame")).not.toBeNull();
+  });
+
+  it("does not render remove button when no frame is active", () => {
+    const { getByText, queryByLabelText } = render(
+      <DecoratePanel
+        image={makeMockImage()}
+        stickers={mockStickers}
+        onPlaceSticker={vi.fn()}
+        activeFrameId={null}
+        frames={mockFrames}
+        onToggleFrame={vi.fn()}
+        frameThickness={100}
+        onFrameThicknessChange={vi.fn()}
+        onFrameThicknessCommit={vi.fn()}
+        onRemoveFrame={vi.fn()}
+      />,
+    );
+    fireEvent.click(getByText("Frames"));
+    expect(queryByLabelText("Remove frame")).toBeNull();
+  });
+
+  it("calls onRemoveFrame when the × button is clicked", () => {
+    const onRemoveFrame = vi.fn();
+    const onToggleFrame = vi.fn();
+    const { getByText, getByLabelText } = render(
+      <DecoratePanel
+        image={makeMockImage()}
+        stickers={mockStickers}
+        onPlaceSticker={vi.fn()}
+        activeFrameId="approved"
+        frames={mockFrames}
+        onToggleFrame={onToggleFrame}
+        frameThickness={100}
+        onFrameThicknessChange={vi.fn()}
+        onFrameThicknessCommit={vi.fn()}
+        onRemoveFrame={onRemoveFrame}
+      />,
+    );
+    fireEvent.click(getByText("Frames"));
+    fireEvent.click(getByLabelText("Remove frame"));
+    expect(onRemoveFrame).toHaveBeenCalledTimes(1);
+    expect(onToggleFrame).not.toHaveBeenCalled();
   });
 });
