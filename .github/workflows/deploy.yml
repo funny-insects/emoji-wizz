@@ -100,3 +100,46 @@ jobs:
             --output text \
             --query 'OperationId')
           echo "Deployment triggered. Operation ID: ${OPERATION_ID}"
+
+  post-deploy:
+    name: Post-Deploy Verification
+    runs-on: ubuntu-latest
+    needs: deploy
+
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Get App Runner service URL
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          SERVICE_URL=$(aws apprunner list-services \
+            --region "${AWS_REGION}" \
+            --output text \
+            --query "ServiceSummaryList[?ServiceName=='emoji-wizz'].ServiceUrl | [0]")
+          PROD_URL="https://${SERVICE_URL}"
+          echo "PROD_URL=${PROD_URL}" >> "$GITHUB_ENV"
+          echo "Production URL: ${PROD_URL}"
+
+      - name: Smoke test — wait for healthy deployment
+        run: |
+          curl --retry 30 --retry-delay 20 --retry-all-errors --max-time 600 -sf "${PROD_URL}"
+          echo "Smoke test passed — production URL returned HTTP 200"
+
+      - name: Log deployment status on timeout
+        if: failure()
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          SERVICE_ARN=$(aws apprunner list-services \
+            --region "${AWS_REGION}" \
+            --output text \
+            --query "ServiceSummaryList[?ServiceName=='emoji-wizz'].ServiceArn | [0]")
+          echo "Querying App Runner operations for service: ${SERVICE_ARN}"
+          aws apprunner list-operations \
+            --service-arn "${SERVICE_ARN}" \
+            --region "${AWS_REGION}"
