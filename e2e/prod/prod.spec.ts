@@ -7,8 +7,8 @@ test("app loads successfully", async ({ page }) => {
 
 test("canvas element renders", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator(".konvajs-content canvas").first()).toBeVisible();
-  //await expect(page.locator(".fjkdsljfsd").first()).toBeVisible();
+  //await expect(page.locator(".konvajs-content canvas").first()).toBeVisible();
+  await expect(page.locator(".fjkdsljfsd").first()).toBeVisible();
 });
 
 test("preset selector is functional", async ({ page }) => {
