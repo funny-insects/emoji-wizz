@@ -35,3 +35,8 @@ tasks:
     desc: Run Playwright e2e tests
     cmds:
       - npx playwright test
+
+  test:e2e:prod:
+    desc: Run Playwright production E2E tests (requires PROD_URL env var)
+    cmds:
+      - npx playwright test --config playwright.prod.config.ts
