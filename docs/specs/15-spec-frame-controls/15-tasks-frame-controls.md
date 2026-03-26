@@ -47,7 +47,7 @@
 
 ---
 
-### [ ] 2.0 Add thickness slider UI in DecoratePanel
+### [x] 2.0 Add thickness slider UI in DecoratePanel
 
 **Purpose:** Surface the thickness control as a compact range slider that appears inline below the active frame thumbnail in the Frames tab, updating the canvas in real time as the user drags.
 
@@ -58,13 +58,13 @@
 
 #### 2.0 Tasks
 
-- [ ] 2.1 In `DecoratePanel.tsx`, add two new props to the `DecoratePanelProps` interface:
+- [x] 2.1 In `DecoratePanel.tsx`, add two new props to the `DecoratePanelProps` interface:
   ```ts
   frameThickness: number;
   onFrameThicknessChange: (value: number) => void;
   ```
-- [ ] 2.2 In `DecoratePanel.tsx`, destructure the new props in the function signature: `{ ..., frameThickness, onFrameThicknessChange }`.
-- [ ] 2.3 In the Frames tab JSX (inside `{activeTab === "frames" && ...}`), after the `frames.map(...)` grid, add a conditional block that renders only when `activeFrameId !== null`:
+- [x] 2.2 In `DecoratePanel.tsx`, destructure the new props in the function signature: `{ ..., frameThickness, onFrameThicknessChange }`.
+- [x] 2.3 In the Frames tab JSX (inside `{activeTab === "frames" && ...}`), after the `frames.map(...)` grid, add a conditional block that renders only when `activeFrameId !== null`:
   ```tsx
   {
     activeFrameId !== null && (
@@ -84,7 +84,7 @@
     );
   }
   ```
-- [ ] 2.4 In `DecoratePanel.css`, add styles for the new elements. Keep them minimal and consistent with existing panel styles:
+- [x] 2.4 In `DecoratePanel.css`, add styles for the new elements. Keep them minimal and consistent with existing panel styles:
 
   ```css
   .decorate-panel__frame-controls {
@@ -104,13 +104,13 @@
   }
   ```
 
-- [ ] 2.5 In `App.tsx`, create a `handleFrameThicknessChange` callback using `useCallback`:
+- [x] 2.5 In `App.tsx`, create a `handleFrameThicknessChange` callback using `useCallback`:
   ```ts
   const handleFrameThicknessChange = useCallback((value: number) => {
     setFrameThickness(value);
   }, []);
   ```
-- [ ] 2.6 In `App.tsx`, pass the new props to `<DecoratePanel>`:
+- [x] 2.6 In `App.tsx`, pass the new props to `<DecoratePanel>`:
   ```tsx
   frameThickness = { frameThickness };
   onFrameThicknessChange = { handleFrameThicknessChange };

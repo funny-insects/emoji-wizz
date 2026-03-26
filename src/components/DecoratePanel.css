@@ -96,3 +96,19 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.decorate-panel__frame-controls {
+  padding: 8px 4px 0;
+}
+
+.decorate-panel__frame-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary, #888);
+}
+
+.decorate-panel__frame-slider {
+  flex: 1;
+}

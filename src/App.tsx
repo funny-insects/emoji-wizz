@@ -272,6 +272,10 @@ function App() {
     [stickers, pushState, stickerHistory],
   );
 
+  const handleFrameThicknessChange = useCallback((value: number) => {
+    setFrameThickness(value);
+  }, []);
+
   const selectedStickerIdRef = useRef(selectedStickerId);
   useEffect(() => {
     selectedStickerIdRef.current = selectedStickerId;
@@ -487,6 +491,8 @@ function App() {
             activeFrameId={activeFrameId}
             frames={FRAME_DEFINITIONS}
             onToggleFrame={handleToggleFrame}
+            frameThickness={frameThickness}
+            onFrameThicknessChange={handleFrameThicknessChange}
           />
         </div>
         <OptimizerPanel
