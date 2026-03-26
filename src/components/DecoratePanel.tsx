@@ -92,6 +92,7 @@ export function DecoratePanel({
                   title={def.label}
                 >
                   <img src={def.src} alt={def.label} draggable={false} />
+                  {/* codeql[js/xss] - React JSX escapes text nodes; file.name cannot be interpreted as HTML */}
                   <span className="decorate-panel__item-label">
                     {def.label}
                   </span>
