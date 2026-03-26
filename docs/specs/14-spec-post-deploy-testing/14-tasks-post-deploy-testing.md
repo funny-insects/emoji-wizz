@@ -57,7 +57,7 @@ Create a production-specific Playwright configuration and test suite in `e2e/pro
 - [x] 2.5 Add steps to the `post-deploy` job in `.github/workflows/deploy.yml` after the smoke test: (1) "Setup Node.js" using `actions/setup-node@v4` with node-version 22 and npm cache; (2) "Install dependencies" running `npm ci`; (3) "Install Playwright browsers" running `npx playwright install --with-deps chromium`; (4) "Run production E2E tests" running `npx playwright test --config playwright.prod.config.ts` with `PROD_URL` set from the dynamically queried URL.
 - [ ] 2.6 Push the changes, trigger a deployment, and verify in GitHub Actions logs that the production E2E tests run and pass in the `post-deploy` job after the smoke test.
 
-### [ ] 3.0 Automatic Rollback on Failure
+### [x] 3.0 Automatic Rollback on Failure
 
 Modify the `deploy` job to capture the pre-deploy image tag and pass it as a job output. Add rollback steps to the `post-deploy` job that trigger on failure: re-tag the previous image as `latest` in ECR, trigger a new App Runner deployment, and re-run the smoke test to verify rollback health.
 
@@ -70,9 +70,9 @@ Modify the `deploy` job to capture the pre-deploy image tag and pass it as a job
 
 #### 3.0 Tasks
 
-- [ ] 3.1 Modify the `deploy` job to add an `outputs` section. Before the "Tag and push to ECR" step, add a step named "Capture previous image tag" that queries ECR for the current `latest` image tag using `aws ecr describe-images --repository-name emoji-wizz --image-ids imageTag=latest --query "imageDetails[0].imageTags[?@ != 'latest'] | [0]"` and saves it as a step output (e.g., `previous-tag`). Expose this as a job output `previous-image-tag`.
-- [ ] 3.2 Update the `post-deploy` job to accept the previous image tag from the `deploy` job output via `needs.deploy.outputs.previous-image-tag`.
-- [ ] 3.3 Add a step named "Rollback — re-tag previous image as latest" with `if: failure()` that pulls the previous image manifest from ECR using `aws ecr batch-get-image`, then puts the image with the `latest` tag using `aws ecr put-image`. Use the `ECR_REGISTRY` and previous image tag from the deploy job output.
-- [ ] 3.4 Add a step named "Rollback — trigger App Runner redeployment" with `if: failure()` that queries the App Runner service ARN and runs `aws apprunner start-deployment` to trigger a redeployment with the rolled-back image. Log the operation ID.
-- [ ] 3.5 Add a step named "Rollback — verify healthy deployment" with `if: failure()` that re-runs the same `curl` smoke test (`curl --retry 30 --retry-delay 20 --retry-all-errors --max-time 600 -sf "${PROD_URL}"`) to verify the rolled-back deployment is healthy. Log success or failure clearly.
+- [x] 3.1 Modify the `deploy` job to add an `outputs` section. Before the "Tag and push to ECR" step, add a step named "Capture previous image tag" that queries ECR for the current `latest` image tag using `aws ecr describe-images --repository-name emoji-wizz --image-ids imageTag=latest --query "imageDetails[0].imageTags[?@ != 'latest'] | [0]"` and saves it as a step output (e.g., `previous-tag`). Expose this as a job output `previous-image-tag`.
+- [x] 3.2 Update the `post-deploy` job to accept the previous image tag from the `deploy` job output via `needs.deploy.outputs.previous-image-tag`.
+- [x] 3.3 Add a step named "Rollback — re-tag previous image as latest" with `if: failure()` that pulls the previous image manifest from ECR using `aws ecr batch-get-image`, then puts the image with the `latest` tag using `aws ecr put-image`. Use the `ECR_REGISTRY` and previous image tag from the deploy job output.
+- [x] 3.4 Add a step named "Rollback — trigger App Runner redeployment" with `if: failure()` that queries the App Runner service ARN and runs `aws apprunner start-deployment` to trigger a redeployment with the rolled-back image. Log the operation ID.
+- [x] 3.5 Add a step named "Rollback — verify healthy deployment" with `if: failure()` that re-runs the same `curl` smoke test (`curl --retry 30 --retry-delay 20 --retry-all-errors --max-time 600 -sf "${PROD_URL}"`) to verify the rolled-back deployment is healthy. Log success or failure clearly.
 - [ ] 3.6 Push the changes and verify in GitHub Actions logs on a successful deployment that all rollback steps are skipped (shown as skipped due to `if: failure()` condition).
