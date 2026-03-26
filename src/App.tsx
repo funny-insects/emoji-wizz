@@ -92,11 +92,15 @@ function App() {
   const handlePushState = useCallback(
     (snapshot: string) => {
       pushState(snapshot);
-      stickerHistory.pushState([...stickers]);
+      stickerHistory.pushState({
+        stickers: [...stickers],
+        activeFrameId,
+        frameThickness,
+      });
       setLatestSnapshot(snapshot);
       latestSnapshotRef.current = snapshot;
     },
-    [pushState, stickerHistory, stickers],
+    [pushState, stickerHistory, stickers, activeFrameId, frameThickness],
   );
 
   const handleUndo = useCallback(() => {
@@ -106,7 +110,13 @@ function App() {
       setRestoreSnapshot(imgSnap);
       setLatestSnapshot(imgSnap);
     }
-    setStickers(stickerSnap ?? []);
+    if (stickerSnap) {
+      setStickers(stickerSnap.stickers);
+      setActiveFrameId(stickerSnap.activeFrameId);
+      setFrameThickness(stickerSnap.frameThickness);
+    } else {
+      setStickers([]);
+    }
   }, [imageUndo, stickerHistory]);
 
   const handleRedo = useCallback(() => {
@@ -116,7 +126,13 @@ function App() {
       setRestoreSnapshot(imgSnap);
       setLatestSnapshot(imgSnap);
     }
-    setStickers(stickerSnap ?? []);
+    if (stickerSnap) {
+      setStickers(stickerSnap.stickers);
+      setActiveFrameId(stickerSnap.activeFrameId);
+      setFrameThickness(stickerSnap.frameThickness);
+    } else {
+      setStickers([]);
+    }
   }, [imageRedo, stickerHistory]);
 
   const handleSnapshotRestored = useCallback(() => {
@@ -206,9 +222,20 @@ function App() {
       const newStickers = [...stickers, newSticker];
       setStickers(newStickers);
       pushState(latestSnapshotRef.current ?? "");
-      stickerHistory.pushState(newStickers);
+      stickerHistory.pushState({
+        stickers: newStickers,
+        activeFrameId,
+        frameThickness,
+      });
     },
-    [stickers, createStickerDescriptor, pushState, stickerHistory],
+    [
+      stickers,
+      createStickerDescriptor,
+      pushState,
+      stickerHistory,
+      activeFrameId,
+      frameThickness,
+    ],
   );
 
   const handleSpeechBubblePlace = useCallback(
@@ -219,12 +246,23 @@ function App() {
         const newStickers = [...stickers, newSticker];
         setStickers(newStickers);
         pushState(latestSnapshotRef.current ?? "");
-        stickerHistory.pushState(newStickers);
+        stickerHistory.pushState({
+          stickers: newStickers,
+          activeFrameId,
+          frameThickness,
+        });
         pendingTextStickerRef.current = null;
       }
       setShowSpeechBubbleModal(false);
     },
-    [stickers, createStickerDescriptor, pushState, stickerHistory],
+    [
+      stickers,
+      createStickerDescriptor,
+      pushState,
+      stickerHistory,
+      activeFrameId,
+      frameThickness,
+    ],
   );
 
   const handleSpeechBubbleCancel = useCallback(() => {
@@ -237,9 +275,13 @@ function App() {
       const newStickers = stickers.map((s) => (s.id === desc.id ? desc : s));
       setStickers(newStickers);
       pushState(latestSnapshotRef.current ?? "");
-      stickerHistory.pushState(newStickers);
+      stickerHistory.pushState({
+        stickers: newStickers,
+        activeFrameId,
+        frameThickness,
+      });
     },
-    [stickers, pushState, stickerHistory],
+    [stickers, pushState, stickerHistory, activeFrameId, frameThickness],
   );
 
   const handleDeleteSticker = useCallback(
@@ -247,10 +289,14 @@ function App() {
       const newStickers = stickers.filter((s) => s.id !== id);
       setStickers(newStickers);
       pushState(latestSnapshotRef.current ?? "");
-      stickerHistory.pushState(newStickers);
+      stickerHistory.pushState({
+        stickers: newStickers,
+        activeFrameId,
+        frameThickness,
+      });
       setSelectedStickerId((prev) => (prev === id ? null : prev));
     },
-    [stickers, pushState, stickerHistory],
+    [stickers, pushState, stickerHistory, activeFrameId, frameThickness],
   );
 
   const handleSelectSticker = useCallback((id: string | null) => {
@@ -259,22 +305,39 @@ function App() {
 
   const handleToggleFrame = useCallback(
     (id: string) => {
-      setActiveFrameId((prev) => {
-        const next = prev === id ? null : id;
-        if (next !== null && next !== prev) {
-          setFrameThickness(50);
-        }
-        return next;
-      });
+      const nextFrameId = activeFrameId === id ? null : id;
+      const nextThickness =
+        nextFrameId !== null && nextFrameId !== activeFrameId
+          ? 50
+          : frameThickness;
+      setActiveFrameId(nextFrameId);
+      setFrameThickness(nextThickness);
       pushState(latestSnapshotRef.current ?? "");
-      stickerHistory.pushState(stickers);
+      stickerHistory.pushState({
+        stickers,
+        activeFrameId: nextFrameId,
+        frameThickness: nextThickness,
+      });
     },
-    [stickers, pushState, stickerHistory],
+    [stickers, activeFrameId, frameThickness, pushState, stickerHistory],
   );
 
   const handleFrameThicknessChange = useCallback((value: number) => {
     setFrameThickness(value);
   }, []);
+
+  const handleFrameThicknessCommit = useCallback(
+    (value: number) => {
+      setFrameThickness(value);
+      pushState(latestSnapshotRef.current ?? "");
+      stickerHistory.pushState({
+        stickers,
+        activeFrameId,
+        frameThickness: value,
+      });
+    },
+    [stickers, activeFrameId, pushState, stickerHistory],
+  );
 
   const selectedStickerIdRef = useRef(selectedStickerId);
   useEffect(() => {
@@ -493,6 +556,7 @@ function App() {
             onToggleFrame={handleToggleFrame}
             frameThickness={frameThickness}
             onFrameThicknessChange={handleFrameThicknessChange}
+            onFrameThicknessCommit={handleFrameThicknessCommit}
           />
         </div>
         <OptimizerPanel

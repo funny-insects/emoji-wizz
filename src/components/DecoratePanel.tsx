@@ -12,6 +12,7 @@ interface DecoratePanelProps {
   onToggleFrame: (id: string) => void;
   frameThickness: number;
   onFrameThicknessChange: (value: number) => void;
+  onFrameThicknessCommit: (value: number) => void;
 }
 
 export function DecoratePanel({
@@ -23,6 +24,7 @@ export function DecoratePanel({
   onToggleFrame,
   frameThickness,
   onFrameThicknessChange,
+  onFrameThicknessCommit,
 }: DecoratePanelProps) {
   const [activeTab, setActiveTab] = useState<"stickers" | "frames">("stickers");
   const [customStickers, setCustomStickers] = useState<StickerDefinition[]>([]);
@@ -147,6 +149,11 @@ export function DecoratePanel({
                     className="decorate-panel__frame-slider"
                     onChange={(e) =>
                       onFrameThicknessChange(Number(e.target.value))
+                    }
+                    onPointerUp={(e) =>
+                      onFrameThicknessCommit(
+                        Number((e.target as HTMLInputElement).value),
+                      )
                     }
                   />
                 </label>

@@ -118,7 +118,7 @@
 
 ---
 
-### [ ] 3.0 Integrate thickness changes into undo/redo
+### [x] 3.0 Integrate thickness changes into undo/redo
 
 **Purpose:** Store `activeFrameId` and `frameThickness` in the undo/redo history alongside stickers, so that Cmd/Ctrl+Z steps back through thickness adjustments (without removing the frame) and also correctly removes the frame when undoing a frame-add action.
 
@@ -130,7 +130,7 @@
 
 #### 3.0 Tasks
 
-- [ ] 3.1 In `src/hooks/useStickerHistory.ts`, define a new snapshot type and update the hook to use it. Replace the existing `StickerDescriptor[]` snapshot with a richer object:
+- [x] 3.1 In `src/hooks/useStickerHistory.ts`, define a new snapshot type and update the hook to use it. Replace the existing `StickerDescriptor[]` snapshot with a richer object:
   ```ts
   export interface StickerSnapshot {
     stickers: StickerDescriptor[];
@@ -139,7 +139,7 @@
   }
   ```
   Update the hook's internal stacks from `StickerDescriptor[][]` to `StickerSnapshot[][]`, and update `pushState`, `undo`, and `redo` accordingly so they accept/return `StickerSnapshot` instead of `StickerDescriptor[]`.
-- [ ] 3.2 In `App.tsx`, update every call to `stickerHistory.pushState(...)` to pass the full snapshot object. There are currently 5 call sites (in `handlePushState`, `handlePlaceSticker`, `handleSpeechBubblePlace`, `handleUpdateSticker`, `handleDeleteSticker`, and `handleToggleFrame`). Each call should become:
+- [x] 3.2 In `App.tsx`, update every call to `stickerHistory.pushState(...)` to pass the full snapshot object. There are currently 5 call sites (in `handlePushState`, `handlePlaceSticker`, `handleSpeechBubblePlace`, `handleUpdateSticker`, `handleDeleteSticker`, and `handleToggleFrame`). Each call should become:
   ```ts
   stickerHistory.pushState({ stickers: <current stickers array>, activeFrameId, frameThickness });
   ```
@@ -157,7 +157,7 @@
   });
   ```
   (This replaces the existing `setActiveFrameId((prev) => ...)` pattern in `handleToggleFrame` with explicit next-value computation so it can be passed to `pushState` synchronously.)
-- [ ] 3.3 In `App.tsx`, update `handleUndo` to restore `activeFrameId` and `frameThickness` from the returned snapshot:
+- [x] 3.3 In `App.tsx`, update `handleUndo` to restore `activeFrameId` and `frameThickness` from the returned snapshot:
   ```ts
   const handleUndo = useCallback(() => {
     const imgSnap = imageUndo();
@@ -175,8 +175,8 @@
     }
   }, [imageUndo, stickerHistory]);
   ```
-- [ ] 3.4 In `App.tsx`, update `handleRedo` the same way — restore `stickers`, `activeFrameId`, and `frameThickness` from the snapshot returned by `stickerHistory.redo()`.
-- [ ] 3.5 In `App.tsx`, add a `handleFrameThicknessCommit` callback that sets the thickness AND pushes a new undo snapshot (called on slider release, not on every drag tick):
+- [x] 3.4 In `App.tsx`, update `handleRedo` the same way — restore `stickers`, `activeFrameId`, and `frameThickness` from the snapshot returned by `stickerHistory.redo()`.
+- [x] 3.5 In `App.tsx`, add a `handleFrameThicknessCommit` callback that sets the thickness AND pushes a new undo snapshot (called on slider release, not on every drag tick):
   ```ts
   const handleFrameThicknessCommit = useCallback(
     (value: number) => {
@@ -191,11 +191,11 @@
     [stickers, activeFrameId, pushState, stickerHistory],
   );
   ```
-- [ ] 3.6 In `DecoratePanel.tsx`, add `onFrameThicknessCommit: (value: number) => void` to `DecoratePanelProps`, and add `onPointerUp` to the slider element that calls it:
+- [x] 3.6 In `DecoratePanel.tsx`, add `onFrameThicknessCommit: (value: number) => void` to `DecoratePanelProps`, and add `onPointerUp` to the slider element that calls it:
   ```tsx
   onPointerUp={(e) => onFrameThicknessCommit(Number((e.target as HTMLInputElement).value))}
   ```
-- [ ] 3.7 In `App.tsx`, pass `onFrameThicknessCommit={handleFrameThicknessCommit}` to `<DecoratePanel>`.
+- [x] 3.7 In `App.tsx`, pass `onFrameThicknessCommit={handleFrameThicknessCommit}` to `<DecoratePanel>`.
 
 ---
 
