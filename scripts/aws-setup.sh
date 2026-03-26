@@ -232,13 +232,55 @@ EXISTING_SERVICE_ARN=$(aws apprunner list-services \
   --query "ServiceSummaryList[?ServiceName=='${APP_NAME}'].ServiceArn | [0]" 2>/dev/null || true)
 
 if [[ -n "${EXISTING_SERVICE_ARN}" && "${EXISTING_SERVICE_ARN}" != "None" ]]; then
-  echo "    Service already exists: ${EXISTING_SERVICE_ARN}"
-  SERVICE_URL=$(aws apprunner describe-service \
+  EXISTING_STATUS=$(aws apprunner describe-service \
     --service-arn "${EXISTING_SERVICE_ARN}" \
     --region "${REGION}" \
     --output text \
-    --query 'Service.ServiceUrl')
-else
+    --query 'Service.Status')
+  echo "    Found service with status: ${EXISTING_STATUS}"
+
+  if [[ "${EXISTING_STATUS}" == "CREATE_FAILED" ]]; then
+    echo "    Service is in CREATE_FAILED state — deleting and recreating ..."
+    aws apprunner delete-service \
+      --service-arn "${EXISTING_SERVICE_ARN}" \
+      --region "${REGION}" \
+      --output text --query 'Service.Status' > /dev/null
+    echo "    Waiting for deletion to complete ..."
+    for i in $(seq 1 20); do
+      DELETED=$(aws apprunner list-services \
+        --region "${REGION}" \
+        --output text \
+        --query "ServiceSummaryList[?ServiceName=='${APP_NAME}'].ServiceArn | [0]" 2>/dev/null || true)
+      if [[ -z "${DELETED}" || "${DELETED}" == "None" ]]; then break; fi
+      echo "    Still deleting ... (attempt ${i}/20)"
+      sleep 10
+    done
+    EXISTING_SERVICE_ARN=""
+  else
+    SERVICE_URL=$(aws apprunner describe-service \
+      --service-arn "${EXISTING_SERVICE_ARN}" \
+      --region "${REGION}" \
+      --output text \
+      --query 'Service.ServiceUrl')
+  fi
+fi
+
+if [[ -z "${EXISTING_SERVICE_ARN}" || "${EXISTING_SERVICE_ARN}" == "None" ]]; then
+  echo "==> [ECR] Checking for existing image ..."
+  IMAGE_EXISTS=$(aws ecr describe-images \
+    --repository-name "${APP_NAME}" \
+    --image-ids imageTag=latest \
+    --region "${REGION}" \
+    --output text \
+    --query 'imageDetails[0].imageTags' 2>/dev/null || true)
+  if [[ -z "${IMAGE_EXISTS}" || "${IMAGE_EXISTS}" == "None" ]]; then
+    echo ""
+    echo "ERROR: No 'latest' image found in ECR repository '${APP_NAME}'." >&2
+    echo "       Push an image first:  ./scripts/deploy.sh --account-id ${ACCOUNT_ID}" >&2
+    echo "       Then re-run this script to create the App Runner service." >&2
+    exit 1
+  fi
+  echo "    Image found, proceeding."
   echo "==> [App Runner] Creating service '${APP_NAME}' ..."
   # Use a placeholder image tag; the deploy script will push the real image.
   # App Runner requires the image to exist before creating the service.
@@ -280,9 +322,16 @@ else
     --query 'Service.ServiceArn')
   echo "    Service created: ${SERVICE_ARN}"
   echo "    Waiting for service to become RUNNING (this may take 2-3 minutes) ..."
-  aws apprunner wait service-running \
-    --service-arn "${SERVICE_ARN}" \
-    --region "${REGION}" || true
+  for i in $(seq 1 40); do
+    STATUS=$(aws apprunner describe-service \
+      --service-arn "${SERVICE_ARN}" \
+      --region "${REGION}" \
+      --output text \
+      --query 'Service.Status')
+    echo "    Status: ${STATUS} (attempt ${i}/40)"
+    if [[ "${STATUS}" == "RUNNING" ]]; then break; fi
+    sleep 15
+  done
   SERVICE_URL=$(aws apprunner describe-service \
     --service-arn "${SERVICE_ARN}" \
     --region "${REGION}" \

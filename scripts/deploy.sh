@@ -55,7 +55,7 @@ echo "==> [Git] Using SHA: ${GIT_SHA}"
 # 2. Build Docker image
 # ---------------------------------------------------------------------------
 echo "==> [Docker] Building image ..."
-docker build -t "${APP_NAME}" .
+docker build --platform linux/amd64 -t "${APP_NAME}" .
 echo "    Build complete."
 
 # ---------------------------------------------------------------------------
@@ -93,7 +93,16 @@ SERVICE_ARN=$(aws apprunner list-services \
 if [[ -z "${SERVICE_ARN}" || "${SERVICE_ARN}" == "None" ]]; then
   echo "    WARNING: App Runner service '${APP_NAME}' not found. Skipping deployment trigger." >&2
 else
-  echo "    Service ARN: ${SERVICE_ARN}"
+  SERVICE_STATUS=$(aws apprunner describe-service \
+    --service-arn "${SERVICE_ARN}" \
+    --region "${REGION}" \
+    --output text \
+    --query 'Service.Status')
+  echo "    Service ARN: ${SERVICE_ARN} (status: ${SERVICE_STATUS})"
+  if [[ "${SERVICE_STATUS}" != "RUNNING" ]]; then
+    echo "    WARNING: Service is not RUNNING (${SERVICE_STATUS}). Skipping deployment trigger." >&2
+    echo "    Image was pushed successfully — run ./scripts/aws-setup.sh to recreate the service if needed." >&2
+  else
   echo "==> [App Runner] Triggering deployment ..."
   OPERATION_ID=$(aws apprunner start-deployment \
     --service-arn "${SERVICE_ARN}" \
@@ -101,6 +110,7 @@ else
     --output text \
     --query 'OperationId')
   echo "    Deployment triggered. Operation ID: ${OPERATION_ID}"
+  fi
 fi
 
 # ---------------------------------------------------------------------------
