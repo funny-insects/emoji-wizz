@@ -60,7 +60,7 @@ Wire the new modal into `App.tsx` with `showBgRemovalModal` state. The scissors 
 - [x] 2.6 Update `Toolbar.test.tsx`: remove the test "tolerance input is visible when image is provided and updates on change". Update the test "Remove BG button calls onRemoveBackground with current tolerance" to instead verify it calls `onOpenBgRemoval`. Remove `bgTolerance` and `onBgToleranceChange` from `defaultTextProps`, add `onOpenBgRemoval: () => {}`.
 - [x] 2.7 Run `task test` and `task typecheck` to verify no regressions.
 
-### [ ] 3.0 Add live preview with debounced background removal inside the modal
+### [x] 3.0 Add live preview with debounced background removal inside the modal
 
 Display a live preview thumbnail inside the modal that updates as the user adjusts the strength slider. Implement the strength-to-tolerance mapping (`tolerance = Math.round((strength / 100) * 128)`). Debounce the preview computation (200–300ms). On confirm, apply the previewed result to the canvas. On cancel, discard.
 

@@ -48,6 +48,7 @@ interface EmojiCanvasProps {
     seq: number;
   } | null;
   cropConfirmSeq?: number;
+  canvasRef?: React.MutableRefObject<HTMLCanvasElement | null>;
 }
 
 const TILE_SIZE = 8;
@@ -92,6 +93,7 @@ export function EmojiCanvas({
   bgRemovalRequest = null,
   transformRequest = null,
   cropConfirmSeq = 0,
+  canvasRef,
 }: EmojiCanvasProps) {
   const width = 512;
   const height = 512;
@@ -188,11 +190,12 @@ export function EmojiCanvas({
 
   useEffect(() => {
     offscreenCanvasRef.current = displayCanvas;
+    if (canvasRef) canvasRef.current = displayCanvas;
     if (displayCanvas && !isRestoringRef.current) {
       onPushStateRef.current?.(displayCanvas.toDataURL("image/png"));
     }
     isRestoringRef.current = false;
-  }, [displayCanvas]);
+  }, [displayCanvas, canvasRef]);
 
   useEffect(() => {
     if (!restoreSnapshot) return;
@@ -205,12 +208,13 @@ export function EmojiCanvas({
       if (!ctx) return;
       ctx.drawImage(img, 0, 0);
       offscreenCanvasRef.current = canvas;
+      if (canvasRef) canvasRef.current = canvas;
       isRestoringRef.current = true;
       setDisplayCanvas(canvas);
       onSnapshotRestoredRef.current?.();
     };
     img.src = restoreSnapshot;
-  }, [restoreSnapshot]);
+  }, [restoreSnapshot, canvasRef]);
 
   useEffect(() => {
     document.addEventListener("paste", handlePaste);

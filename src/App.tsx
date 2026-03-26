@@ -53,6 +53,9 @@ function App() {
   const [textColor, setTextColor] = useState<string>("#000000");
   const [textSize, setTextSize] = useState<number>(18);
   const [showBgRemovalModal, setShowBgRemovalModal] = useState(false);
+  const [bgRemovalImageData, setBgRemovalImageData] =
+    useState<ImageData | null>(null);
+  const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [bgRemovalRequest, setBgRemovalRequest] = useState<{
     tolerance: number;
     seq: number;
@@ -120,6 +123,15 @@ function App() {
   }, []);
 
   const handleOpenBgRemoval = useCallback(() => {
+    const canvas = offscreenCanvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        setBgRemovalImageData(
+          ctx.getImageData(0, 0, canvas.width, canvas.height),
+        );
+      }
+    }
     setShowBgRemovalModal(true);
   }, []);
 
@@ -129,10 +141,12 @@ function App() {
       seq: (prev?.seq ?? 0) + 1,
     }));
     setShowBgRemovalModal(false);
+    setBgRemovalImageData(null);
   }, []);
 
   const handleBgRemovalCancel = useCallback(() => {
     setShowBgRemovalModal(false);
+    setBgRemovalImageData(null);
   }, []);
 
   const handleRotateLeft = useCallback(() => {
@@ -456,6 +470,7 @@ function App() {
             bgRemovalRequest={bgRemovalRequest}
             transformRequest={transformRequest}
             cropConfirmSeq={cropConfirmSeq}
+            canvasRef={offscreenCanvasRef}
           />
           <DecoratePanel
             image={image}
@@ -495,7 +510,7 @@ function App() {
         <BackgroundRemovalModal
           onConfirm={handleBgRemovalConfirm}
           onCancel={handleBgRemovalCancel}
-          imageData={null}
+          imageData={bgRemovalImageData}
         />
       )}
     </div>
