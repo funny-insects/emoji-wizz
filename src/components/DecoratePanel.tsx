@@ -3,6 +3,11 @@ import "./DecoratePanel.css";
 import type { StickerDefinition } from "../assets/stickers/index";
 import type { FrameDefinition } from "../assets/frames/index";
 
+function sanitizeImgSrc(src: string): string {
+  // Allow blob: URLs (user uploads via URL.createObjectURL) and relative paths (bundled assets)
+  return src.startsWith("blob:") || !src.includes(":") ? src : "";
+}
+
 interface DecoratePanelProps {
   image: HTMLImageElement | null;
   stickers: StickerDefinition[];
@@ -91,7 +96,11 @@ export function DecoratePanel({
                   onClick={() => onPlaceSticker(def)}
                   title={def.label}
                 >
-                  <img src={def.src} alt={def.label} draggable={false} />
+                  <img
+                    src={sanitizeImgSrc(def.src)}
+                    alt={def.label}
+                    draggable={false}
+                  />
                   <span className="decorate-panel__item-label">
                     {def.label}
                   </span>
@@ -104,7 +113,11 @@ export function DecoratePanel({
                   onClick={() => onPlaceSticker(def)}
                   title={def.label}
                 >
-                  <img src={def.src} alt={def.label} draggable={false} />
+                  <img
+                    src={sanitizeImgSrc(def.src)}
+                    alt={def.label}
+                    draggable={false}
+                  />
                   <span className="decorate-panel__item-label">
                     {def.label}
                   </span>
@@ -122,7 +135,7 @@ export function DecoratePanel({
                 onClick={() => onToggleFrame(def.id)}
                 title={def.label}
               >
-                <img src={def.src} alt={def.label} />
+                <img src={sanitizeImgSrc(def.src)} alt={def.label} />
                 <span className="decorate-panel__item-label">{def.label}</span>
               </button>
             ))}
