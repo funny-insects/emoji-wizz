@@ -62,7 +62,7 @@ Create idempotent shell scripts that provision all required AWS resources from s
 - [x] 2.6 Create `scripts/aws-teardown.sh` that deletes resources in reverse order: App Runner service, IAM roles/policies, OIDC provider (if no other roles use it), and ECR repository (with `--force` to delete images). Each step should gracefully handle resources that don't exist
 - [x] 2.7 Make both scripts executable (`chmod +x`) and test `aws-setup.sh` followed by `aws-teardown.sh` to verify idempotency and clean teardown
 
-### [ ] 3.0 Docker Build & ECR Push Script
+### [x] 3.0 Docker Build & ECR Push Script
 
 Create a deployment script (`scripts/deploy.sh`) that builds the Docker image, authenticates with ECR, tags with git SHA and `latest`, and pushes to the ECR repository. This validates the full local build-and-push flow before automating it in CI.
 
@@ -74,15 +74,15 @@ Create a deployment script (`scripts/deploy.sh`) that builds the Docker image, a
 
 #### 3.0 Tasks
 
-- [ ] 3.1 Create `scripts/deploy.sh` with a shebang, `set -euo pipefail`, and parameter handling for `--region` (defaulting to `us-east-1`) and `--account-id` (required). Derive the ECR registry URL from the account ID and region
-- [ ] 3.2 Add a step that retrieves the current git SHA (`git rev-parse --short HEAD`) to use as the image tag
-- [ ] 3.3 Add a step that builds the Docker image with `docker build -t emoji-wizz .`
-- [ ] 3.4 Add a step that authenticates with ECR using `aws ecr get-login-password | docker login`
-- [ ] 3.5 Add steps that tag the image with both the git SHA and `latest`, then push both tags to the ECR repository
-- [ ] 3.6 Add a step that triggers an App Runner deployment using `aws apprunner start-deployment --service-arn <arn>` (fetch the service ARN dynamically via `aws apprunner list-services`)
-- [ ] 3.7 Make the script executable and test the full flow: build, push, and verify images appear in ECR with correct tags
+- [x] 3.1 Create `scripts/deploy.sh` with a shebang, `set -euo pipefail`, and parameter handling for `--region` (defaulting to `us-east-1`) and `--account-id` (required). Derive the ECR registry URL from the account ID and region
+- [x] 3.2 Add a step that retrieves the current git SHA (`git rev-parse --short HEAD`) to use as the image tag
+- [x] 3.3 Add a step that builds the Docker image with `docker build -t emoji-wizz .`
+- [x] 3.4 Add a step that authenticates with ECR using `aws ecr get-login-password | docker login`
+- [x] 3.5 Add steps that tag the image with both the git SHA and `latest`, then push both tags to the ECR repository
+- [x] 3.6 Add a step that triggers an App Runner deployment using `aws apprunner start-deployment --service-arn <arn>` (fetch the service ARN dynamically via `aws apprunner list-services`)
+- [x] 3.7 Make the script executable and test the full flow: build, push, and verify images appear in ECR with correct tags
 
-### [ ] 4.0 GitHub Actions CD Pipeline
+### [x] 4.0 GitHub Actions CD Pipeline
 
 Create a GitHub Actions workflow (`.github/workflows/deploy.yml`) that triggers on pushes to `main`, runs CI checks, builds and pushes the Docker image to ECR using OIDC authentication, and triggers an App Runner deployment.
 
@@ -95,10 +95,10 @@ Create a GitHub Actions workflow (`.github/workflows/deploy.yml`) that triggers 
 
 #### 4.0 Tasks
 
-- [ ] 4.1 Create `.github/workflows/deploy.yml` with trigger on `push` to `main` branch and add top-level `permissions` for `id-token: write` (OIDC) and `contents: read`
-- [ ] 4.2 Add a `ci` job that replicates the existing CI checks: checkout, setup Node 22, `npm ci`, install Task, run `task lint`, `task typecheck`, `task test` (mirror the pattern from `.github/workflows/ci.yml`)
-- [ ] 4.3 Add a `deploy` job that depends on (`needs`) the `ci` job and runs only on success. Add steps to: checkout code, configure AWS credentials using `aws-actions/configure-aws-credentials@v4` with OIDC (`role-to-assume` from a GitHub secret, region from a GitHub variable)
-- [ ] 4.4 Add steps to the `deploy` job for: authenticate with ECR using `aws-actions/amazon-ecr-login@v2`, build Docker image, tag with git SHA and `latest`, push both tags to ECR
-- [ ] 4.5 Add a step to the `deploy` job that fetches the App Runner service ARN and triggers a deployment using `aws apprunner start-deployment`
-- [ ] 4.6 Add a documentation comment block at the top of the workflow file listing the required GitHub secrets (`AWS_ROLE_ARN`) and variables (`AWS_ACCOUNT_ID`, `AWS_REGION`) that must be configured in the repository settings
+- [x] 4.1 Create `.github/workflows/deploy.yml` with trigger on `push` to `main` branch and add top-level `permissions` for `id-token: write` (OIDC) and `contents: read`
+- [x] 4.2 Add a `ci` job that replicates the existing CI checks: checkout, setup Node 22, `npm ci`, install Task, run `task lint`, `task typecheck`, `task test` (mirror the pattern from `.github/workflows/ci.yml`)
+- [x] 4.3 Add a `deploy` job that depends on (`needs`) the `ci` job and runs only on success. Add steps to: checkout code, configure AWS credentials using `aws-actions/configure-aws-credentials@v4` with OIDC (`role-to-assume` from a GitHub secret, region from a GitHub variable)
+- [x] 4.4 Add steps to the `deploy` job for: authenticate with ECR using `aws-actions/amazon-ecr-login@v2`, build Docker image, tag with git SHA and `latest`, push both tags to ECR
+- [x] 4.5 Add a step to the `deploy` job that fetches the App Runner service ARN and triggers a deployment using `aws apprunner start-deployment`
+- [x] 4.6 Add a documentation comment block at the top of the workflow file listing the required GitHub secrets (`AWS_ROLE_ARN`) and variables (`AWS_ACCOUNT_ID`, `AWS_REGION`) that must be configured in the repository settings
 - [ ] 4.7 Push the workflow to a branch, open a PR, and merge to `main` to trigger the full pipeline. Verify the GitHub Actions UI shows CI passing and deploy succeeding, and that the app is accessible at the App Runner URL
