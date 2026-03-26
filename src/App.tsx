@@ -83,6 +83,7 @@ function App() {
     null,
   );
   const [activeFrameId, setActiveFrameId] = useState<string | null>(null);
+  const [frameThickness, setFrameThickness] = useState<number>(50);
   const [showSpeechBubbleModal, setShowSpeechBubbleModal] = useState(false);
   const pendingTextStickerRef = useRef<StickerDefinition | null>(null);
   const activeFrameSrc =
@@ -258,7 +259,13 @@ function App() {
 
   const handleToggleFrame = useCallback(
     (id: string) => {
-      setActiveFrameId((prev) => (prev === id ? null : id));
+      setActiveFrameId((prev) => {
+        const next = prev === id ? null : id;
+        if (next !== null && next !== prev) {
+          setFrameThickness(50);
+        }
+        return next;
+      });
       pushState(latestSnapshotRef.current ?? "");
       stickerHistory.pushState(stickers);
     },
@@ -467,6 +474,7 @@ function App() {
             onDeleteSticker={handleDeleteSticker}
             onSelectSticker={handleSelectSticker}
             activeFrameSrc={activeFrameSrc}
+            frameThickness={frameThickness}
             bgRemovalRequest={bgRemovalRequest}
             transformRequest={transformRequest}
             cropConfirmSeq={cropConfirmSeq}
