@@ -189,16 +189,16 @@ jobs:
             exit 1
           fi
           echo "Rolling back to previous image tag: ${PREVIOUS_IMAGE_TAG}"
-          MANIFEST=$(aws ecr batch-get-image \
+          aws ecr batch-get-image \
             --repository-name emoji-wizz \
             --image-ids imageTag="${PREVIOUS_IMAGE_TAG}" \
             --region "${AWS_REGION}" \
             --output json \
-            | jq -r '.images[0].imageManifest')
+            | jq -r '.images[0].imageManifest' > /tmp/manifest.json
           aws ecr put-image \
             --repository-name emoji-wizz \
             --image-tag latest \
-            --image-manifest "${MANIFEST}" \
+            --image-manifest "file:///tmp/manifest.json" \
             --region "${AWS_REGION}"
           echo "Rollback: image ${PREVIOUS_IMAGE_TAG} re-tagged as latest in ECR"
 
