@@ -7,6 +7,8 @@ import { OptimizerPanel } from "./components/OptimizerPanel";
 import { ExportControls } from "./components/ExportControls";
 import { DecoratePanel } from "./components/DecoratePanel";
 import { SpeechBubbleModal } from "./components/SpeechBubbleModal";
+import { BackgroundRemovalModal } from "./components/BackgroundRemovalModal";
+import { strengthToTolerance } from "./utils/strengthToTolerance";
 import { PLATFORM_PRESETS } from "./utils/presets";
 import { useImageImport } from "./hooks/useImageImport";
 
@@ -50,7 +52,7 @@ function App() {
   const [brushSize, setBrushSize] = useState<number>(3);
   const [textColor, setTextColor] = useState<string>("#000000");
   const [textSize, setTextSize] = useState<number>(18);
-  const [bgTolerance, setBgTolerance] = useState<number>(15);
+  const [showBgRemovalModal, setShowBgRemovalModal] = useState(false);
   const [bgRemovalRequest, setBgRemovalRequest] = useState<{
     tolerance: number;
     seq: number;
@@ -117,11 +119,20 @@ function App() {
     setRestoreSnapshot(null);
   }, []);
 
-  const handleRemoveBackground = useCallback((tolerance: number) => {
+  const handleOpenBgRemoval = useCallback(() => {
+    setShowBgRemovalModal(true);
+  }, []);
+
+  const handleBgRemovalConfirm = useCallback((strength: number) => {
     setBgRemovalRequest((prev) => ({
-      tolerance,
+      tolerance: strengthToTolerance(strength),
       seq: (prev?.seq ?? 0) + 1,
     }));
+    setShowBgRemovalModal(false);
+  }, []);
+
+  const handleBgRemovalCancel = useCallback(() => {
+    setShowBgRemovalModal(false);
   }, []);
 
   const handleRotateLeft = useCallback(() => {
@@ -412,9 +423,7 @@ function App() {
             onTextColorChange={setTextColor}
             textSize={textSize}
             onTextSizeChange={setTextSize}
-            bgTolerance={bgTolerance}
-            onBgToleranceChange={setBgTolerance}
-            onRemoveBackground={handleRemoveBackground}
+            onOpenBgRemoval={handleOpenBgRemoval}
             onRotateLeft={handleRotateLeft}
             onRotateRight={handleRotateRight}
             onFlipHorizontal={handleFlipHorizontal}
@@ -480,6 +489,13 @@ function App() {
         <SpeechBubbleModal
           onPlace={handleSpeechBubblePlace}
           onCancel={handleSpeechBubbleCancel}
+        />
+      )}
+      {showBgRemovalModal && (
+        <BackgroundRemovalModal
+          onConfirm={handleBgRemovalConfirm}
+          onCancel={handleBgRemovalCancel}
+          imageData={null}
         />
       )}
     </div>

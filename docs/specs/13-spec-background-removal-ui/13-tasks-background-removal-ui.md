@@ -40,7 +40,7 @@ Build the new `BackgroundRemovalModal` component following the `SpeechBubbleModa
 - [x] 1.6 Add Escape key handler via `useEffect` + `document.addEventListener("keydown", ...)` that calls `onCancel`, following the `SpeechBubbleModal` pattern.
 - [x] 1.7 Write `src/components/BackgroundRemovalModal.test.tsx`: test that the modal renders title, description, slider at default 50; test that changing the slider updates displayed value; test that clicking "Remove Background" calls `onConfirm` with current strength; test that clicking ✕ calls `onCancel`; test that clicking the backdrop calls `onCancel`; test that pressing Escape calls `onCancel`.
 
-### [ ] 2.0 Integrate modal into App and rewire Toolbar scissors button
+### [x] 2.0 Integrate modal into App and rewire Toolbar scissors button
 
 Wire the new modal into `App.tsx` with `showBgRemovalModal` state. The scissors button in `Toolbar` now opens the modal instead of triggering removal directly. Remove the old "tol" label and number input from `Toolbar`. Remove `bgTolerance`/`onBgToleranceChange` props from `Toolbar`. Update existing Toolbar tests to reflect the removed tolerance UI.
 
@@ -52,13 +52,13 @@ Wire the new modal into `App.tsx` with `showBgRemovalModal` state. The scissors 
 
 #### 2.0 Tasks
 
-- [ ] 2.1 In `Toolbar.tsx`, replace the `onRemoveBackground`, `bgTolerance`, and `onBgToleranceChange` props with a single `onOpenBgRemoval: () => void` prop. Update the `ToolbarProps` interface accordingly.
-- [ ] 2.2 In `Toolbar.tsx`, change the scissors button `onClick` from `() => onRemoveBackground(bgTolerance)` to `onOpenBgRemoval`. Remove the entire `<div className="toolbar-bg-settings">` block (lines 104–120 containing the "tol" label and number input).
-- [ ] 2.3 In `App.tsx`, add `showBgRemovalModal` boolean state (default `false`). Create `handleOpenBgRemoval` callback that sets it to `true`. Create `handleBgRemovalConfirm(strength: number)` callback that maps strength to tolerance via `strengthToTolerance`, calls the existing `setBgRemovalRequest` logic, and sets `showBgRemovalModal` to `false`. Create `handleBgRemovalCancel` that sets `showBgRemovalModal` to `false`.
-- [ ] 2.4 In `App.tsx`, replace the `bgTolerance`, `onBgToleranceChange`, and `onRemoveBackground` Toolbar props with `onOpenBgRemoval={handleOpenBgRemoval}`. Remove the `bgTolerance` state and `setBgTolerance`.
-- [ ] 2.5 In `App.tsx`, render `<BackgroundRemovalModal>` conditionally when `showBgRemovalModal` is true (following the `SpeechBubbleModal` pattern at the bottom of the JSX). Pass `onConfirm={handleBgRemovalConfirm}`, `onCancel={handleBgRemovalCancel}`, and `imageData={null}` (placeholder until task 3.0).
-- [ ] 2.6 Update `Toolbar.test.tsx`: remove the test "tolerance input is visible when image is provided and updates on change". Update the test "Remove BG button calls onRemoveBackground with current tolerance" to instead verify it calls `onOpenBgRemoval`. Remove `bgTolerance` and `onBgToleranceChange` from `defaultTextProps`, add `onOpenBgRemoval: () => {}`.
-- [ ] 2.7 Run `task test` and `task typecheck` to verify no regressions.
+- [x] 2.1 In `Toolbar.tsx`, replace the `onRemoveBackground`, `bgTolerance`, and `onBgToleranceChange` props with a single `onOpenBgRemoval: () => void` prop. Update the `ToolbarProps` interface accordingly.
+- [x] 2.2 In `Toolbar.tsx`, change the scissors button `onClick` from `() => onRemoveBackground(bgTolerance)` to `onOpenBgRemoval`. Remove the entire `<div className="toolbar-bg-settings">` block (lines 104–120 containing the "tol" label and number input).
+- [x] 2.3 In `App.tsx`, add `showBgRemovalModal` boolean state (default `false`). Create `handleOpenBgRemoval` callback that sets it to `true`. Create `handleBgRemovalConfirm(strength: number)` callback that maps strength to tolerance via `strengthToTolerance`, calls the existing `setBgRemovalRequest` logic, and sets `showBgRemovalModal` to `false`. Create `handleBgRemovalCancel` that sets `showBgRemovalModal` to `false`.
+- [x] 2.4 In `App.tsx`, replace the `bgTolerance`, `onBgToleranceChange`, and `onRemoveBackground` Toolbar props with `onOpenBgRemoval={handleOpenBgRemoval}`. Remove the `bgTolerance` state and `setBgTolerance`.
+- [x] 2.5 In `App.tsx`, render `<BackgroundRemovalModal>` conditionally when `showBgRemovalModal` is true (following the `SpeechBubbleModal` pattern at the bottom of the JSX). Pass `onConfirm={handleBgRemovalConfirm}`, `onCancel={handleBgRemovalCancel}`, and `imageData={null}` (placeholder until task 3.0).
+- [x] 2.6 Update `Toolbar.test.tsx`: remove the test "tolerance input is visible when image is provided and updates on change". Update the test "Remove BG button calls onRemoveBackground with current tolerance" to instead verify it calls `onOpenBgRemoval`. Remove `bgTolerance` and `onBgToleranceChange` from `defaultTextProps`, add `onOpenBgRemoval: () => {}`.
+- [x] 2.7 Run `task test` and `task typecheck` to verify no regressions.
 
 ### [ ] 3.0 Add live preview with debounced background removal inside the modal
 
