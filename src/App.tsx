@@ -459,8 +459,6 @@ function App() {
             brushSize={brushSize}
             textColor={textColor}
             textSize={textSize}
-            canvasWidth={exportPreset.width}
-            canvasHeight={exportPreset.height}
             stageRef={stageRef}
             fileName={fileName}
             stickers={stickers}
