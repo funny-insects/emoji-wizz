@@ -34,6 +34,8 @@ interface EmojiCanvasProps {
   brushSize?: number;
   textColor?: string;
   textSize?: number;
+  canvasWidth?: number;
+  canvasHeight?: number;
   stageRef?: React.RefObject<Konva.Stage | null>;
   fileName?: string;
   stickers?: StickerDescriptor[];
@@ -81,6 +83,8 @@ export function EmojiCanvas({
   brushSize,
   textColor = "#000000",
   textSize = 18,
+  canvasWidth,
+  canvasHeight,
   stageRef,
   fileName,
   stickers = [],
@@ -93,8 +97,8 @@ export function EmojiCanvas({
   transformRequest = null,
   cropConfirmSeq = 0,
 }: EmojiCanvasProps) {
-  const width = 512;
-  const height = 512;
+  const width = canvasWidth ?? 512;
+  const height = canvasHeight ?? 512;
   const tiles = buildCheckerboard(width, height);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const transformerRef = useRef<Konva.Transformer | null>(null);

@@ -237,22 +237,25 @@ export function Toolbar({
               />
             ))}
           </div>
-          <div className="toolbar-brush-size">
-            <label className="toolbar-brush-size-label" htmlFor="text-size">
-              px
-            </label>
-            <input
-              id="text-size"
-              type="number"
-              className="toolbar-brush-size-input"
-              value={textSize}
-              min={4}
-              max={200}
-              onChange={(e) => {
-                const v = parseInt(e.target.value, 10);
-                if (!isNaN(v) && v >= 4 && v <= 200) onTextSizeChange(v);
-              }}
-            />
+          <div className="toolbar-text-sizes">
+            <button
+              className={`toolbar-btn${textSize === 12 ? " toolbar-btn--active" : ""}`}
+              onClick={() => onTextSizeChange(12)}
+            >
+              Small
+            </button>
+            <button
+              className={`toolbar-btn${textSize === 18 ? " toolbar-btn--active" : ""}`}
+              onClick={() => onTextSizeChange(18)}
+            >
+              Medium
+            </button>
+            <button
+              className={`toolbar-btn${textSize === 32 ? " toolbar-btn--active" : ""}`}
+              onClick={() => onTextSizeChange(32)}
+            >
+              Large
+            </button>
           </div>
         </div>
       )}
