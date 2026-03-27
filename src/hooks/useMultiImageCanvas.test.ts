@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useMultiImageCanvas } from "./useMultiImageCanvas";
+import type { CanvasImageItem } from "../utils/canvasImageTypes";
 
 // Minimal 1×1 transparent PNG data URL
 const MOCK_DATA_URL =
@@ -141,8 +142,8 @@ describe("useMultiImageCanvas", () => {
       result.current.addImage(makeImage(), "b.png");
     });
     const [first, second] = result.current.items as [
-      ReturnType<typeof result.current.items>[0],
-      ReturnType<typeof result.current.items>[0],
+      CanvasImageItem,
+      CanvasImageItem,
     ];
     act(() => {
       result.current.reorderItems([second, first]);
