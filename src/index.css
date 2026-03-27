@@ -7,8 +7,8 @@
 }
 
 :root {
-  --bg: #12080f;
-  /*--bg: #0000ff;*/
+  /*--bg: #12080f;*/
+  --bg: #0000ff;
   --surface: #1c0e18;
   --surface-2: #241422;
   --border: #3d1e36;
