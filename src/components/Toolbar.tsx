@@ -14,6 +14,8 @@ interface ToolbarProps {
   onBrushColorChange: (color: string) => void;
   brushSize: number;
   onBrushSizeChange: (size: number) => void;
+  eraserSize: number;
+  onEraserSizeChange: (size: number) => void;
   textColor: string;
   onTextColorChange: (color: string) => void;
   textSize: number;
@@ -39,6 +41,8 @@ export function Toolbar({
   onBrushColorChange,
   brushSize,
   onBrushSizeChange,
+  eraserSize,
+  onEraserSizeChange,
   textColor,
   onTextColorChange,
   textSize,
@@ -199,6 +203,23 @@ export function Toolbar({
               }}
             />
           </div>
+        </div>
+      )}
+
+      {activeTool === "eraser" && (
+        <div className="toolbar-eraser-size">
+          <label className="toolbar-eraser-size-label" htmlFor="eraser-size">
+            Size
+          </label>
+          <input
+            id="eraser-size"
+            type="range"
+            className="toolbar-eraser-size-slider"
+            value={eraserSize}
+            min={1}
+            max={100}
+            onChange={(e) => onEraserSizeChange(Number(e.target.value))}
+          />
         </div>
       )}
 

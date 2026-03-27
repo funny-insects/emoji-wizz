@@ -9,6 +9,8 @@ const defaultTextProps: {
   onBrushColorChange: () => void;
   brushSize: number;
   onBrushSizeChange: () => void;
+  eraserSize: number;
+  onEraserSizeChange: () => void;
   textColor: string;
   onTextColorChange: () => void;
   textSize: number;
@@ -25,6 +27,8 @@ const defaultTextProps: {
   onBrushColorChange: () => {},
   brushSize: 3,
   onBrushSizeChange: () => {},
+  eraserSize: 12,
+  onEraserSizeChange: () => {},
   textColor: "#000000",
   onTextColorChange: () => {},
   textSize: 18,
@@ -203,6 +207,40 @@ describe("Toolbar", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Remove BG" }));
     expect(onOpenBgRemoval).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders eraser size slider when eraser tool is active", () => {
+    render(
+      <Toolbar
+        image={mockImage}
+        activeTool="eraser"
+        onToolChange={() => {}}
+        canUndo={false}
+        canRedo={false}
+        onUndo={() => {}}
+        onRedo={() => {}}
+        {...defaultTextProps}
+      />,
+    );
+    expect(screen.getByRole("slider", { name: "Size" })).toBeInTheDocument();
+  });
+
+  it("does not render eraser size slider when brush tool is active", () => {
+    render(
+      <Toolbar
+        image={mockImage}
+        activeTool="brush"
+        onToolChange={() => {}}
+        canUndo={false}
+        canRedo={false}
+        onUndo={() => {}}
+        onRedo={() => {}}
+        {...defaultTextProps}
+      />,
+    );
+    expect(
+      screen.queryByRole("slider", { name: "Size" }),
+    ).not.toBeInTheDocument();
   });
 });
 

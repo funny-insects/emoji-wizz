@@ -32,6 +32,7 @@ interface EmojiCanvasProps {
   onSnapshotRestored?: () => void;
   brushColor?: string;
   brushSize?: number;
+  eraserSize?: number;
   textColor?: string;
   textSize?: number;
   canvasWidth?: number;
@@ -83,6 +84,7 @@ export function EmojiCanvas({
   onSnapshotRestored,
   brushColor = "#000000",
   brushSize,
+  eraserSize = 12,
   textColor = "#000000",
   textSize = 18,
   canvasWidth,
@@ -165,7 +167,6 @@ export function EmojiCanvas({
     [image, width, height],
   );
 
-  const eraserRadius = Math.round((width / 128) * 3);
   const brushStrokeWidth = brushSize ?? Math.round((width / 128) * 3);
   const scaledFontSize = Math.max(4, textSize);
 
@@ -254,11 +255,11 @@ export function EmojiCanvas({
       const prevOp = ctx.globalCompositeOperation;
       ctx.globalCompositeOperation = "destination-out";
       ctx.beginPath();
-      ctx.arc(stageX, stageY, eraserRadius, 0, Math.PI * 2);
+      ctx.arc(stageX, stageY, eraserSize, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalCompositeOperation = prevOp;
     },
-    [imageRect, eraserRadius],
+    [imageRect, eraserSize],
   );
 
   const flattenCurrentLine = useCallback((): boolean => {
@@ -673,7 +674,7 @@ export function EmojiCanvas({
                     <Circle
                       x={eraserPos.x}
                       y={eraserPos.y}
-                      radius={eraserRadius}
+                      radius={eraserSize}
                       stroke="rgba(0,0,0,0.7)"
                       strokeWidth={1.5}
                       fill="transparent"
