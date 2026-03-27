@@ -142,9 +142,15 @@ test("text tool: changing color affects new text placement", async ({
   await expect(
     page.getByRole("button", { name: "Color #FF0000" }),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Small" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Medium" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Large" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "S", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "M", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "L", exact: true }),
+  ).toBeVisible();
 
   // Select red color
   await page.getByRole("button", { name: "Color #FF0000" }).click();
