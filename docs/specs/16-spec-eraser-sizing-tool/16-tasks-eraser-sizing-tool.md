@@ -160,7 +160,7 @@
 
 ---
 
-### [ ] 4.0 Add E2E test and verify all quality gates pass
+### [x] 4.0 Add E2E test and verify all quality gates pass
 
 #### 4.0 Proof Artifact(s)
 
@@ -171,7 +171,7 @@
 
 #### 4.0 Tasks
 
-- [ ] 4.1 In `e2e/eraser.spec.ts`, add a helper function below the existing `getImageLayerPixel` helper that counts the number of transparent pixels (alpha = 0) in a square region on the image layer canvas:
+- [x] 4.1 In `e2e/eraser.spec.ts`, add a helper function below the existing `getImageLayerPixel` helper that counts the number of transparent pixels (alpha = 0) in a square region on the image layer canvas:
   ```ts
   async function countTransparentPixels(
     page: Parameters<typeof test>[1]["page"],
@@ -196,7 +196,7 @@
     );
   }
   ```
-- [ ] 4.2 In `e2e/eraser.spec.ts`, add a new test after the existing two tests:
+- [x] 4.2 In `e2e/eraser.spec.ts`, add a new test after the existing two tests:
 
   ```ts
   test("eraser size slider changes the size of the erased area", async ({
@@ -258,7 +258,7 @@
   });
   ```
 
-- [ ] 4.3 Run `task test:e2e` and confirm all three eraser tests pass.
-- [ ] 4.4 Run `task lint` and confirm no errors.
-- [ ] 4.5 Run `task typecheck` and confirm no errors.
-- [ ] 4.6 Run `task test` and confirm all unit tests pass.
+- [x] 4.3 Run `task test:e2e` and confirm all three eraser tests pass.
+- [x] 4.4 Run `task lint` and confirm no errors.
+- [x] 4.5 Run `task typecheck` and confirm no errors.
+- [x] 4.6 Run `task test` and confirm all unit tests pass.
