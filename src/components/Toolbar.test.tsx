@@ -279,9 +279,9 @@ describe("Toolbar — text tool settings", () => {
     );
     const swatches = screen.getAllByRole("button", { name: /Color #/ });
     expect(swatches).toHaveLength(8);
-    expect(screen.getByRole("button", { name: "Small" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Medium" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Large" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "S" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "M" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "L" })).toBeInTheDocument();
   });
 
   it("calls onTextColorChange when a color swatch is clicked", () => {
@@ -324,7 +324,7 @@ describe("Toolbar — text tool settings", () => {
         onTextSizeChange={onTextSizeChange}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Large" }));
+    fireEvent.click(screen.getByRole("button", { name: "L" }));
     expect(onTextSizeChange).toHaveBeenCalledWith(32);
   });
 
@@ -367,13 +367,13 @@ describe("Toolbar — text tool settings", () => {
         textSize={32}
       />,
     );
-    expect(screen.getByRole("button", { name: "Large" })).toHaveClass(
+    expect(screen.getByRole("button", { name: "L" })).toHaveClass(
       "toolbar-btn--active",
     );
-    expect(screen.getByRole("button", { name: "Small" })).not.toHaveClass(
+    expect(screen.getByRole("button", { name: "S" })).not.toHaveClass(
       "toolbar-btn--active",
     );
-    expect(screen.getByRole("button", { name: "Medium" })).not.toHaveClass(
+    expect(screen.getByRole("button", { name: "M" })).not.toHaveClass(
       "toolbar-btn--active",
     );
   });

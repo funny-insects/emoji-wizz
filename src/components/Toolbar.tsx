@@ -242,19 +242,19 @@ export function Toolbar({
               className={`toolbar-btn${textSize === 12 ? " toolbar-btn--active" : ""}`}
               onClick={() => onTextSizeChange(12)}
             >
-              Small
+              S
             </button>
             <button
               className={`toolbar-btn${textSize === 18 ? " toolbar-btn--active" : ""}`}
               onClick={() => onTextSizeChange(18)}
             >
-              Medium
+              M
             </button>
             <button
               className={`toolbar-btn${textSize === 32 ? " toolbar-btn--active" : ""}`}
               onClick={() => onTextSizeChange(32)}
             >
-              Large
+              L
             </button>
           </div>
         </div>

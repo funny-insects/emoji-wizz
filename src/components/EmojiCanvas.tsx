@@ -409,8 +409,10 @@ export function EmojiCanvas({
       const stage = e.target.getStage();
       const pos = stage?.getPointerPosition();
       if (!pos) return;
-      if (activeTool === "eraser") {
+      if (activeTool === "eraser" || activeTool === "brush") {
         setEraserPos({ x: pos.x, y: pos.y });
+      }
+      if (activeTool === "eraser") {
         if (!isErasingRef.current) return;
         applyEraserAt(pos.x, pos.y);
         stage?.getLayers()[1]?.batchDraw();
@@ -670,17 +672,23 @@ export function EmojiCanvas({
                   )}
                 </Layer>
                 <Layer>
-                  {activeTool === "eraser" && eraserPos && image && (
-                    <Circle
-                      x={eraserPos.x}
-                      y={eraserPos.y}
-                      radius={eraserSize}
-                      stroke="rgba(0,0,0,0.7)"
-                      strokeWidth={1.5}
-                      fill="transparent"
-                      listening={false}
-                    />
-                  )}
+                  {(activeTool === "eraser" || activeTool === "brush") &&
+                    eraserPos &&
+                    image && (
+                      <Circle
+                        x={eraserPos.x}
+                        y={eraserPos.y}
+                        radius={
+                          activeTool === "eraser"
+                            ? eraserSize
+                            : brushStrokeWidth / 2
+                        }
+                        stroke="rgba(0,0,0,0.7)"
+                        strokeWidth={1.5}
+                        fill="transparent"
+                        listening={false}
+                      />
+                    )}
                 </Layer>
                 <Layer>
                   {activeTool === "crop" && cropRect && (
