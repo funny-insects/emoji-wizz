@@ -116,7 +116,7 @@ describe("LayerPanel", () => {
       fireEvent.drop(rows[1]!);
     });
     expect(onReorder).toHaveBeenCalled();
-    const newOrder: CanvasImageItem[] = onReorder.mock.calls[0][0];
+    const newOrder: CanvasImageItem[] = onReorder.mock.calls[0]![0];
     expect(newOrder[0]!.id).toBe("b");
     expect(newOrder[1]!.id).toBe("a");
   });
