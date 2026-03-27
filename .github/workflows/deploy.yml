@@ -74,14 +74,19 @@ jobs:
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Capture previous image tag
+      - name: Capture previous image digest
         id: capture-prev-tag
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
         run: |
-          PREV_TAG=$(git rev-parse HEAD~1 | cut -c1-7)
-          echo "Previous image tag: ${PREV_TAG}"
-          echo "previous-tag=${PREV_TAG}" >> "$GITHUB_OUTPUT"
+          PREV_DIGEST=$(aws ecr describe-images \
+            --repository-name emoji-wizz \
+            --image-ids imageTag=latest \
+            --region "${AWS_REGION}" \
+            --output json 2>/dev/null \
+            | jq -r '.imageDetails[0].imageDigest // ""')
+          echo "Previous image digest: ${PREV_DIGEST:-none}"
+          echo "previous-tag=${PREV_DIGEST}" >> "$GITHUB_OUTPUT"
 
       - name: Build Docker image
         run: docker build -t emoji-wizz .
@@ -188,17 +193,21 @@ jobs:
             echo "No previous image tag available — cannot roll back"
             exit 1
           fi
-          echo "Rolling back to previous image tag: ${PREVIOUS_IMAGE_TAG}"
+          echo "Rolling back to previous image digest: ${PREVIOUS_IMAGE_TAG}"
           aws ecr batch-get-image \
             --repository-name emoji-wizz \
-            --image-ids imageTag="${PREVIOUS_IMAGE_TAG}" \
+            --image-ids imageDigest="${PREVIOUS_IMAGE_TAG}" \
             --region "${AWS_REGION}" \
             --output json \
-            | jq -r '.images[0].imageManifest' > /tmp/manifest.json
+            | jq -r '.images[0].imageManifest // empty' > /tmp/manifest.json
+          if [ ! -s /tmp/manifest.json ]; then
+            echo "ERROR: Could not retrieve manifest for previous image — rollback aborted"
+            exit 1
+          fi
           aws ecr put-image \
             --repository-name emoji-wizz \
             --image-tag latest \
-            --image-manifest "file:///tmp/manifest.json" \
+            --image-manifest "$(cat /tmp/manifest.json)" \
             --region "${AWS_REGION}"
           echo "Rollback: image ${PREVIOUS_IMAGE_TAG} re-tagged as latest in ECR"
 
