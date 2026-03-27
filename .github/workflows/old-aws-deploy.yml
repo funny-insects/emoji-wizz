@@ -1,0 +1,254 @@
+# This is no longer used The app is now deployed to Cloudflare
+
+# deploy.yml — CD pipeline: CI checks → build & push to ECR → trigger App Runner deployment
+#
+# Required GitHub repository secrets:
+#   AWS_ROLE_ARN   — ARN of the IAM role for OIDC authentication
+#                    (created by scripts/aws-setup.sh, e.g. arn:aws:iam::123456789012:role/emoji-wizz-github-actions-role)
+#
+# Required GitHub repository variables:
+#   AWS_ACCOUNT_ID — 12-digit AWS account ID
+#   AWS_REGION     — AWS region (e.g. us-east-1)
+
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  ci:
+    name: Lint, Typecheck & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Lint
+        run: task lint
+
+      - name: Typecheck
+        run: task typecheck
+
+      - name: Unit tests
+        run: task test
+
+  deploy:
+    name: Build, Push & Deploy
+    runs-on: ubuntu-latest
+    needs: ci
+    outputs:
+      previous-image-tag: ${{ steps.capture-prev-tag.outputs.previous-tag }}
+      ecr-registry: ${{ steps.ecr-login.outputs.registry }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Capture previous image digest
+        id: capture-prev-tag
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          PREV_DIGEST=$(aws ecr describe-images \
+            --repository-name emoji-wizz \
+            --image-ids imageTag=latest \
+            --region "${AWS_REGION}" \
+            --output json 2>/dev/null \
+            | jq -r '.imageDetails[0].imageDigest // ""')
+          echo "Previous image digest: ${PREV_DIGEST:-none}"
+          echo "previous-tag=${PREV_DIGEST}" >> "$GITHUB_OUTPUT"
+
+      - name: Build Docker image
+        run: docker build -t emoji-wizz .
+
+      - name: Tag and push to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          SHORT_SHA="${IMAGE_TAG::7}"
+          docker tag emoji-wizz:latest "${ECR_REGISTRY}/emoji-wizz:${SHORT_SHA}"
+          docker tag emoji-wizz:latest "${ECR_REGISTRY}/emoji-wizz:latest"
+          docker push "${ECR_REGISTRY}/emoji-wizz:${SHORT_SHA}"
+          docker push "${ECR_REGISTRY}/emoji-wizz:latest"
+
+      - name: Trigger App Runner deployment
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          SERVICE_ARN=$(aws apprunner list-services \
+            --region "${AWS_REGION}" \
+            --output text \
+            --query "ServiceSummaryList[?ServiceName=='emoji-wizz'].ServiceArn | [0]")
+          echo "Service ARN: ${SERVICE_ARN}"
+          OPERATION_ID=$(aws apprunner start-deployment \
+            --service-arn "${SERVICE_ARN}" \
+            --region "${AWS_REGION}" \
+            --output text \
+            --query 'OperationId')
+          echo "Deployment triggered. Operation ID: ${OPERATION_ID}"
+
+  post-deploy:
+    name: Post-Deploy Verification
+    runs-on: ubuntu-latest
+    needs: deploy
+    env:
+      PREVIOUS_IMAGE_TAG: ${{ needs.deploy.outputs.previous-image-tag }}
+      ECR_REGISTRY: ${{ needs.deploy.outputs.ecr-registry }}
+
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Get App Runner service URL
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          SERVICE_URL=$(aws apprunner list-services \
+            --region "${AWS_REGION}" \
+            --output text \
+            --query "ServiceSummaryList[?ServiceName=='emoji-wizz'].ServiceUrl | [0]")
+          PROD_URL="https://${SERVICE_URL}"
+          echo "PROD_URL=${PROD_URL}" >> "$GITHUB_ENV"
+          echo "Production URL: ${PROD_URL}"
+
+      - name: Smoke test — wait for healthy deployment
+        run: |
+          curl --retry 30 --retry-delay 20 --retry-all-errors --max-time 600 -sf "${PROD_URL}"
+          echo "Smoke test passed — production URL returned HTTP 200"
+
+      - name: Log deployment status on timeout
+        if: failure()
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          SERVICE_ARN=$(aws apprunner list-services \
+            --region "${AWS_REGION}" \
+            --output text \
+            --query "ServiceSummaryList[?ServiceName=='emoji-wizz'].ServiceArn | [0]")
+          echo "Querying App Runner operations for service: ${SERVICE_ARN}"
+          aws apprunner list-operations \
+            --service-arn "${SERVICE_ARN}" \
+            --region "${AWS_REGION}"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run production E2E tests
+        env:
+          PROD_URL: ${{ env.PROD_URL }}
+        run: npx playwright test --config playwright.prod.config.ts
+
+      - name: Rollback — re-tag previous image as latest
+        if: failure()
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          if [ -z "${PREVIOUS_IMAGE_TAG}" ]; then
+            echo "No previous image tag available — cannot roll back"
+            exit 1
+          fi
+          echo "Rolling back to previous image digest: ${PREVIOUS_IMAGE_TAG}"
+          aws ecr batch-get-image \
+            --repository-name emoji-wizz \
+            --image-ids imageDigest="${PREVIOUS_IMAGE_TAG}" \
+            --region "${AWS_REGION}" \
+            --output json \
+            | jq -r '.images[0].imageManifest // empty' > /tmp/manifest.json
+          if [ ! -s /tmp/manifest.json ]; then
+            echo "ERROR: Could not retrieve manifest for previous image — rollback aborted"
+            exit 1
+          fi
+          aws ecr put-image \
+            --repository-name emoji-wizz \
+            --image-tag latest \
+            --image-manifest "$(cat /tmp/manifest.json)" \
+            --region "${AWS_REGION}"
+          echo "Rollback: image ${PREVIOUS_IMAGE_TAG} re-tagged as latest in ECR"
+
+      - name: Rollback — trigger App Runner redeployment
+        if: failure()
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          SERVICE_ARN=$(aws apprunner list-services \
+            --region "${AWS_REGION}" \
+            --output text \
+            --query "ServiceSummaryList[?ServiceName=='emoji-wizz'].ServiceArn | [0]")
+          echo "Waiting for App Runner service to reach RUNNING state..."
+          for i in $(seq 1 30); do
+            STATUS=$(aws apprunner describe-service \
+              --service-arn "${SERVICE_ARN}" \
+              --region "${AWS_REGION}" \
+              --output text \
+              --query 'Service.Status')
+            echo "  attempt ${i}/30: status=${STATUS}"
+            [ "${STATUS}" = "RUNNING" ] && break
+            [ "${i}" -eq 30 ] && { echo "Timed out waiting for RUNNING state"; exit 1; }
+            sleep 20
+          done
+          echo "Triggering rollback deployment for service: ${SERVICE_ARN}"
+          OPERATION_ID=$(aws apprunner start-deployment \
+            --service-arn "${SERVICE_ARN}" \
+            --region "${AWS_REGION}" \
+            --output text \
+            --query 'OperationId')
+          echo "Rollback deployment triggered. Operation ID: ${OPERATION_ID}"
+
+      - name: Rollback — verify healthy deployment
+        if: failure()
+        run: |
+          echo "Waiting for rollback deployment to become healthy..."
+          if curl --retry 30 --retry-delay 20 --retry-all-errors --max-time 600 -sf "${PROD_URL}"; then
+            echo "Rollback successful — production URL returned HTTP 200"
+          else
+            echo "ERROR: Rollback did not restore a healthy deployment"
+            exit 1
+          fi
