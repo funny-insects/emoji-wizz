@@ -12,6 +12,7 @@ import {
   Image as KonvaImage,
   Circle,
   Transformer,
+  Text as KonvaText,
 } from "react-konva";
 import Konva from "konva";
 import { removeBackground } from "../utils/removeBackground";
@@ -23,6 +24,7 @@ import {
 } from "../utils/imageTransforms";
 import type { EditorTool } from "../App";
 import type { CanvasImageItem } from "../utils/canvasImageTypes";
+import type { StickerDescriptor } from "../utils/stickerTypes";
 
 const CANVAS_SIZE = 512;
 const TILE_SIZE = 8;
@@ -73,6 +75,15 @@ export interface MultiImageCanvasProps {
     seq: number;
   } | null;
   cropConfirmSeq?: number;
+  bgColor?: string | null;
+  onBgColorChange?: (color: string | null) => void;
+  stickers?: StickerDescriptor[];
+  selectedStickerId?: string | null;
+  onUpdateSticker?: (desc: StickerDescriptor) => void;
+  onDeleteSticker?: (id: string) => void;
+  onSelectSticker?: (id: string | null) => void;
+  activeFrameSrc?: string | null;
+  frameThickness?: number;
   onAddImage: (img: HTMLImageElement, label: string) => void;
   onUpdateItem: (updated: CanvasImageItem) => void;
   onRemoveItem: (id: string) => void;
@@ -89,6 +100,15 @@ export function MultiImageCanvas({
   brushColor = "#000000",
   brushSize,
   eraserSize = 12,
+  bgColor = null,
+  onBgColorChange,
+  stickers = [],
+  selectedStickerId = null,
+  onUpdateSticker,
+  onDeleteSticker,
+  onSelectSticker,
+  activeFrameSrc = null,
+  frameThickness = 50,
   bgRemovalRequest = null,
   transformRequest = null,
   cropConfirmSeq = 0,
@@ -106,6 +126,10 @@ export function MultiImageCanvas({
   const cropRectNodeRef = useRef<Konva.Rect | null>(null);
   const cropTransformerRef = useRef<Konva.Transformer | null>(null);
   const itemNodeRefs = useRef<Map<string, Konva.Image>>(new Map());
+  const stickerNodeRefs = useRef<Map<string, Konva.Image>>(new Map());
+  const stickerTransformerRef = useRef<Konva.Transformer | null>(null);
+  const [stickerImages, setStickerImages] = useState<Record<string, HTMLImageElement>>({});
+  const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
 
   const isErasingRef = useRef(false);
   const isBrushingRef = useRef(false);
@@ -158,6 +182,39 @@ export function MultiImageCanvas({
     document.addEventListener("paste", handlePaste);
     return () => document.removeEventListener("paste", handlePaste);
   }, [onAddImage, onPushHistory]);
+
+  // ── Load sticker images ─────────────────────────────────────────────────────
+  useEffect(() => {
+    stickers.forEach((s) => {
+      if (!stickerImages[s.src]) {
+        const img = new window.Image();
+        img.onload = () => setStickerImages((prev) => ({ ...prev, [s.src]: img }));
+        img.src = s.src;
+      }
+    });
+  }, [stickers, stickerImages]);
+
+  // ── Load frame image ────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!activeFrameSrc) return;
+    const img = new window.Image();
+    img.onload = () => setFrameImage(img);
+    img.src = activeFrameSrc;
+    return () => setFrameImage(null);
+  }, [activeFrameSrc]);
+
+  // ── Wire sticker transformer ────────────────────────────────────────────────
+  useEffect(() => {
+    const tr = stickerTransformerRef.current;
+    if (!tr) return;
+    if (selectedStickerId) {
+      const node = stickerNodeRefs.current.get(selectedStickerId);
+      if (node) { tr.nodes([node]); tr.getLayer()?.batchDraw(); }
+    } else {
+      tr.nodes([]);
+      tr.getLayer()?.batchDraw();
+    }
+  }, [selectedStickerId]);
 
   // ── Wire Transformer to active item ────────────────────────────────────────
   useEffect(() => {
@@ -462,19 +519,27 @@ export function MultiImageCanvas({
       const isTransformerPart =
         target instanceof Konva.Transformer ||
         target.getParent() instanceof Konva.Transformer;
-      if (!isTransformerPart) {
-        // Check if target is one of our item nodes
-        const clickedItemId = [...itemNodeRefs.current.entries()].find(
-          ([, node]) => node === target,
-        )?.[0];
-        if (clickedItemId) {
-          onSetActiveImageId(clickedItemId);
-        } else {
-          onSetActiveImageId(null);
-        }
+      if (isTransformerPart) return;
+
+      const clickedItemId = [...itemNodeRefs.current.entries()].find(
+        ([, node]) => node === target,
+      )?.[0];
+      const clickedStickerId = [...stickerNodeRefs.current.entries()].find(
+        ([, node]) => node === target,
+      )?.[0];
+
+      if (clickedItemId) {
+        onSetActiveImageId(clickedItemId);
+        onSelectSticker?.(null);
+      } else if (clickedStickerId) {
+        onSelectSticker?.(clickedStickerId);
+        onSetActiveImageId(null);
+      } else {
+        onSetActiveImageId(null);
+        onSelectSticker?.(null);
       }
     },
-    [onSetActiveImageId],
+    [onSetActiveImageId, onSelectSticker],
   );
 
   // ── File picker ─────────────────────────────────────────────────────────────
@@ -541,18 +606,22 @@ export function MultiImageCanvas({
                 onMouseLeave={handleMouseLeave}
                 onClick={handleStageClick}
               >
-                {/* Layer 0: Checkerboard */}
+                {/* Layer 0: Background */}
                 <Layer>
-                  {tiles.map((tile, i) => (
-                    <Rect
-                      key={i}
-                      x={tile.x}
-                      y={tile.y}
-                      width={TILE_SIZE}
-                      height={TILE_SIZE}
-                      fill={tile.fill}
-                    />
-                  ))}
+                  {bgColor ? (
+                    <Rect x={0} y={0} width={CANVAS_SIZE} height={CANVAS_SIZE} fill={bgColor} />
+                  ) : (
+                    tiles.map((tile, i) => (
+                      <Rect
+                        key={i}
+                        x={tile.x}
+                        y={tile.y}
+                        width={TILE_SIZE}
+                        height={TILE_SIZE}
+                        fill={tile.fill}
+                      />
+                    ))
+                  )}
                 </Layer>
 
                 {/* Layer 1: Images + Transformer */}
@@ -738,6 +807,68 @@ export function MultiImageCanvas({
                     </>
                   )}
                 </Layer>
+
+                {/* Layer 3: Stickers */}
+                <Layer>
+                  {stickers.map((sticker) => {
+                    const img = stickerImages[sticker.src];
+                    if (!img) return null;
+                    return (
+                      <>
+                        <KonvaImage
+                          key={sticker.id}
+                          ref={(node: Konva.Image | null) => {
+                            if (node) stickerNodeRefs.current.set(sticker.id, node);
+                            else stickerNodeRefs.current.delete(sticker.id);
+                          }}
+                          image={img}
+                          x={sticker.x}
+                          y={sticker.y}
+                          width={sticker.width}
+                          height={sticker.height}
+                          scaleX={sticker.scaleX}
+                          scaleY={sticker.scaleY}
+                          rotation={sticker.rotation}
+                          draggable
+                          onClick={() => { onSelectSticker?.(sticker.id); onSetActiveImageId(null); }}
+                          onDragEnd={(e) => onUpdateSticker?.({ ...sticker, x: e.target.x(), y: e.target.y() })}
+                          onTransformEnd={(e) => {
+                            const node = e.target;
+                            onUpdateSticker?.({ ...sticker, x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() });
+                          }}
+                        />
+                        {sticker.text && (
+                          <KonvaText
+                            x={sticker.x + sticker.width * sticker.scaleX * 0.1}
+                            y={sticker.y + sticker.height * sticker.scaleY * 0.3}
+                            width={sticker.width * sticker.scaleX * 0.8}
+                            text={sticker.text}
+                            fontSize={Math.max(10, sticker.width * sticker.scaleX * 0.15)}
+                            fill="#222"
+                            align="center"
+                            wrap="word"
+                            listening={false}
+                          />
+                        )}
+                      </>
+                    );
+                  })}
+                  <Transformer ref={stickerTransformerRef} />
+                </Layer>
+
+                {/* Layer 4: Frame */}
+                <Layer>
+                  {frameImage && (() => {
+                    const frameScale = 100 / frameThickness;
+                    const frameW = CANVAS_SIZE * frameScale;
+                    const frameH = CANVAS_SIZE * frameScale;
+                    const frameX = -(frameW - CANVAS_SIZE) / 2;
+                    const frameY = -(frameH - CANVAS_SIZE) / 2;
+                    return (
+                      <KonvaImage image={frameImage} x={frameX} y={frameY} width={frameW} height={frameH} listening={false} />
+                    );
+                  })()}
+                </Layer>
               </Stage>
 
               {/* "Select an image" hint when tool requires active image */}
@@ -800,6 +931,19 @@ export function MultiImageCanvas({
                   ×
                 </button>
               )}
+
+              {/* Delete button for selected sticker */}
+              {selectedStickerId && (() => {
+                const s = stickers.find((st) => st.id === selectedStickerId);
+                if (!s) return null;
+                return (
+                  <button
+                    style={{ position: "absolute", left: s.x + s.width * s.scaleX, top: s.y, transform: "translate(-50%, -50%)", width: 20, height: 20, borderRadius: "50%", background: "#ff4444", color: "#fff", border: "none", cursor: "pointer", fontSize: 14, lineHeight: "1", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 20, padding: 0 }}
+                    onClick={() => onDeleteSticker?.(selectedStickerId)}
+                    aria-label="Delete sticker"
+                  >×</button>
+                );
+              })()}
 
               {/* Drop hint when canvas is empty */}
               {items.length === 0 && (
@@ -865,6 +1009,28 @@ export function MultiImageCanvas({
             <span className="file-name">{items.length} image{items.length !== 1 ? "s" : ""}</span>
           )}
         </div>
+        {onBgColorChange && (
+          <div className="bg-color-row">
+            <span className="bg-color-label">Background</span>
+            <input
+              type="color"
+              className="bg-color-input"
+              value={bgColor ?? "#ffffff"}
+              onChange={(e) => onBgColorChange(e.target.value)}
+              title="Pick background color"
+              aria-hidden="true"
+            />
+            {bgColor && (
+              <button
+                className="bg-color-clear"
+                onClick={() => onBgColorChange(null)}
+                title="Remove background color (transparent)"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

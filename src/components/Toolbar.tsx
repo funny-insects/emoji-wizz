@@ -4,6 +4,7 @@ import { TEXT_COLOR_PALETTE } from "../utils/textTool";
 
 interface ToolbarProps {
   image: HTMLImageElement | null;
+  hasContent?: boolean;
   activeTool: EditorTool;
   onToolChange: (tool: EditorTool) => void;
   canUndo: boolean;
@@ -31,6 +32,7 @@ interface ToolbarProps {
 
 export function Toolbar({
   image,
+  hasContent,
   activeTool,
   onToolChange,
   canUndo,
@@ -55,7 +57,8 @@ export function Toolbar({
   onCropConfirm,
   onCropCancel,
 }: ToolbarProps) {
-  if (!image) return null;
+  const enabled = hasContent !== undefined ? hasContent : image !== null;
+  if (!enabled) return null;
 
   return (
     <div className="toolbar">
@@ -96,7 +99,7 @@ export function Toolbar({
           className="toolbar-btn"
           aria-label="Remove BG"
           title="Remove Background"
-          disabled={!image}
+          disabled={!enabled}
           onClick={onOpenBgRemoval}
         >
           ✂
@@ -104,7 +107,7 @@ export function Toolbar({
         <button
           className={`toolbar-btn${activeTool === "crop" ? " toolbar-btn--active" : ""}`}
           onClick={() => onToolChange("crop")}
-          disabled={!image}
+          disabled={!enabled}
           aria-label="Crop"
           title="Crop"
         >
@@ -116,7 +119,7 @@ export function Toolbar({
         <button
           className="toolbar-btn"
           onClick={onRotateLeft}
-          disabled={!image}
+          disabled={!enabled}
           aria-label="Rotate Left"
           title="Rotate Left"
         >
@@ -125,7 +128,7 @@ export function Toolbar({
         <button
           className="toolbar-btn"
           onClick={onRotateRight}
-          disabled={!image}
+          disabled={!enabled}
           aria-label="Rotate Right"
           title="Rotate Right"
         >
@@ -134,7 +137,7 @@ export function Toolbar({
         <button
           className="toolbar-btn"
           onClick={onFlipHorizontal}
-          disabled={!image}
+          disabled={!enabled}
           aria-label="Flip Horizontal"
           title="Flip Horizontal"
         >
@@ -143,7 +146,7 @@ export function Toolbar({
         <button
           className="toolbar-btn"
           onClick={onFlipVertical}
-          disabled={!image}
+          disabled={!enabled}
           aria-label="Flip Vertical"
           title="Flip Vertical"
         >

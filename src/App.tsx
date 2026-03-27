@@ -46,6 +46,9 @@ function App() {
   // ── Multi-image state ──────────────────────────────────────────────────────
   const multiImage = useMultiImageCanvas();
 
+  // ── Background color ───────────────────────────────────────────────────────
+  const [bgColor, setBgColor] = useState<string | null>(null);
+
   // ── Export / shared state ──────────────────────────────────────────────────
   const [exportPreset, setExportPreset] = useState<PlatformPreset>(
     PLATFORM_PRESETS[0]!,
@@ -408,11 +411,15 @@ function App() {
         handleRedo();
       } else if (e.key === "Delete" || e.key === "Backspace") {
         if (mode === "multiImage") {
-          const id = activeImageIdRef.current;
-          if (id) {
+          const imgId = activeImageIdRef.current;
+          const stkId = selectedStickerIdRef.current;
+          if (imgId) {
             e.preventDefault();
-            multiImage.removeItem(id);
+            multiImage.removeItem(imgId);
             multiImage.pushHistory();
+          } else if (stkId) {
+            e.preventDefault();
+            handleDeleteSticker(stkId);
           }
         } else {
           const id = selectedStickerIdRef.current;
@@ -513,7 +520,7 @@ function App() {
         setSizeWarning("Export failed: canvas not ready.");
         return;
       }
-      exportStageAsBlob(stageRef.current, exportPreset).then((blob) => {
+      exportStageAsBlob(stageRef.current, exportPreset, { hideBgLayer: bgColor === null }).then((blob) => {
         if (!blob) {
           setSizeWarning(
             "Export failed: this format is not supported by your browser.",
@@ -540,7 +547,7 @@ function App() {
         setSizeWarning("Export failed: canvas not ready.");
         return;
       }
-      exportStageAsBlob(stageRef.current, exportPreset).then((blob) => {
+      exportStageAsBlob(stageRef.current, exportPreset, { hideBgLayer: bgColor === null }).then((blob) => {
         if (!blob) {
           setSizeWarning(
             "Export failed: this format is not supported by your browser.",
@@ -611,7 +618,8 @@ function App() {
       <div className="app-card">
         <div className="editor-area">
           <Toolbar
-            image={mode === "singleImage" ? image : null}
+            image={image}
+            hasContent={hasContent}
             activeTool={activeTool}
             onToolChange={setActiveTool}
             canUndo={activeCanUndo}
@@ -643,6 +651,8 @@ function App() {
               handleFileInput={handleFileInput}
               handleDrop={handleDrop}
               handlePaste={handlePaste}
+              bgColor={bgColor}
+              onBgColorChange={setBgColor}
               activeTool={activeTool}
               onToolChange={setActiveTool}
               onPushState={handlePushState}
@@ -671,6 +681,8 @@ function App() {
             <MultiImageCanvas
               items={multiImage.items}
               activeImageId={multiImage.activeImageId}
+              bgColor={bgColor}
+              onBgColorChange={setBgColor}
               stageRef={stageRef}
               activeTool={activeTool}
               onToolChange={setActiveTool}
@@ -680,6 +692,13 @@ function App() {
               bgRemovalRequest={bgRemovalRequest}
               transformRequest={transformRequest}
               cropConfirmSeq={cropConfirmSeq}
+              stickers={stickers}
+              selectedStickerId={selectedStickerId}
+              onUpdateSticker={handleUpdateSticker}
+              onDeleteSticker={handleDeleteSticker}
+              onSelectSticker={handleSelectSticker}
+              activeFrameSrc={activeFrameSrc}
+              frameThickness={frameThickness}
               onAddImage={multiImage.addImage}
               onUpdateItem={multiImage.updateItem}
               onRemoveItem={multiImage.removeItem}
@@ -688,9 +707,10 @@ function App() {
             />
           )}
 
-          {mode === "singleImage" ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <DecoratePanel
               image={image}
+              hasContent={hasContent}
               stickers={STICKER_DEFINITIONS}
               onPlaceSticker={handlePlaceSticker}
               activeFrameId={activeFrameId}
@@ -701,17 +721,18 @@ function App() {
               onFrameThicknessCommit={handleFrameThicknessCommit}
               onRemoveFrame={handleRemoveFrame}
             />
-          ) : (
-            <LayerPanel
-              items={multiImage.items}
-              activeImageId={multiImage.activeImageId}
-              onSelectImage={multiImage.setActiveImageId}
-              onReorder={(newOrder) => {
-                multiImage.reorderItems(newOrder);
-                multiImage.pushHistory();
-              }}
-            />
-          )}
+            {mode === "multiImage" && (
+              <LayerPanel
+                items={multiImage.items}
+                activeImageId={multiImage.activeImageId}
+                onSelectImage={multiImage.setActiveImageId}
+                onReorder={(newOrder) => {
+                  multiImage.reorderItems(newOrder);
+                  multiImage.pushHistory();
+                }}
+              />
+            )}
+          </div>
         </div>
         <OptimizerPanel
           hasImage={hasContent}

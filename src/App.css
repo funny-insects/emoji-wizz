@@ -334,6 +334,45 @@
   cursor: not-allowed;
 }
 
+/* ── Background color picker ── */
+.bg-color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.bg-color-label {
+  font-size: 0.78rem;
+  color: var(--text-2);
+  flex-shrink: 0;
+}
+
+.bg-color-input {
+  width: 32px;
+  height: 28px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  cursor: pointer;
+}
+
+.bg-color-clear {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.bg-color-clear:hover {
+  color: var(--red);
+  background: var(--red-dim);
+}
+
 /* ── Mode toggle ── */
 .mode-toggle {
   display: flex;

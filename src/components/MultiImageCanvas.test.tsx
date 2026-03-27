@@ -119,7 +119,7 @@ describe("MultiImageCanvas", () => {
     expect(container.textContent).not.toContain("Select an image to edit");
   });
 
-  it("renders three Konva layers", () => {
+  it("renders five Konva layers", () => {
     render(
       <MultiImageCanvas
         items={[]}
@@ -132,7 +132,7 @@ describe("MultiImageCanvas", () => {
       />,
     );
     const stage = Konva.stages[0]!;
-    expect(stage.getLayers().length).toBe(3);
+    expect(stage.getLayers().length).toBe(5);
   });
 
   it("shows delete button for active item when pointer tool is active", async () => {

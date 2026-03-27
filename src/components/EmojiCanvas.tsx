@@ -46,6 +46,8 @@ interface EmojiCanvasProps {
   onSelectSticker?: (id: string | null) => void;
   activeFrameSrc?: string | null;
   frameThickness?: number;
+  bgColor?: string | null;
+  onBgColorChange?: (color: string | null) => void;
   bgRemovalRequest?: { tolerance: number; seq: number } | null;
   transformRequest?: {
     type: "rotateCW" | "rotateCCW" | "flipH" | "flipV";
@@ -98,6 +100,8 @@ export function EmojiCanvas({
   onSelectSticker,
   activeFrameSrc = null,
   frameThickness = 100,
+  bgColor = null,
+  onBgColorChange,
   bgRemovalRequest = null,
   transformRequest = null,
   cropConfirmSeq = 0,
@@ -649,16 +653,20 @@ export function EmojiCanvas({
                 onClick={handleClick}
               >
                 <Layer>
-                  {tiles.map((tile, i) => (
-                    <Rect
-                      key={i}
-                      x={tile.x}
-                      y={tile.y}
-                      width={TILE_SIZE}
-                      height={TILE_SIZE}
-                      fill={tile.fill}
-                    />
-                  ))}
+                  {bgColor ? (
+                    <Rect x={0} y={0} width={width} height={height} fill={bgColor} />
+                  ) : (
+                    tiles.map((tile, i) => (
+                      <Rect
+                        key={i}
+                        x={tile.x}
+                        y={tile.y}
+                        width={TILE_SIZE}
+                        height={TILE_SIZE}
+                        fill={tile.fill}
+                      />
+                    ))
+                  )}
                 </Layer>
                 <Layer>
                   {image && imageRect && displayCanvas && (
@@ -982,6 +990,28 @@ export function EmojiCanvas({
             </span>
           )}
         </div>
+        {onBgColorChange && (
+          <div className="bg-color-row">
+            <span className="bg-color-label">Background</span>
+            <input
+              type="color"
+              className="bg-color-input"
+              value={bgColor ?? "#ffffff"}
+              onChange={(e) => onBgColorChange(e.target.value)}
+              title="Pick background color"
+              aria-hidden="true"
+            />
+            {bgColor && (
+              <button
+                className="bg-color-clear"
+                onClick={() => onBgColorChange(null)}
+                title="Remove background color (transparent)"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

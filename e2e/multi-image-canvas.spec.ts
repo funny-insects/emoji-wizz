@@ -26,14 +26,14 @@ test("Multi-Image mode: file picker adds images and shows them in layer panel", 
   await page.goto("/");
   await page.getByRole("button", { name: "Multi-Image" }).click();
 
-  // Add first image via file input
-  await page.locator('input[type="file"]').setInputFiles(fixturePath);
+  // Add first image via the canvas file picker (label "Add image")
+  await page.locator('label:has-text("Add image") input[type="file"]').setInputFiles(fixturePath);
 
   // Layer panel should now show 1 item
   await expect(page.locator(".layer-row")).toHaveCount(1);
 
   // Add second image
-  await page.locator('input[type="file"]').setInputFiles(fixture2Path);
+  await page.locator('label:has-text("Add image") input[type="file"]').setInputFiles(fixture2Path);
   await expect(page.locator(".layer-row")).toHaveCount(2);
 });
 
@@ -46,7 +46,7 @@ test("Multi-Image mode: Download button enabled after adding image", async ({
   const downloadBtn = page.getByRole("button", { name: "Download" });
   await expect(downloadBtn).toBeDisabled();
 
-  await page.locator('input[type="file"]').setInputFiles(fixturePath);
+  await page.locator('label:has-text("Add image") input[type="file"]').setInputFiles(fixturePath);
   await expect(downloadBtn).toBeEnabled();
 });
 
@@ -55,7 +55,7 @@ test("Multi-Image mode: Download triggers a file download", async ({
 }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Multi-Image" }).click();
-  await page.locator('input[type="file"]').setInputFiles(fixturePath);
+  await page.locator('label:has-text("Add image") input[type="file"]').setInputFiles(fixturePath);
 
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Download" }).click();
@@ -68,7 +68,7 @@ test("Multi-Image mode: clicking a layer row selects the image", async ({
 }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Multi-Image" }).click();
-  await page.locator('input[type="file"]').setInputFiles(fixturePath);
+  await page.locator('label:has-text("Add image") input[type="file"]').setInputFiles(fixturePath);
 
   // Click the layer row
   await page.locator(".layer-row").first().click();
