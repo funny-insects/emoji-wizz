@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Konva from "konva";
 import "./App.css";
 import { EmojiCanvas } from "./components/EmojiCanvas";
+import { MultiImageCanvas } from "./components/MultiImageCanvas";
+import { LayerPanel } from "./components/LayerPanel";
 import { Toolbar } from "./components/Toolbar";
 import { OptimizerPanel } from "./components/OptimizerPanel";
 import { ExportControls } from "./components/ExportControls";
@@ -11,6 +13,7 @@ import { BackgroundRemovalModal } from "./components/BackgroundRemovalModal";
 import { strengthToTolerance } from "./utils/strengthToTolerance";
 import { PLATFORM_PRESETS } from "./utils/presets";
 import { useImageImport } from "./hooks/useImageImport";
+import { useMultiImageCanvas } from "./hooks/useMultiImageCanvas";
 
 const CANVAS_SIZE = 512;
 import { useHistory } from "./hooks/useHistory";
@@ -34,19 +37,29 @@ import type { StickerDefinition } from "./assets/stickers/index";
 import referenceEmojiPng from "./assets/reference-emoji.png";
 
 export type EditorTool = "pointer" | "eraser" | "brush" | "text" | "crop";
+export type EditorMode = "singleImage" | "multiImage";
 
 function App() {
+  // ── Editor mode ────────────────────────────────────────────────────────────
+  const [mode, setMode] = useState<EditorMode>("singleImage");
+
+  // ── Multi-image state ──────────────────────────────────────────────────────
+  const multiImage = useMultiImageCanvas();
+
+  // ── Export / shared state ──────────────────────────────────────────────────
   const [exportPreset, setExportPreset] = useState<PlatformPreset>(
     PLATFORM_PRESETS[0]!,
   );
   const [sizeWarning, setSizeWarning] = useState<string | null>(null);
-  const { image, handleFileInput, handleDrop, handlePaste, fileName } =
-    useImageImport();
   const stageRef = useRef<Konva.Stage | null>(null);
   const [suggestions, setSuggestions] = useState<string[] | null>(null);
   const [customEmojiDataUrl, setCustomEmojiDataUrl] = useState<string | null>(
     null,
   );
+
+  // ── Single-image state ─────────────────────────────────────────────────────
+  const { image, handleFileInput, handleDrop, handlePaste, fileName } =
+    useImageImport();
   const [activeTool, setActiveTool] = useState<EditorTool>("pointer");
   const [brushColor, setBrushColor] = useState<string>("#000000");
   const [brushSize, setBrushSize] = useState<number>(3);
@@ -90,6 +103,7 @@ function App() {
   const activeFrameSrc =
     FRAME_DEFINITIONS.find((f) => f.id === activeFrameId)?.src ?? null;
 
+  // ── Single-image callbacks (unchanged) ────────────────────────────────────
   const handlePushState = useCallback(
     (snapshot: string) => {
       pushState(snapshot);
@@ -105,6 +119,10 @@ function App() {
   );
 
   const handleUndo = useCallback(() => {
+    if (mode === "multiImage") {
+      void multiImage.undo();
+      return;
+    }
     const imgSnap = imageUndo();
     const stickerSnap = stickerHistory.undo();
     if (imgSnap) {
@@ -118,9 +136,13 @@ function App() {
     } else {
       setStickers([]);
     }
-  }, [imageUndo, stickerHistory]);
+  }, [mode, multiImage, imageUndo, stickerHistory]);
 
   const handleRedo = useCallback(() => {
+    if (mode === "multiImage") {
+      void multiImage.redo();
+      return;
+    }
     const imgSnap = imageRedo();
     const stickerSnap = stickerHistory.redo();
     if (imgSnap) {
@@ -134,13 +156,27 @@ function App() {
     } else {
       setStickers([]);
     }
-  }, [imageRedo, stickerHistory]);
+  }, [mode, multiImage, imageRedo, stickerHistory]);
 
   const handleSnapshotRestored = useCallback(() => {
     setRestoreSnapshot(null);
   }, []);
 
   const handleOpenBgRemoval = useCallback(() => {
+    if (mode === "multiImage") {
+      const activeItem = multiImage.items.find(
+        (i) => i.id === multiImage.activeImageId,
+      );
+      if (!activeItem) return;
+      const ctx = activeItem.canvas.getContext("2d");
+      if (ctx) {
+        setBgRemovalImageData(
+          ctx.getImageData(0, 0, activeItem.canvas.width, activeItem.canvas.height),
+        );
+      }
+      setShowBgRemovalModal(true);
+      return;
+    }
     const canvas = offscreenCanvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext("2d");
@@ -151,7 +187,7 @@ function App() {
       }
     }
     setShowBgRemovalModal(true);
-  }, []);
+  }, [mode, multiImage]);
 
   const handleBgRemovalConfirm = useCallback((strength: number) => {
     setBgRemovalRequest((prev) => ({
@@ -351,10 +387,16 @@ function App() {
     setFrameThickness(50);
   }, [stickers, pushState, stickerHistory]);
 
+  // ── Keyboard shortcuts ─────────────────────────────────────────────────────
   const selectedStickerIdRef = useRef(selectedStickerId);
   useEffect(() => {
     selectedStickerIdRef.current = selectedStickerId;
   }, [selectedStickerId]);
+
+  const activeImageIdRef = useRef(multiImage.activeImageId);
+  useEffect(() => {
+    activeImageIdRef.current = multiImage.activeImageId;
+  }, [multiImage.activeImageId]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -365,10 +407,19 @@ function App() {
         e.preventDefault();
         handleRedo();
       } else if (e.key === "Delete" || e.key === "Backspace") {
-        const id = selectedStickerIdRef.current;
-        if (id) {
-          e.preventDefault();
-          handleDeleteSticker(id);
+        if (mode === "multiImage") {
+          const id = activeImageIdRef.current;
+          if (id) {
+            e.preventDefault();
+            multiImage.removeItem(id);
+            multiImage.pushHistory();
+          }
+        } else {
+          const id = selectedStickerIdRef.current;
+          if (id) {
+            e.preventDefault();
+            handleDeleteSticker(id);
+          }
         }
       } else if (activeTool === "crop" && e.key === "Enter") {
         e.preventDefault();
@@ -381,14 +432,17 @@ function App() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [
+    mode,
     handleUndo,
     handleRedo,
     handleDeleteSticker,
     activeTool,
     handleCropConfirm,
     handleCropCancel,
+    multiImage,
   ]);
 
+  // ── Analyze ────────────────────────────────────────────────────────────────
   function handleAnalyze() {
     if (!stageRef.current) return;
     const dataUrl = stageRef.current.toDataURL();
@@ -425,6 +479,7 @@ function App() {
     }
   }
 
+  // ── Download ───────────────────────────────────────────────────────────────
   function triggerDownload(canvas: HTMLCanvasElement, format: ExportFormat) {
     const mimeMap: Record<ExportFormat, string> = {
       png: "image/png",
@@ -451,6 +506,34 @@ function App() {
   }
 
   function handleDownload(format: ExportFormat) {
+    // Multi-image mode: flatten the stage
+    if (mode === "multiImage") {
+      if (multiImage.items.length === 0) return;
+      if (!stageRef.current) {
+        setSizeWarning("Export failed: canvas not ready.");
+        return;
+      }
+      exportStageAsBlob(stageRef.current, exportPreset).then((blob) => {
+        if (!blob) {
+          setSizeWarning(
+            "Export failed: this format is not supported by your browser.",
+          );
+          return;
+        }
+        setSizeWarning(checkFileSizeWarning(blob.size, exportPreset));
+        const href = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = href;
+        a.download = buildFilename(format);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(href);
+      });
+      return;
+    }
+
+    // Single-image mode (original logic)
     if (!image) return;
     if (stickers.length > 0 || activeFrameId !== null) {
       if (!stageRef.current) {
@@ -496,6 +579,12 @@ function App() {
     }
   }
 
+  // ── Derived values for toolbar / export ───────────────────────────────────
+  const activeCanUndo = mode === "multiImage" ? multiImage.canUndo : canUndo;
+  const activeCanRedo = mode === "multiImage" ? multiImage.canRedo : canRedo;
+  const hasContent =
+    mode === "multiImage" ? multiImage.items.length > 0 : image !== null;
+
   return (
     <div className="app">
       <header className="app-header">
@@ -503,16 +592,30 @@ function App() {
           emoji<span>wizz</span>
         </h1>
         <p>Create platform-perfect custom emojis</p>
+        <div className="mode-toggle">
+          <button
+            className={`mode-btn${mode === "singleImage" ? " mode-btn--active" : ""}`}
+            onClick={() => setMode("singleImage")}
+          >
+            Single Image
+          </button>
+          <button
+            className={`mode-btn${mode === "multiImage" ? " mode-btn--active" : ""}`}
+            onClick={() => setMode("multiImage")}
+          >
+            Multi-Image
+          </button>
+        </div>
       </header>
 
       <div className="app-card">
         <div className="editor-area">
           <Toolbar
-            image={image}
+            image={mode === "singleImage" ? image : null}
             activeTool={activeTool}
             onToolChange={setActiveTool}
-            canUndo={canUndo}
-            canRedo={canRedo}
+            canUndo={activeCanUndo}
+            canRedo={activeCanRedo}
             onUndo={handleUndo}
             onRedo={handleRedo}
             brushColor={brushColor}
@@ -533,50 +636,85 @@ function App() {
             onCropConfirm={handleCropConfirm}
             onCropCancel={handleCropCancel}
           />
-          <EmojiCanvas
-            image={image}
-            handleFileInput={handleFileInput}
-            handleDrop={handleDrop}
-            handlePaste={handlePaste}
-            activeTool={activeTool}
-            onToolChange={setActiveTool}
-            onPushState={handlePushState}
-            restoreSnapshot={restoreSnapshot}
-            onSnapshotRestored={handleSnapshotRestored}
-            brushColor={brushColor}
-            brushSize={brushSize}
-            eraserSize={eraserSize}
-            textColor={textColor}
-            textSize={textSize}
-            stageRef={stageRef}
-            fileName={fileName}
-            stickers={stickers}
-            selectedStickerId={selectedStickerId}
-            onUpdateSticker={handleUpdateSticker}
-            onDeleteSticker={handleDeleteSticker}
-            onSelectSticker={handleSelectSticker}
-            activeFrameSrc={activeFrameSrc}
-            frameThickness={frameThickness}
-            bgRemovalRequest={bgRemovalRequest}
-            transformRequest={transformRequest}
-            cropConfirmSeq={cropConfirmSeq}
-            canvasRef={offscreenCanvasRef}
-          />
-          <DecoratePanel
-            image={image}
-            stickers={STICKER_DEFINITIONS}
-            onPlaceSticker={handlePlaceSticker}
-            activeFrameId={activeFrameId}
-            frames={FRAME_DEFINITIONS}
-            onToggleFrame={handleToggleFrame}
-            frameThickness={frameThickness}
-            onFrameThicknessChange={handleFrameThicknessChange}
-            onFrameThicknessCommit={handleFrameThicknessCommit}
-            onRemoveFrame={handleRemoveFrame}
-          />
+
+          {mode === "singleImage" ? (
+            <EmojiCanvas
+              image={image}
+              handleFileInput={handleFileInput}
+              handleDrop={handleDrop}
+              handlePaste={handlePaste}
+              activeTool={activeTool}
+              onToolChange={setActiveTool}
+              onPushState={handlePushState}
+              restoreSnapshot={restoreSnapshot}
+              onSnapshotRestored={handleSnapshotRestored}
+              brushColor={brushColor}
+              brushSize={brushSize}
+              eraserSize={eraserSize}
+              textColor={textColor}
+              textSize={textSize}
+              stageRef={stageRef}
+              fileName={fileName}
+              stickers={stickers}
+              selectedStickerId={selectedStickerId}
+              onUpdateSticker={handleUpdateSticker}
+              onDeleteSticker={handleDeleteSticker}
+              onSelectSticker={handleSelectSticker}
+              activeFrameSrc={activeFrameSrc}
+              frameThickness={frameThickness}
+              bgRemovalRequest={bgRemovalRequest}
+              transformRequest={transformRequest}
+              cropConfirmSeq={cropConfirmSeq}
+              canvasRef={offscreenCanvasRef}
+            />
+          ) : (
+            <MultiImageCanvas
+              items={multiImage.items}
+              activeImageId={multiImage.activeImageId}
+              stageRef={stageRef}
+              activeTool={activeTool}
+              onToolChange={setActiveTool}
+              brushColor={brushColor}
+              brushSize={brushSize}
+              eraserSize={eraserSize}
+              bgRemovalRequest={bgRemovalRequest}
+              transformRequest={transformRequest}
+              cropConfirmSeq={cropConfirmSeq}
+              onAddImage={multiImage.addImage}
+              onUpdateItem={multiImage.updateItem}
+              onRemoveItem={multiImage.removeItem}
+              onSetActiveImageId={multiImage.setActiveImageId}
+              onPushHistory={multiImage.pushHistory}
+            />
+          )}
+
+          {mode === "singleImage" ? (
+            <DecoratePanel
+              image={image}
+              stickers={STICKER_DEFINITIONS}
+              onPlaceSticker={handlePlaceSticker}
+              activeFrameId={activeFrameId}
+              frames={FRAME_DEFINITIONS}
+              onToggleFrame={handleToggleFrame}
+              frameThickness={frameThickness}
+              onFrameThicknessChange={handleFrameThicknessChange}
+              onFrameThicknessCommit={handleFrameThicknessCommit}
+              onRemoveFrame={handleRemoveFrame}
+            />
+          ) : (
+            <LayerPanel
+              items={multiImage.items}
+              activeImageId={multiImage.activeImageId}
+              onSelectImage={multiImage.setActiveImageId}
+              onReorder={(newOrder) => {
+                multiImage.reorderItems(newOrder);
+                multiImage.pushHistory();
+              }}
+            />
+          )}
         </div>
         <OptimizerPanel
-          hasImage={image !== null}
+          hasImage={hasContent}
           onAnalyze={handleAnalyze}
           suggestions={suggestions}
           customEmojiDataUrl={customEmojiDataUrl}
@@ -584,6 +722,7 @@ function App() {
         />
         <ExportControls
           image={image}
+          hasContent={hasContent}
           onDownload={handleDownload}
           sizeWarning={sizeWarning}
           presets={PLATFORM_PRESETS}
@@ -592,7 +731,7 @@ function App() {
             const preset = PLATFORM_PRESETS.find((p) => p.id === id);
             if (preset) {
               if (
-                image &&
+                (mode === "singleImage" ? image : multiImage.items.length > 0) &&
                 !window.confirm(
                   `Resize canvas to ${preset.label}? This will rescale the image.`,
                 )

@@ -4,6 +4,7 @@ import type { PlatformPreset } from "../utils/presets";
 
 interface ExportControlsProps {
   image: HTMLImageElement | null;
+  hasContent?: boolean;
   onDownload: (format: ExportFormat) => void;
   sizeWarning: string | null;
   presets: PlatformPreset[];
@@ -13,12 +14,14 @@ interface ExportControlsProps {
 
 export function ExportControls({
   image,
+  hasContent,
   onDownload,
   sizeWarning,
   presets,
   activePresetId,
   onPresetChange,
 }: ExportControlsProps) {
+  const canDownload = hasContent !== undefined ? hasContent : image !== null;
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>("png");
 
   return (
@@ -50,7 +53,7 @@ export function ExportControls({
         </select>
         <button
           className="btn-download"
-          disabled={image === null}
+          disabled={!canDownload}
           onClick={() => onDownload(selectedFormat)}
         >
           Download
