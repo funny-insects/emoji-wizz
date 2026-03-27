@@ -78,7 +78,6 @@ jobs:
           accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           projectName: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
           directory: dist
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
   post-deploy:
     name: Post-Deploy Verification
