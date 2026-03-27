@@ -5,6 +5,7 @@ import type { FrameDefinition } from "../assets/frames/index";
 
 interface DecoratePanelProps {
   image: HTMLImageElement | null;
+  hasContent?: boolean;
   stickers: StickerDefinition[];
   onPlaceSticker: (def: StickerDefinition) => void;
   activeFrameId: string | null;
@@ -18,6 +19,7 @@ interface DecoratePanelProps {
 
 export function DecoratePanel({
   image,
+  hasContent,
   stickers,
   onPlaceSticker,
   activeFrameId,
@@ -57,7 +59,8 @@ export function DecoratePanel({
     e.target.value = "";
   }
 
-  if (!image) return null;
+  const enabled = hasContent !== undefined ? hasContent : image !== null;
+  if (!enabled) return null;
 
   return (
     <div className="decorate-panel">

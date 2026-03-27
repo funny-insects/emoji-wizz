@@ -81,11 +81,13 @@ export function downscaleCanvas(
 export async function exportStageAsBlob(
   stage: Konva.Stage,
   targetPreset?: PlatformPreset,
+  options?: { hideBgLayer?: boolean },
 ): Promise<Blob | null> {
+  const hideBg = options?.hideBgLayer !== false;
   const bgLayer = stage.getLayers()[0];
-  if (bgLayer) bgLayer.visible(false);
+  if (bgLayer && hideBg) bgLayer.visible(false);
   const dataUrl = stage.toDataURL({ pixelRatio: 1 });
-  if (bgLayer) bgLayer.visible(true);
+  if (bgLayer && hideBg) bgLayer.visible(true);
 
   if (targetPreset && targetPreset.width < 512) {
     const img = await new Promise<HTMLImageElement>((resolve) => {
