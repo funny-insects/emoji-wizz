@@ -14,6 +14,8 @@ interface ToolbarProps {
   onBrushColorChange: (color: string) => void;
   brushSize: number;
   onBrushSizeChange: (size: number) => void;
+  eraserSize: number;
+  onEraserSizeChange: (size: number) => void;
   textColor: string;
   onTextColorChange: (color: string) => void;
   textSize: number;
@@ -39,6 +41,8 @@ export function Toolbar({
   onBrushColorChange,
   brushSize,
   onBrushSizeChange,
+  eraserSize,
+  onEraserSizeChange,
   textColor,
   onTextColorChange,
   textSize,
@@ -202,6 +206,23 @@ export function Toolbar({
         </div>
       )}
 
+      {activeTool === "eraser" && (
+        <div className="toolbar-eraser-size">
+          <label className="toolbar-eraser-size-label" htmlFor="eraser-size">
+            Size
+          </label>
+          <input
+            id="eraser-size"
+            type="range"
+            className="toolbar-eraser-size-slider"
+            value={eraserSize}
+            min={1}
+            max={100}
+            onChange={(e) => onEraserSizeChange(Number(e.target.value))}
+          />
+        </div>
+      )}
+
       {activeTool === "text" && (
         <div className="toolbar-text-settings">
           <div className="toolbar-colors">
@@ -221,19 +242,19 @@ export function Toolbar({
               className={`toolbar-btn${textSize === 12 ? " toolbar-btn--active" : ""}`}
               onClick={() => onTextSizeChange(12)}
             >
-              Small
+              S
             </button>
             <button
               className={`toolbar-btn${textSize === 18 ? " toolbar-btn--active" : ""}`}
               onClick={() => onTextSizeChange(18)}
             >
-              Medium
+              M
             </button>
             <button
               className={`toolbar-btn${textSize === 32 ? " toolbar-btn--active" : ""}`}
               onClick={() => onTextSizeChange(32)}
             >
-              Large
+              L
             </button>
           </div>
         </div>

@@ -50,6 +50,7 @@ function App() {
   const [activeTool, setActiveTool] = useState<EditorTool>("pointer");
   const [brushColor, setBrushColor] = useState<string>("#000000");
   const [brushSize, setBrushSize] = useState<number>(3);
+  const [eraserSize, setEraserSize] = useState<number>(12);
   const [textColor, setTextColor] = useState<string>("#000000");
   const [textSize, setTextSize] = useState<number>(18);
   const [showBgRemovalModal, setShowBgRemovalModal] = useState(false);
@@ -518,6 +519,8 @@ function App() {
             onBrushColorChange={setBrushColor}
             brushSize={brushSize}
             onBrushSizeChange={setBrushSize}
+            eraserSize={eraserSize}
+            onEraserSizeChange={setEraserSize}
             textColor={textColor}
             onTextColorChange={setTextColor}
             textSize={textSize}
@@ -542,6 +545,7 @@ function App() {
             onSnapshotRestored={handleSnapshotRestored}
             brushColor={brushColor}
             brushSize={brushSize}
+            eraserSize={eraserSize}
             textColor={textColor}
             textSize={textSize}
             stageRef={stageRef}

@@ -23,6 +23,29 @@ async function getImageLayerPixel(
   );
 }
 
+async function countTransparentPixels(
+  page: Parameters<typeof test>[1]["page"],
+  x: number,
+  y: number,
+  size: number,
+): Promise<number> {
+  return page.evaluate(
+    ([px, py, sz]: [number, number, number]) => {
+      const canvases = document.querySelectorAll(".konvajs-content canvas");
+      const el = canvases[1] as HTMLCanvasElement;
+      const ctx = el.getContext("2d");
+      if (!ctx) return 0;
+      const data = ctx.getImageData(px, py, sz, sz).data;
+      let count = 0;
+      for (let i = 3; i < data.length; i += 4) {
+        if (data[i] === 0) count++;
+      }
+      return count;
+    },
+    [x, y, size] as [number, number, number],
+  );
+}
+
 test("eraser tool: drag erases pixels to transparent (alpha=0) and undo restores them", async ({
   page,
 }) => {
@@ -117,4 +140,67 @@ test("eraser cursor (circle) shows when eraser tool is active and mouse is over 
     return data.some((v) => v !== 0);
   });
   expect(hasOverlayContent).toBe(true);
+});
+
+test("eraser size slider changes the size of the erased area", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  const fixturePath = path.join(__dirname, "fixtures", "test-emoji.png");
+  await page.locator('input[type="file"]').setInputFiles(fixturePath);
+
+  await page.waitForFunction(() => {
+    const canvases = document.querySelectorAll(".konvajs-content canvas");
+    const el = canvases[1] as HTMLCanvasElement;
+    const ctx = el.getContext("2d");
+    if (!ctx) return false;
+    return ctx
+      .getImageData(0, 0, el.width, el.height)
+      .data.some((v) => v !== 0);
+  });
+
+  await page.getByRole("button", { name: "Eraser" }).click();
+  const stageBox = await page.locator(".konvajs-content").first().boundingBox();
+  expect(stageBox).not.toBeNull();
+
+  // --- Erase with a small eraser (size 5) ---
+  await page.locator("#eraser-size").evaluate((el: HTMLInputElement) => {
+    const setter = Object.getOwnPropertyDescriptor(
+      window.HTMLInputElement.prototype,
+      "value",
+    )!.set!;
+    setter.call(el, "5");
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+
+  const smallX = stageBox!.x + 80;
+  const smallY = stageBox!.y + 80;
+  await page.mouse.move(smallX, smallY);
+  await page.mouse.down();
+  await page.mouse.up();
+  await page.waitForTimeout(100);
+
+  const smallCount = await countTransparentPixels(page, 60, 60, 40);
+
+  // --- Erase with a large eraser (size 60) ---
+  await page.locator("#eraser-size").evaluate((el: HTMLInputElement) => {
+    const setter = Object.getOwnPropertyDescriptor(
+      window.HTMLInputElement.prototype,
+      "value",
+    )!.set!;
+    setter.call(el, "60");
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+
+  const largeX = stageBox!.x + 200;
+  const largeY = stageBox!.y + 200;
+  await page.mouse.move(largeX, largeY);
+  await page.mouse.down();
+  await page.mouse.up();
+  await page.waitForTimeout(100);
+
+  const largeCount = await countTransparentPixels(page, 140, 140, 120);
+
+  expect(largeCount).toBeGreaterThan(smallCount);
 });

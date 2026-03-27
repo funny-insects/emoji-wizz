@@ -130,6 +130,24 @@
   border-color: var(--accent);
 }
 
+.toolbar-eraser-size {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.toolbar-eraser-size-label {
+  font-size: 11px;
+  color: var(--text-muted, #888);
+}
+
+.toolbar-eraser-size-slider {
+  width: 80px;
+  cursor: pointer;
+}
+
 .toolbar-text-settings {
   display: flex;
   flex-direction: column;
