@@ -356,7 +356,7 @@ export function EmojiCanvas({
   );
 
   const handleClick = useCallback(
-    (e: Konva.KonvaEventObject<MouseEvent>) => {
+    (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
       const target = e.target;
       const isStickerNode = [...stickerNodeRefs.current.values()].some(
         (node) => node === target,
@@ -378,7 +378,7 @@ export function EmojiCanvas({
   );
 
   const handleMouseDown = useCallback(
-    (e: Konva.KonvaEventObject<MouseEvent>) => {
+    (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
       if (!offscreenCanvasRef.current) return;
       const stage = e.target.getStage();
 
@@ -409,7 +409,7 @@ export function EmojiCanvas({
   );
 
   const handleMouseMove = useCallback(
-    (e: Konva.KonvaEventObject<MouseEvent>) => {
+    (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
       const stage = e.target.getStage();
       const pos = stage?.getPointerPosition();
       if (!pos) return;
@@ -651,10 +651,20 @@ export function EmojiCanvas({
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseLeave}
                 onClick={handleClick}
+                onTouchStart={handleMouseDown}
+                onTouchMove={handleMouseMove}
+                onTouchEnd={handleMouseUp}
+                onTap={handleClick}
               >
                 <Layer>
                   {bgColor ? (
-                    <Rect x={0} y={0} width={width} height={height} fill={bgColor} />
+                    <Rect
+                      x={0}
+                      y={0}
+                      width={width}
+                      height={height}
+                      fill={bgColor}
+                    />
                   ) : (
                     tiles.map((tile, i) => (
                       <Rect
@@ -840,6 +850,7 @@ export function EmojiCanvas({
                           rotation={sticker.rotation}
                           draggable
                           onClick={() => onSelectSticker?.(sticker.id)}
+                          onTap={() => onSelectSticker?.(sticker.id)}
                           onDragEnd={(e) => {
                             onUpdateSticker?.({
                               ...sticker,
