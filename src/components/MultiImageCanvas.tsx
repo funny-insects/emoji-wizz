@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  useCallback,
-  useMemo,
-} from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import {
   Stage,
   Layer,
@@ -128,7 +122,9 @@ export function MultiImageCanvas({
   const itemNodeRefs = useRef<Map<string, Konva.Image>>(new Map());
   const stickerNodeRefs = useRef<Map<string, Konva.Image>>(new Map());
   const stickerTransformerRef = useRef<Konva.Transformer | null>(null);
-  const [stickerImages, setStickerImages] = useState<Record<string, HTMLImageElement>>({});
+  const [stickerImages, setStickerImages] = useState<
+    Record<string, HTMLImageElement>
+  >({});
   const [frameImage, setFrameImage] = useState<HTMLImageElement | null>(null);
 
   const isErasingRef = useRef(false);
@@ -150,13 +146,9 @@ export function MultiImageCanvas({
 
   // Increment to force Konva layer redraw after in-place canvas mutations
   const [renderRevision, setRenderRevision] = useState(0);
-  const bumpRevision = useCallback(
-    () => setRenderRevision((r) => r + 1),
-    [],
-  );
+  const bumpRevision = useCallback(() => setRenderRevision((r) => r + 1), []);
 
-  const brushStrokeWidth =
-    brushSize ?? Math.round((CANVAS_SIZE / 128) * 3);
+  const brushStrokeWidth = brushSize ?? Math.round((CANVAS_SIZE / 128) * 3);
 
   const activeItem = useMemo(
     () => items.find((i) => i.id === activeImageId) ?? null,
@@ -188,7 +180,8 @@ export function MultiImageCanvas({
     stickers.forEach((s) => {
       if (!stickerImages[s.src]) {
         const img = new window.Image();
-        img.onload = () => setStickerImages((prev) => ({ ...prev, [s.src]: img }));
+        img.onload = () =>
+          setStickerImages((prev) => ({ ...prev, [s.src]: img }));
         img.src = s.src;
       }
     });
@@ -209,7 +202,10 @@ export function MultiImageCanvas({
     if (!tr) return;
     if (selectedStickerId) {
       const node = stickerNodeRefs.current.get(selectedStickerId);
-      if (node) { tr.nodes([node]); tr.getLayer()?.batchDraw(); }
+      if (node) {
+        tr.nodes([node]);
+        tr.getLayer()?.batchDraw();
+      }
     } else {
       tr.nodes([]);
       tr.getLayer()?.batchDraw();
@@ -255,12 +251,8 @@ export function MultiImageCanvas({
         const displayW = activeItem.width * activeItem.scaleX;
         const displayH = activeItem.height * activeItem.scaleY;
         const size = Math.round(Math.min(displayW, displayH) * 0.8);
-        const cx = Math.round(
-          activeItem.x + displayW / 2 - size / 2,
-        );
-        const cy = Math.round(
-          activeItem.y + displayH / 2 - size / 2,
-        );
+        const cx = Math.round(activeItem.x + displayW / 2 - size / 2);
+        const cy = Math.round(activeItem.y + displayH / 2 - size / 2);
         setCropRect({ x: cx, y: cy, size });
       } else {
         const defaultSize = Math.round(CANVAS_SIZE * 0.5);
@@ -434,7 +426,7 @@ export function MultiImageCanvas({
 
   // ── Mouse handlers ──────────────────────────────────────────────────────────
   const handleMouseDown = useCallback(
-    (e: Konva.KonvaEventObject<MouseEvent>) => {
+    (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
       if (!activeItem) return;
       const stage = e.target.getStage();
       const pos = stage?.getPointerPosition();
@@ -459,11 +451,18 @@ export function MultiImageCanvas({
         overlayLayerRef.current?.batchDraw();
       }
     },
-    [activeTool, activeItem, applyEraserAt, brushColor, brushStrokeWidth, bumpRevision],
+    [
+      activeTool,
+      activeItem,
+      applyEraserAt,
+      brushColor,
+      brushStrokeWidth,
+      bumpRevision,
+    ],
   );
 
   const handleMouseMove = useCallback(
-    (e: Konva.KonvaEventObject<MouseEvent>) => {
+    (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
       const stage = e.target.getStage();
       const pos = stage?.getPointerPosition();
       if (!pos) return;
@@ -514,7 +513,7 @@ export function MultiImageCanvas({
   }, [activeTool, flattenBrushLine, onPushHistory]);
 
   const handleStageClick = useCallback(
-    (e: Konva.KonvaEventObject<MouseEvent>) => {
+    (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
       const target = e.target;
       const isTransformerPart =
         target instanceof Konva.Transformer ||
@@ -586,7 +585,11 @@ export function MultiImageCanvas({
           className={`canvas-drop-zone${items.length > 0 ? " has-image" : ""}`}
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
-          style={{ position: "relative", display: "inline-block", cursor: cursorStyle }}
+          style={{
+            position: "relative",
+            display: "inline-block",
+            cursor: cursorStyle,
+          }}
         >
           <div style={{ width: CANVAS_SIZE, height: CANVAS_SIZE }}>
             <div
@@ -605,11 +608,21 @@ export function MultiImageCanvas({
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseLeave}
                 onClick={handleStageClick}
+                onTouchStart={handleMouseDown}
+                onTouchMove={handleMouseMove}
+                onTouchEnd={handleMouseUp}
+                onTap={handleStageClick}
               >
                 {/* Layer 0: Background */}
                 <Layer>
                   {bgColor ? (
-                    <Rect x={0} y={0} width={CANVAS_SIZE} height={CANVAS_SIZE} fill={bgColor} />
+                    <Rect
+                      x={0}
+                      y={0}
+                      width={CANVAS_SIZE}
+                      height={CANVAS_SIZE}
+                      fill={bgColor}
+                    />
                   ) : (
                     tiles.map((tile, i) => (
                       <Rect
@@ -648,6 +661,7 @@ export function MultiImageCanvas({
                       strokeWidth={item.id === activeImageId ? 2 : 0}
                       draggable={activeTool === "pointer"}
                       onClick={() => onSetActiveImageId(item.id)}
+                      onTap={() => onSetActiveImageId(item.id)}
                       onDragEnd={(e) => {
                         onUpdateItem({
                           ...item,
@@ -818,7 +832,8 @@ export function MultiImageCanvas({
                         <KonvaImage
                           key={sticker.id}
                           ref={(node: Konva.Image | null) => {
-                            if (node) stickerNodeRefs.current.set(sticker.id, node);
+                            if (node)
+                              stickerNodeRefs.current.set(sticker.id, node);
                             else stickerNodeRefs.current.delete(sticker.id);
                           }}
                           image={img}
@@ -830,20 +845,45 @@ export function MultiImageCanvas({
                           scaleY={sticker.scaleY}
                           rotation={sticker.rotation}
                           draggable
-                          onClick={() => { onSelectSticker?.(sticker.id); onSetActiveImageId(null); }}
-                          onDragEnd={(e) => onUpdateSticker?.({ ...sticker, x: e.target.x(), y: e.target.y() })}
+                          onClick={() => {
+                            onSelectSticker?.(sticker.id);
+                            onSetActiveImageId(null);
+                          }}
+                          onTap={() => {
+                            onSelectSticker?.(sticker.id);
+                            onSetActiveImageId(null);
+                          }}
+                          onDragEnd={(e) =>
+                            onUpdateSticker?.({
+                              ...sticker,
+                              x: e.target.x(),
+                              y: e.target.y(),
+                            })
+                          }
                           onTransformEnd={(e) => {
                             const node = e.target;
-                            onUpdateSticker?.({ ...sticker, x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() });
+                            onUpdateSticker?.({
+                              ...sticker,
+                              x: node.x(),
+                              y: node.y(),
+                              scaleX: node.scaleX(),
+                              scaleY: node.scaleY(),
+                              rotation: node.rotation(),
+                            });
                           }}
                         />
                         {sticker.text && (
                           <KonvaText
                             x={sticker.x + sticker.width * sticker.scaleX * 0.1}
-                            y={sticker.y + sticker.height * sticker.scaleY * 0.3}
+                            y={
+                              sticker.y + sticker.height * sticker.scaleY * 0.3
+                            }
                             width={sticker.width * sticker.scaleX * 0.8}
                             text={sticker.text}
-                            fontSize={Math.max(10, sticker.width * sticker.scaleX * 0.15)}
+                            fontSize={Math.max(
+                              10,
+                              sticker.width * sticker.scaleX * 0.15,
+                            )}
                             fill="#222"
                             align="center"
                             wrap="word"
@@ -858,16 +898,24 @@ export function MultiImageCanvas({
 
                 {/* Layer 4: Frame */}
                 <Layer>
-                  {frameImage && (() => {
-                    const frameScale = 100 / frameThickness;
-                    const frameW = CANVAS_SIZE * frameScale;
-                    const frameH = CANVAS_SIZE * frameScale;
-                    const frameX = -(frameW - CANVAS_SIZE) / 2;
-                    const frameY = -(frameH - CANVAS_SIZE) / 2;
-                    return (
-                      <KonvaImage image={frameImage} x={frameX} y={frameY} width={frameW} height={frameH} listening={false} />
-                    );
-                  })()}
+                  {frameImage &&
+                    (() => {
+                      const frameScale = 100 / frameThickness;
+                      const frameW = CANVAS_SIZE * frameScale;
+                      const frameH = CANVAS_SIZE * frameScale;
+                      const frameX = -(frameW - CANVAS_SIZE) / 2;
+                      const frameY = -(frameH - CANVAS_SIZE) / 2;
+                      return (
+                        <KonvaImage
+                          image={frameImage}
+                          x={frameX}
+                          y={frameY}
+                          width={frameW}
+                          height={frameH}
+                          listening={false}
+                        />
+                      );
+                    })()}
                 </Layer>
               </Stage>
 
@@ -902,9 +950,7 @@ export function MultiImageCanvas({
                 <button
                   style={{
                     position: "absolute",
-                    left:
-                      activeItem.x +
-                      activeItem.width * activeItem.scaleX,
+                    left: activeItem.x + activeItem.width * activeItem.scaleX,
                     top: activeItem.y,
                     transform: "translate(-50%, -50%)",
                     width: 20,
@@ -933,17 +979,39 @@ export function MultiImageCanvas({
               )}
 
               {/* Delete button for selected sticker */}
-              {selectedStickerId && (() => {
-                const s = stickers.find((st) => st.id === selectedStickerId);
-                if (!s) return null;
-                return (
-                  <button
-                    style={{ position: "absolute", left: s.x + s.width * s.scaleX, top: s.y, transform: "translate(-50%, -50%)", width: 20, height: 20, borderRadius: "50%", background: "#ff4444", color: "#fff", border: "none", cursor: "pointer", fontSize: 14, lineHeight: "1", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 20, padding: 0 }}
-                    onClick={() => onDeleteSticker?.(selectedStickerId)}
-                    aria-label="Delete sticker"
-                  >×</button>
-                );
-              })()}
+              {selectedStickerId &&
+                (() => {
+                  const s = stickers.find((st) => st.id === selectedStickerId);
+                  if (!s) return null;
+                  return (
+                    <button
+                      style={{
+                        position: "absolute",
+                        left: s.x + s.width * s.scaleX,
+                        top: s.y,
+                        transform: "translate(-50%, -50%)",
+                        width: 20,
+                        height: 20,
+                        borderRadius: "50%",
+                        background: "#ff4444",
+                        color: "#fff",
+                        border: "none",
+                        cursor: "pointer",
+                        fontSize: 14,
+                        lineHeight: "1",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        zIndex: 20,
+                        padding: 0,
+                      }}
+                      onClick={() => onDeleteSticker?.(selectedStickerId)}
+                      aria-label="Delete sticker"
+                    >
+                      ×
+                    </button>
+                  );
+                })()}
 
               {/* Drop hint when canvas is empty */}
               {items.length === 0 && (
@@ -1006,7 +1074,9 @@ export function MultiImageCanvas({
             />
           </label>
           {items.length > 0 && (
-            <span className="file-name">{items.length} image{items.length !== 1 ? "s" : ""}</span>
+            <span className="file-name">
+              {items.length} image{items.length !== 1 ? "s" : ""}
+            </span>
           )}
         </div>
         {onBgColorChange && (
