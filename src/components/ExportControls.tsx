@@ -13,6 +13,11 @@ interface ExportControlsProps {
   onPresetChange: (id: string) => void;
   animated?: boolean;
   busy?: boolean;
+  autoFit?: boolean;
+  onAutoFitChange?: (autoFit: boolean) => void;
+  onFormatChange?: (format: ExportFormat) => void;
+  progress?: string | null;
+  result?: string | null;
 }
 
 export function ExportControls({
@@ -25,6 +30,11 @@ export function ExportControls({
   onPresetChange,
   animated = false,
   busy = false,
+  autoFit = true,
+  onAutoFitChange,
+  onFormatChange,
+  progress = null,
+  result = null,
 }: ExportControlsProps) {
   const canDownload = hasContent !== undefined ? hasContent : image !== null;
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>(
@@ -56,7 +66,11 @@ export function ExportControls({
         <select
           className="format-select"
           value={selectedFormat}
-          onChange={(e) => setSelectedFormat(e.target.value as ExportFormat)}
+          onChange={(e) => {
+            const format = e.target.value as ExportFormat;
+            setSelectedFormat(format);
+            onFormatChange?.(format);
+          }}
           aria-label="Format"
         >
           <option value="png">PNG</option>
@@ -72,9 +86,28 @@ export function ExportControls({
         </button>
       </div>
 
+      {animated && selectedFormat === "gif" && onAutoFitChange && (
+        <label className="export-autofit">
+          <input
+            type="checkbox"
+            checked={autoFit}
+            onChange={(e) => onAutoFitChange(e.target.checked)}
+          />
+          Auto-fit to size limit
+        </label>
+      )}
+
       {animated && selectedFormat !== "gif" && (
         <p className="export-note">{STATIC_EXPORT_NOTE}</p>
       )}
+
+      {progress !== null && (
+        <p className="export-progress" role="status">
+          {progress}
+        </p>
+      )}
+
+      {result !== null && <p className="export-result">{result}</p>}
 
       {sizeWarning !== null && (
         <p className="export-warning">

@@ -165,6 +165,27 @@ describe("encodeGif", () => {
     expect(new Set(out[0]!.pixels).size).toBeLessThanOrEqual(32);
   });
 
+  it("shares one global palette across all frames", () => {
+    const { parsed, frames: out } = decode(
+      encodeGif(
+        [
+          solidFrame(4, 4, [255, 0, 0, 255]),
+          solidFrame(4, 4, [0, 0, 255, 255]),
+        ],
+        4,
+        4,
+        opts,
+      ),
+    );
+    expect(parsed.gct).toBeDefined();
+    for (const block of parsed.frames) {
+      if ("image" in block)
+        expect(block.image.descriptor.lct.exists).toBe(false);
+    }
+    expect(Array.from(out[0]!.patch.subarray(0, 3))).toEqual([255, 0, 0]);
+    expect(Array.from(out[1]!.patch.subarray(0, 3))).toEqual([0, 0, 255]);
+  });
+
   it("accepts frame data that is a view into a larger buffer", () => {
     const backing = new Uint8ClampedArray(8 + 16);
     const view = new Uint8ClampedArray(backing.buffer, 8, 16);

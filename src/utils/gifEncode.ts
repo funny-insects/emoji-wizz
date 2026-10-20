@@ -17,11 +17,8 @@ const ALPHA_THRESHOLD = 128;
 const MIN_DELAY_CS = 2;
 const DISPOSE_RESTORE_BACKGROUND = 2;
 
-interface IndexedFrame {
-  index: Uint8Array;
-  palette: Palette;
-  transparentIndex: number | null;
-}
+const PIXEL_FORMAT = "rgb444";
+const MAX_PALETTE_SAMPLES = 1 << 20;
 
 // gifenc reads pixels via `new Uint32Array(data.buffer)`, so the buffer must start at offset 0 and hold exactly this frame.
 function exactBuffer(data: Uint8ClampedArray): Uint8ClampedArray {
@@ -31,54 +28,90 @@ function exactBuffer(data: Uint8ClampedArray): Uint8ClampedArray {
   return new Uint8ClampedArray(data);
 }
 
-function indexOpaque(data: Uint8ClampedArray, maxColors: number): IndexedFrame {
-  const rgba = exactBuffer(data);
-  const palette = quantize(rgba, maxColors);
-  return {
-    index: applyPalette(rgba, palette),
-    palette,
-    transparentIndex: null,
-  };
+function isOpaque(data: Uint8ClampedArray, pixel: number): boolean {
+  return (data[pixel * 4 + 3] ?? 0) >= ALPHA_THRESHOLD;
 }
 
-function indexTransparent(
-  data: Uint8ClampedArray,
+/** Opaque pixels of every frame, evenly subsampled to at most MAX_PALETTE_SAMPLES. */
+function paletteSamples(
+  frames: RgbaFrame[],
+  pixelCount: number,
+  skipTransparent: boolean,
+): Uint8ClampedArray {
+  let total = 0;
+  for (const { data } of frames) {
+    for (let i = 0; i < pixelCount; i++) {
+      if (!skipTransparent || isOpaque(data, i)) total++;
+    }
+  }
+  const stride = Math.max(1, Math.ceil(total / MAX_PALETTE_SAMPLES));
+  const samples = new Uint8ClampedArray(Math.ceil(total / stride) * 4);
+  let seen = 0;
+  let o = 0;
+  for (const { data } of frames) {
+    for (let i = 0; i < pixelCount; i++) {
+      if (skipTransparent && !isOpaque(data, i)) continue;
+      if (seen++ % stride !== 0) continue;
+      const p = i * 4;
+      samples[o] = data[p] ?? 0;
+      samples[o + 1] = data[p + 1] ?? 0;
+      samples[o + 2] = data[p + 2] ?? 0;
+      samples[o + 3] = 255;
+      o += 4;
+    }
+  }
+  return samples.subarray(0, o);
+}
+
+interface SharedPalette {
+  palette: Palette;
+  transparentIndex: number | null;
+}
+
+function buildPalette(
+  frames: RgbaFrame[],
   pixelCount: number,
   maxColors: number,
-): IndexedFrame {
-  let opaqueCount = 0;
-  for (let i = 0; i < pixelCount; i++) {
-    if ((data[i * 4 + 3] ?? 0) >= ALPHA_THRESHOLD) opaqueCount++;
-  }
-  if (opaqueCount === pixelCount) return indexOpaque(data, maxColors);
-  if (opaqueCount === 0) {
-    return {
-      index: new Uint8Array(pixelCount),
-      palette: [[0, 0, 0]],
-      transparentIndex: 0,
-    };
-  }
-
-  const opaque = new Uint8ClampedArray(opaqueCount * 4);
-  for (let i = 0, o = 0; i < pixelCount; i++) {
-    const p = i * 4;
-    if ((data[p + 3] ?? 0) < ALPHA_THRESHOLD) continue;
-    opaque[o] = data[p] ?? 0;
-    opaque[o + 1] = data[p + 1] ?? 0;
-    opaque[o + 2] = data[p + 2] ?? 0;
-    opaque[o + 3] = 255;
-    o += 4;
-  }
-  const palette = quantize(opaque, maxColors - 1);
-  const index = applyPalette(exactBuffer(data), palette);
+  transparent: boolean,
+): SharedPalette {
+  const hasTransparentPixel =
+    transparent &&
+    frames.some(({ data }) => {
+      for (let i = 0; i < pixelCount; i++) if (!isOpaque(data, i)) return true;
+      return false;
+    });
+  const samples = paletteSamples(frames, pixelCount, hasTransparentPixel);
+  if (samples.length === 0)
+    return { palette: [[0, 0, 0]], transparentIndex: 0 };
+  const palette = quantize(
+    exactBuffer(samples),
+    hasTransparentPixel ? maxColors - 1 : maxColors,
+    { format: PIXEL_FORMAT },
+  );
+  if (!hasTransparentPixel) return { palette, transparentIndex: null };
   const transparentIndex = palette.length;
-  for (let i = 0; i < pixelCount; i++) {
-    if ((data[i * 4 + 3] ?? 0) < ALPHA_THRESHOLD) index[i] = transparentIndex;
-  }
   palette.push([0, 0, 0]);
-  return { index, palette, transparentIndex };
+  return { palette, transparentIndex };
 }
 
+function indexFrame(
+  data: Uint8ClampedArray,
+  pixelCount: number,
+  { palette, transparentIndex }: SharedPalette,
+): Uint8Array {
+  if (palette.length === 1 && transparentIndex === 0) {
+    return new Uint8Array(pixelCount);
+  }
+  const index = applyPalette(exactBuffer(data), palette, PIXEL_FORMAT);
+  if (transparentIndex !== null) {
+    for (let i = 0; i < pixelCount; i++) {
+      if (!isOpaque(data, i)) index[i] = transparentIndex;
+    }
+  }
+  return index;
+}
+
+/** All frames share one global palette quantized from every frame's pixels. */
 export function encodeGif(
   frames: RgbaFrame[],
   width: number,
@@ -87,25 +120,25 @@ export function encodeGif(
 ): Uint8Array {
   if (frames.length === 0) throw new Error("encodeGif: no frames");
   const pixelCount = width * height;
-  const maxColors = Math.max(2, Math.min(256, Math.floor(opts.maxColors)));
-  const gif = GIFEncoder();
-
   frames.forEach((frame, i) => {
     if (frame.data.length !== pixelCount * 4) {
       throw new Error(
         `encodeGif: frame ${i} has ${frame.data.length} bytes, expected ${pixelCount * 4}`,
       );
     }
-    const { index, palette, transparentIndex } = opts.transparent
-      ? indexTransparent(frame.data, pixelCount, maxColors)
-      : indexOpaque(frame.data, maxColors);
+  });
+  const maxColors = Math.max(2, Math.min(256, Math.floor(opts.maxColors)));
+  const shared = buildPalette(frames, pixelCount, maxColors, opts.transparent);
+  const gif = GIFEncoder();
+
+  frames.forEach((frame, i) => {
     const delayCs = Math.max(MIN_DELAY_CS, Math.round(frame.delayMs / 10));
-    gif.writeFrame(index, width, height, {
-      palette,
+    gif.writeFrame(indexFrame(frame.data, pixelCount, shared), width, height, {
+      ...(i === 0 ? { palette: shared.palette } : {}),
       delay: delayCs * 10,
       repeat: opts.loopCount,
-      transparent: transparentIndex !== null,
-      transparentIndex: transparentIndex ?? 0,
+      transparent: shared.transparentIndex !== null,
+      transparentIndex: shared.transparentIndex ?? 0,
       dispose: opts.transparent ? DISPOSE_RESTORE_BACKGROUND : -1,
     });
   });

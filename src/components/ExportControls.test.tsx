@@ -184,4 +184,80 @@ describe("ExportControls", () => {
       expect(screen.getByRole("button", { name: "Download" })).toBeDisabled();
     });
   });
+
+  describe("auto-fit", () => {
+    const checkbox = () =>
+      screen.queryByRole("checkbox", { name: "Auto-fit to size limit" });
+
+    function renderControls(
+      props: Partial<React.ComponentProps<typeof ExportControls>> = {},
+    ) {
+      return render(
+        <ExportControls
+          image={null}
+          hasContent
+          animated
+          onAutoFitChange={vi.fn()}
+          onDownload={vi.fn()}
+          sizeWarning={null}
+          {...defaultPresetProps}
+          {...props}
+        />,
+      );
+    }
+
+    it("is checked by default for animated GIF exports", () => {
+      renderControls();
+      expect(checkbox()).toBeChecked();
+    });
+
+    it("is hidden for static compositions and non-GIF formats", () => {
+      const { unmount } = renderControls({ animated: false });
+      expect(checkbox()).toBeNull();
+      unmount();
+      renderControls();
+      fireEvent.change(screen.getByRole("combobox", { name: "Format" }), {
+        target: { value: "png" },
+      });
+      expect(checkbox()).toBeNull();
+    });
+
+    it("reports toggles and format changes", () => {
+      const onAutoFitChange = vi.fn();
+      const onFormatChange = vi.fn();
+      renderControls({ onAutoFitChange, onFormatChange });
+      fireEvent.click(checkbox()!);
+      expect(onAutoFitChange).toHaveBeenCalledWith(false);
+      fireEvent.change(screen.getByRole("combobox", { name: "Format" }), {
+        target: { value: "webp" },
+      });
+      expect(onFormatChange).toHaveBeenCalledWith("webp");
+    });
+
+    it("reflects an unchecked state from props", () => {
+      renderControls({ autoFit: false });
+      expect(checkbox()).not.toBeChecked();
+    });
+
+    it("shows progress as a status and the result line", () => {
+      renderControls({
+        progress: "Optimizing\u2026 step 3/8",
+        result: "118 KB \u2014 64 colors, 12 fps, 128 px (was 412 KB)",
+      });
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Optimizing\u2026 step 3/8",
+      );
+      expect(
+        screen.getByText(
+          "118 KB \u2014 64 colors, 12 fps, 128 px (was 412 KB)",
+        ),
+      ).toHaveClass("export-result");
+    });
+
+    it("renders no progress or result by default", () => {
+      renderControls();
+      expect(screen.queryByRole("status")).toBeNull();
+      expect(document.querySelector(".export-result")).toBeNull();
+    });
+  });
 });

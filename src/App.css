@@ -515,6 +515,29 @@
   font-size: 0.8rem;
 }
 
+.export-autofit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.export-autofit input {
+  accent-color: var(--accent);
+}
+
+.export-progress,
+.export-result {
+  padding: 10px 14px;
+  background: var(--green-dim);
+  border: 1px solid rgba(250, 172, 191, 0.2);
+  border-radius: var(--radius-sm);
+  color: var(--green);
+  font-size: 0.8rem;
+}
+
 .export-warning {
   display: flex;
   align-items: center;

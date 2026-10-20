@@ -7,6 +7,7 @@ import { decompressFrames, parseGIF } from "gifuct-js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const animatedGif = path.join(__dirname, "fixtures", "test-animated.gif");
 const staticPng = path.join(__dirname, "fixtures", "test-emoji.png");
+const largeGif = path.join(__dirname, "fixtures", "test-large-animated.gif");
 
 // test-animated.gif is 32×32, centred on the 512 stage at (240, 240).
 // At local (8, 8): frame 0 is red, frame 1 blue, frame 2 green, frames 3–4 transparent.
@@ -268,5 +269,71 @@ test.describe("animated GIF export", () => {
     const { lsd, frames } = decodeFullFrames(bytes);
     expect([lsd.width, lsd.height]).toEqual([128, 128]);
     expect(frames).toHaveLength(1);
+  });
+});
+
+// test-large-animated.gif is 120×120, centred at 196..316; scale it to fill the stage.
+async function addLargeGifFillingStage(page: Page) {
+  await page.getByRole("button", { name: "Multi-Image" }).click();
+  await addImage(page, largeGif);
+  await expect(page.locator(".layer-row")).toHaveCount(1);
+  await page.locator(".layer-row").click();
+
+  const box = (await page.locator(".konvajs-content").first().boundingBox())!;
+  const drag = async (from: number, to: number) => {
+    await page.mouse.move(box.x + from, box.y + from);
+    await page.mouse.down();
+    await page.mouse.move(box.x + to, box.y + to, { steps: 10 });
+    await page.mouse.up();
+  };
+  await drag(316, 508);
+  await drag(196, 4);
+}
+
+test.describe("auto-fit to size limit", () => {
+  test("auto-fit brings a large GIF under Slack's 128 KB limit", async ({
+    page,
+  }) => {
+    await addLargeGifFillingStage(page);
+    await expect(
+      page.getByRole("checkbox", { name: "Auto-fit to size limit" }),
+    ).toBeChecked();
+
+    const started = Date.now();
+    const bytes = await downloadBytes(page);
+    const elapsedMs = Date.now() - started;
+
+    expect(bytes.length).toBeLessThan(131072);
+    expect(bytes.subarray(0, 6).toString("latin1")).toBe("GIF89a");
+    const { lsd, frames } = decodeFullFrames(bytes);
+    expect(frames.length).toBeGreaterThan(1);
+    expect(lsd.width).toBeLessThanOrEqual(128);
+    expect(lsd.height).toBeLessThanOrEqual(128);
+
+    const result = page.locator(".export-result");
+    await expect(result).toContainText("was");
+    await expect(page.locator(".export-warning")).toHaveCount(0);
+    await expect(page.getByRole("status")).toHaveCount(0);
+    test.info().annotations.push({
+      type: "auto-fit",
+      description: `${elapsedMs} ms, ${bytes.length} bytes, ${frames.length} frames, ${lsd.width}px: ${await result.textContent()}`,
+    });
+  });
+
+  test("without auto-fit the full-quality GIF exceeds the limit and warns", async ({
+    page,
+  }) => {
+    await addLargeGifFillingStage(page);
+    await page
+      .getByRole("checkbox", { name: "Auto-fit to size limit" })
+      .uncheck();
+
+    const bytes = await downloadBytes(page);
+    expect(bytes.length).toBeGreaterThan(131072);
+    expect(bytes.subarray(0, 6).toString("latin1")).toBe("GIF89a");
+    await expect(page.locator(".export-warning")).toContainText(
+      "exceeds Slack",
+    );
+    await expect(page.locator(".export-result")).toHaveCount(0);
   });
 });

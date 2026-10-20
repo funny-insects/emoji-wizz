@@ -4,9 +4,12 @@ import * as gifEncode from "./gifEncode";
 import {
   ExportError,
   STATIC_EXPORT_NOTE,
+  describeProgress,
   exportComposition,
   routeExport,
+  type ExportProgress,
 } from "./exportComposition";
+import type { FitInput, FitProgress, FitResult } from "./fitToSizeLimit";
 import type { AnimationControls, AnimationFrame } from "./canvasImageTypes";
 import type { PlatformPreset } from "./presets";
 
@@ -232,26 +235,118 @@ describe("exportComposition", () => {
       expect(result.note).toBeUndefined();
     });
 
-    it("uses an injected encoder for the animated route", async () => {
+    function fakeFit(fits: boolean, size: number): FitResult {
+      return {
+        bytes: new Uint8Array(size).fill(71),
+        settings: {
+          colors: 64,
+          decimation: 1,
+          width: 112,
+          height: 112,
+          trimMs: null,
+        },
+        fits,
+        originalBytes: 400 * 1024,
+        encodes: 5,
+        fps: 12.4,
+        durationMs: 3000,
+        originalDurationMs: 3000,
+      };
+    }
+
+    function makeEncoders(result: FitResult) {
+      return {
+        fit: vi.fn(
+          async (_input: FitInput, onProgress?: (p: FitProgress) => void) => {
+            onProgress?.({ step: 1, total: 8 });
+            onProgress?.({ step: 2, total: 8 });
+            return result;
+          },
+        ),
+        encode: vi.fn(async () => new Uint8Array([71, 73, 70])),
+      };
+    }
+
+    it("auto-fit passes the rendered frames and the preset limit to the fitter", async () => {
       const { stage, controls } = setup();
-      const encodeAnimated = vi.fn(() => new Uint8Array([71, 73, 70]));
+      const encoders = makeEncoders(fakeFit(true, 100 * 1024));
+      const progress: ExportProgress[] = [];
       const result = await exportComposition({
         stage,
         preset,
         format: "gif",
         bgColor: "#000",
         animation: { frames: sourceFrames, loopCount: 0, controls },
-        encodeAnimated,
+        autoFit: true,
+        onProgress: (p) => progress.push(p),
+        encoders,
       });
-      expect(encodeAnimated).toHaveBeenCalledWith(
+      expect(encoders.fit).toHaveBeenCalledWith(
         expect.objectContaining({
           width: SIZE,
           height: SIZE,
           transparent: false,
           loopCount: 0,
+          limitBytes: 128 * 1024,
         }),
+        expect.any(Function),
       );
-      expect(result.blob.size).toBe(3);
+      expect(encoders.fit.mock.calls[0]![0].frames).toHaveLength(3);
+      expect(encoders.encode).not.toHaveBeenCalled();
+      expect(progress.map(describeProgress)).toEqual([
+        "Optimizing\u2026 step 1/8",
+        "Optimizing\u2026 step 2/8",
+      ]);
+      expect(result.blob.size).toBe(100 * 1024);
+      expect(result.warning).toBeNull();
+      expect(result.summary).toBe(
+        "100 KB \u2014 64 colors, 12 fps, 112 px (was 400 KB)",
+      );
+    });
+
+    it("auto-fit that cannot fit still returns the smallest result with a warning", async () => {
+      const { stage, controls } = setup();
+      const result = await exportComposition({
+        stage,
+        preset,
+        format: "gif",
+        bgColor: null,
+        animation: { frames: sourceFrames, loopCount: 0, controls },
+        autoFit: true,
+        encoders: makeEncoders(fakeFit(false, 143 * 1024)),
+      });
+      expect(result.blob.size).toBe(143 * 1024);
+      expect(result.blob.type).toBe("image/gif");
+      expect(result.warning).toBe(
+        "Couldn't get under Slack \u2014 128\u00d7128's 128 KB limit (smallest: 143 KB). Try fewer frames or a simpler source.",
+      );
+      expect(result.summary).toMatch(/^143 KB/);
+    });
+
+    it("without auto-fit encodes at full quality and keeps the advisory warning", async () => {
+      const { stage, controls } = setup();
+      const encoders = makeEncoders(fakeFit(true, 1));
+      const progress: ExportProgress[] = [];
+      const result = await exportComposition({
+        stage,
+        preset: { ...preset, maxFileSizeKb: 0 },
+        format: "gif",
+        bgColor: null,
+        animation: { frames: sourceFrames, loopCount: 2, controls },
+        autoFit: false,
+        onProgress: (p) => progress.push(p),
+        encoders,
+      });
+      expect(encoders.fit).not.toHaveBeenCalled();
+      expect(encoders.encode).toHaveBeenCalledWith(
+        expect.any(Array),
+        SIZE,
+        SIZE,
+        { maxColors: 256, transparent: true, loopCount: 2 },
+      );
+      expect(progress.map(describeProgress)).toEqual(["Encoding\u2026"]);
+      expect(result.summary).toBeNull();
+      expect(result.warning).toMatch(/^Warning: file is/);
     });
 
     it("PNG of an animated composition exports one frame with a note", async () => {

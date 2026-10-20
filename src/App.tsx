@@ -27,6 +27,7 @@ import { downscaleCanvas, type ExportFormat } from "./utils/exportUtils";
 import {
   ExportError,
   UNSUPPORTED_FORMAT_MESSAGE,
+  describeProgress,
   exportComposition,
 } from "./utils/exportComposition";
 import { isAnimated, type AnimationControls } from "./utils/canvasImageTypes";
@@ -554,6 +555,9 @@ function App() {
   // ── Download ───────────────────────────────────────────────────────────────
   const animationRef = useRef<AnimationControls | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [autoFit, setAutoFit] = useState(true);
+  const [exportProgress, setExportProgress] = useState<string | null>(null);
+  const [exportSummary, setExportSummary] = useState<string | null>(null);
   const animatedItem =
     mode === "multiImage" ? multiImage.items.find(isAnimated) : undefined;
 
@@ -577,6 +581,7 @@ function App() {
     }
     const controls = animationRef.current;
     setExporting(true);
+    setExportSummary(null);
     try {
       const result = await exportComposition({
         stage,
@@ -591,8 +596,11 @@ function App() {
                 controls,
               }
             : null,
+        autoFit,
+        onProgress: (p) => setExportProgress(describeProgress(p)),
       });
       setSizeWarning(result.warning);
+      setExportSummary(result.summary);
       triggerDownload(result.blob, result.filename);
     } catch (err) {
       setSizeWarning(
@@ -600,6 +608,7 @@ function App() {
       );
     } finally {
       setExporting(false);
+      setExportProgress(null);
     }
   }
 
@@ -767,6 +776,11 @@ function App() {
           onDownload={(format) => void handleDownload(format)}
           animated={animatedItem !== undefined}
           busy={exporting}
+          autoFit={autoFit}
+          onAutoFitChange={setAutoFit}
+          onFormatChange={() => setExportSummary(null)}
+          progress={exportProgress}
+          result={exportSummary}
           sizeWarning={sizeWarning}
           presets={PLATFORM_PRESETS}
           activePresetId={exportPreset.id}
@@ -783,6 +797,7 @@ function App() {
               )
                 return;
               setExportPreset(preset);
+              setExportSummary(null);
             }
           }}
         />

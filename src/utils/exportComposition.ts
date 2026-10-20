@@ -8,6 +8,12 @@ import {
 } from "./exportUtils";
 import type { PlatformPreset } from "./presets";
 import type { AnimationControls, AnimationFrame } from "./canvasImageTypes";
+import {
+  describeFit,
+  type FitProgress,
+  type FitResult,
+} from "./fitToSizeLimit";
+import { runEncodeGif, runFitToSizeLimit } from "./gifEncodeClient";
 
 export type ExportRoute = "gif-animated" | "gif-static" | "png" | "webp";
 
@@ -114,16 +120,36 @@ export function renderAnimationFrames(
   };
 }
 
-export type AnimatedEncoder = (
-  rendered: RenderedAnimation,
-) => Promise<Uint8Array> | Uint8Array;
+export interface AnimatedEncoders {
+  fit: typeof runFitToSizeLimit;
+  encode: typeof runEncodeGif;
+}
 
-const encodeFullQuality: AnimatedEncoder = (rendered) =>
-  encodeGif(rendered.frames, rendered.width, rendered.height, {
-    maxColors: MAX_COLORS,
-    transparent: rendered.transparent,
-    loopCount: rendered.loopCount,
-  });
+const workerEncoders: AnimatedEncoders = {
+  fit: runFitToSizeLimit,
+  encode: runEncodeGif,
+};
+
+export type ExportProgress =
+  | { phase: "optimizing"; step: number; total: number }
+  | { phase: "encoding" };
+
+export function describeProgress(progress: ExportProgress): string {
+  return progress.phase === "optimizing"
+    ? `Optimizing\u2026 step ${progress.step}/${progress.total}`
+    : "Encoding\u2026";
+}
+
+function formatKb(bytes: number): string {
+  return `${Math.round(bytes / 1024)} KB`;
+}
+
+export function fitFailureWarning(
+  result: FitResult,
+  preset: PlatformPreset,
+): string {
+  return `Couldn't get under ${preset.label}'s ${preset.maxFileSizeKb} KB limit (smallest: ${formatKb(result.bytes.length)}). Try fewer frames or a simpler source.`;
+}
 
 function gifBlob(bytes: Uint8Array): Blob {
   return new Blob([bytes], { type: "image/gif" });
@@ -153,13 +179,16 @@ export interface ExportRequest {
   format: ExportFormat;
   bgColor: string | null;
   animation?: AnimationSource | null;
-  encodeAnimated?: AnimatedEncoder;
+  autoFit?: boolean;
+  onProgress?: (progress: ExportProgress) => void;
+  encoders?: AnimatedEncoders;
 }
 
 export interface ExportResult {
   blob: Blob;
   filename: string;
   warning: string | null;
+  summary: string | null;
   note?: string;
 }
 
@@ -169,15 +198,37 @@ export async function exportComposition({
   format,
   bgColor,
   animation = null,
-  encodeAnimated = encodeFullQuality,
+  autoFit = false,
+  onProgress,
+  encoders = workerEncoders,
 }: ExportRequest): Promise<ExportResult> {
   const route = routeExport(format, animation !== null);
   const opts = { hideBackground: bgColor === null };
   let blob: Blob;
+  let fit: FitResult | null = null;
 
   if (route === "gif-animated" && animation) {
     const rendered = renderAnimationFrames(stage, preset, bgColor, animation);
-    blob = gifBlob(await encodeAnimated(rendered));
+    if (autoFit) {
+      fit = await encoders.fit(
+        { ...rendered, limitBytes: preset.maxFileSizeKb * 1024 },
+        (p: FitProgress) => onProgress?.({ phase: "optimizing", ...p }),
+      );
+      blob = gifBlob(fit.bytes);
+    } else {
+      onProgress?.({ phase: "encoding" });
+      const bytes = await encoders.encode(
+        rendered.frames,
+        rendered.width,
+        rendered.height,
+        {
+          maxColors: MAX_COLORS,
+          transparent: rendered.transparent,
+          loopCount: rendered.loopCount,
+        },
+      );
+      blob = gifBlob(bytes);
+    }
   } else {
     const canvas = renderStageFrame(stage, preset, opts);
     if (route === "gif-static") {
@@ -202,7 +253,12 @@ export async function exportComposition({
   return {
     blob,
     filename: buildFilename(format),
-    warning: checkFileSizeWarning(blob.size, preset),
+    warning: fit
+      ? fit.fits
+        ? null
+        : fitFailureWarning(fit, preset)
+      : checkFileSizeWarning(blob.size, preset),
+    summary: fit ? describeFit(fit) : null,
     ...(animation && format !== "gif" ? { note: STATIC_EXPORT_NOTE } : {}),
   };
 }

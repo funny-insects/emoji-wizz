@@ -84,7 +84,7 @@ Encode a real animated GIF of the whole composition at preset dimensions with st
 
 #### 2.0 Tasks
 
-- [x] 2.1 Implement `src/utils/gifEncode.ts` (`encodeGif` with per-frame quantization, transparency index for alpha < 128 when the background is transparent, loop count).
+- [x] 2.1 Implement `src/utils/gifEncode.ts` (`encodeGif` with one shared palette quantized across all frames — per-frame quantization was too slow for the auto-fit ladder, transparency index for alpha < 128 when the background is transparent, loop count).
 - [x] 2.2 Name UI-only Konva nodes `ui`; implement per-frame rendering: set animated node to frame i, `stage.toCanvas()` with UI (and transparent background) hidden, `downscaleCanvas` to preset size, restore.
 - [x] 2.3 Implement `exportComposition()` with routing: animated + GIF → animated encode; static GIF → `gifenc`; WebP → `toDataURL('image/webp')`; PNG → canvas PNG.
 - [x] 2.4 Replace the three download copies in `App.tsx` with `exportComposition()`.
@@ -93,7 +93,7 @@ Encode a real animated GIF of the whole composition at preset dimensions with st
 
 ---
 
-### [ ] 3.0 Auto-Fit to Platform Size Limit
+### [x] 3.0 Auto-Fit to Platform Size Limit
 
 Compress animated exports under `preset.maxFileSizeKb` using a binary-searched quality ladder in a Web Worker, with progress and a result summary.
 
@@ -105,11 +105,11 @@ Compress animated exports under `preset.maxFileSizeKb` using a binary-searched q
 
 #### 3.0 Tasks
 
-- [ ] 3.1 Implement `decimateFrames()` (merge delays, 8 fps floor), `trimFrames()` (3 s / 2 s / 1.5 s) and `resizeRgba()`.
-- [ ] 3.2 Implement `fitToSizeLimit()`: palette 256→128→64→32, decimation ×2 (twice), dimensions 100/87.5/75/62.5/50 % of preset (128→112→96→80→64), trim; binary search per dimension; fallback to the smallest result.
-- [ ] 3.3 Worker `src/workers/gifEncode.worker.ts` + `gifEncodeClient.ts` with progress messages.
-- [ ] 3.4 ExportControls: "Auto-fit to size limit" checkbox (default on), "Optimizing… step n/m" indicator, result summary ("118 KB — 64 colors, 12 fps, 128 px (was 412 KB)", plus "trimmed to X s of Y s"), warning in `sizeWarning` when nothing fits; unchecked keeps `checkFileSizeWarning`.
-- [ ] 3.5 Unit + E2E tests.
+- [x] 3.1 Implement `decimateFrames()` (merge delays, 8 fps floor), `trimFrames()` (3 s / 2 s / 1.5 s) and `resizeRgba()`.
+- [x] 3.2 Implement `fitToSizeLimit()`: palette 256→128→64→32, decimation ×2 (twice), dimensions 100/87.5/75/62.5/50 % of preset (128→112→96→80→64), trim; binary search per dimension; fallback to the smallest result.
+- [x] 3.3 Worker `src/workers/gifEncode.worker.ts` + `gifEncodeClient.ts` with progress messages.
+- [x] 3.4 ExportControls: "Auto-fit to size limit" checkbox (default on), "Optimizing… step n/m" indicator, result summary ("118 KB — 64 colors, 12 fps, 128 px (was 412 KB)", plus "trimmed to X s of Y s"), warning in `sizeWarning` when nothing fits; unchecked keeps `checkFileSizeWarning`.
+- [x] 3.5 Unit + E2E tests.
 
 ---
 
