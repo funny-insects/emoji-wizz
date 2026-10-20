@@ -267,6 +267,8 @@ export function useMultiImageCanvas() {
     setCanRedo(false);
   }, [setItems]);
 
+  const frameSetCount = useCallback(() => registry.current.sets.size, []);
+
   return {
     items,
     activeImageId,
@@ -283,5 +285,6 @@ export function useMultiImageCanvas() {
     canUndo,
     canRedo,
     clear,
+    frameSetCount,
   };
 }

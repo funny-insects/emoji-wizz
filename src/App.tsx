@@ -612,6 +612,18 @@ function App() {
     }
   }
 
+  const activeIsAnimated =
+    mode === "multiImage" &&
+    multiImage.items.some(
+      (i) => i.id === multiImage.activeImageId && isAnimated(i),
+    );
+  if (
+    activeIsAnimated &&
+    (activeTool === "brush" || activeTool === "eraser" || activeTool === "text")
+  ) {
+    setActiveTool("pointer");
+  }
+
   // ── Derived values for toolbar / export ───────────────────────────────────
   const activeCanUndo = mode === "multiImage" ? multiImage.canUndo : canUndo;
   const activeCanRedo = mode === "multiImage" ? multiImage.canRedo : canRedo;
@@ -669,6 +681,7 @@ function App() {
             onFlipVertical={handleFlipVertical}
             onCropConfirm={handleCropConfirm}
             onCropCancel={handleCropCancel}
+            animatedSelected={activeIsAnimated}
           />
 
           {mode === "singleImage" ? (

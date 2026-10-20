@@ -3,6 +3,20 @@ import { render, act, screen, fireEvent } from "@testing-library/react";
 import Konva from "konva";
 import { MultiImageCanvas } from "./MultiImageCanvas";
 import type { CanvasImageItem } from "../utils/canvasImageTypes";
+import { flipCanvas } from "../utils/imageTransforms";
+import { removeBackground } from "../utils/removeBackground";
+
+vi.mock("../utils/imageTransforms", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../utils/imageTransforms")>();
+  return { ...actual, flipCanvas: vi.fn(actual.flipCanvas) };
+});
+
+vi.mock("../utils/removeBackground", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../utils/removeBackground")>();
+  return { ...actual, removeBackground: vi.fn(actual.removeBackground) };
+});
 
 const noop = () => {};
 
@@ -407,6 +421,87 @@ describe("MultiImageCanvas", () => {
       const updated: CanvasImageItem = onUpdateItem.mock.calls[0]![0];
       expect(updated).toMatchObject({ x: 150, y: 108, width: 32, height: 32 });
       expect(updated.frames).toBeUndefined();
+    });
+  });
+
+  describe("per-frame edits on an animated item", () => {
+    function makeAnimated(): CanvasImageItem {
+      const frames = [100, 200, 300].map((delayMs) => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 40;
+        canvas.height = 40;
+        return { canvas, delayMs };
+      });
+      return makeItem({
+        id: "gif-1",
+        canvas: frames[1]!.canvas,
+        width: 40,
+        height: 40,
+        frames,
+      });
+    }
+
+    function renderWith(
+      item: CanvasImageItem,
+      props: Partial<React.ComponentProps<typeof MultiImageCanvas>>,
+    ) {
+      const onUpdateItem = vi.fn();
+      const onPushHistory = vi.fn();
+      const ui = (extra: typeof props) => (
+        <MultiImageCanvas
+          items={[item]}
+          activeImageId={item.id}
+          onAddImage={noop}
+          onUpdateItem={onUpdateItem}
+          onRemoveItem={noop}
+          onSetActiveImageId={noop}
+          onPushHistory={onPushHistory}
+          {...extra}
+        />
+      );
+      const view = render(ui({}));
+      view.rerender(ui(props));
+      return { onUpdateItem, onPushHistory };
+    }
+
+    it("flips every frame into a new frame set with one history entry", () => {
+      vi.mocked(flipCanvas).mockClear();
+      const item = makeAnimated();
+      const { onUpdateItem, onPushHistory } = renderWith(item, {
+        transformRequest: { type: "flipH", seq: 0 },
+      });
+      expect(flipCanvas).toHaveBeenCalledTimes(3);
+      item.frames!.forEach((f, i) =>
+        expect(vi.mocked(flipCanvas).mock.calls[i]).toEqual([
+          f.canvas,
+          "horizontal",
+        ]),
+      );
+      const updated: CanvasImageItem = onUpdateItem.mock.calls[0]![0];
+      expect(updated.frames).toHaveLength(3);
+      updated.frames!.forEach((f, i) => {
+        expect(f.canvas).not.toBe(item.frames![i]!.canvas);
+        expect(f.delayMs).toBe(item.frames![i]!.delayMs);
+      });
+      expect(updated.canvas).toBe(updated.frames![1]!.canvas);
+      expect(onPushHistory).toHaveBeenCalledTimes(1);
+    });
+
+    it("removes the background from every frame with one history entry", () => {
+      vi.mocked(removeBackground).mockClear();
+      const item = makeAnimated();
+      const { onUpdateItem, onPushHistory } = renderWith(item, {
+        bgRemovalRequest: { tolerance: 42, seq: 0 },
+      });
+      expect(removeBackground).toHaveBeenCalledTimes(3);
+      for (const call of vi.mocked(removeBackground).mock.calls) {
+        expect(call[1]).toBe(42);
+      }
+      const updated: CanvasImageItem = onUpdateItem.mock.calls[0]![0];
+      expect(updated.frames).toHaveLength(3);
+      expect(updated.frames!.map((f) => f.delayMs)).toEqual([100, 200, 300]);
+      expect(updated.canvas).toBe(updated.frames![1]!.canvas);
+      expect(onPushHistory).toHaveBeenCalledTimes(1);
     });
   });
 });

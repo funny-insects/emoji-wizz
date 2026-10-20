@@ -24,7 +24,12 @@ import {
   type CanvasImageItem,
 } from "../utils/canvasImageTypes";
 import { isGifFile } from "../utils/gifDecode";
-import { cropFrames, cropRectToSourceRegion } from "../utils/frameOps";
+import {
+  cropFrames,
+  cropRectToSourceRegion,
+  removeBackgroundFrames,
+  transformFrames,
+} from "../utils/frameOps";
 import { firstClipboardImage, useGifImport } from "../hooks/useGifImport";
 import { useGifPlayback } from "../hooks/useGifPlayback";
 import type { StickerDescriptor } from "../utils/stickerTypes";
@@ -64,6 +69,13 @@ function loadImageFromBlob(blob: Blob): Promise<HTMLImageElement> {
 }
 
 const rejectAnimatedImage = () => null;
+
+function posterIndexOf(item: CanvasImageItem): number {
+  return Math.max(
+    0,
+    item.frames?.findIndex((f) => f.canvas === item.canvas) ?? 0,
+  );
+}
 
 export interface MultiImageCanvasProps {
   items: CanvasImageItem[];
@@ -367,15 +379,11 @@ export function MultiImageCanvas({
     let updatedItem: CanvasImageItem | null = null;
     if (region && geometry && isAnimated(activeItem)) {
       const frames = cropFrames(activeItem.frames, region);
-      const poster = Math.max(
-        0,
-        activeItem.frames.findIndex((f) => f.canvas === activeItem.canvas),
-      );
       updatedItem = {
         ...activeItem,
         ...geometry,
         frames,
-        canvas: (frames[poster] ?? frames[0]!).canvas,
+        canvas: frames[posterIndexOf(activeItem)]!.canvas,
       };
     } else if (region && geometry) {
       updatedItem = {
@@ -402,33 +410,45 @@ export function MultiImageCanvas({
     prevTransformSeqRef.current = transformRequest.seq;
     if (!activeItem) return;
 
-    let result: HTMLCanvasElement;
-    switch (transformRequest.type) {
-      case "rotateCW":
-        result = rotateCanvas90(activeItem.canvas, "cw");
-        break;
-      case "rotateCCW":
-        result = rotateCanvas90(activeItem.canvas, "ccw");
-        break;
-      case "flipH":
-        result = flipCanvas(activeItem.canvas, "horizontal");
-        break;
-      case "flipV":
-        result = flipCanvas(activeItem.canvas, "vertical");
-        break;
-    }
     // For rotation the canvas dims swap; reframe to current visual dimensions
     const targetW = Math.round(activeItem.width * activeItem.scaleX);
     const targetH = Math.round(activeItem.height * activeItem.scaleY);
-    const reframed = reframeCanvas(result, targetW, targetH);
-    onUpdateItem({
-      ...activeItem,
-      canvas: reframed,
-      width: targetW,
-      height: targetH,
-      scaleX: 1,
-      scaleY: 1,
-    });
+    const geometry = { width: targetW, height: targetH, scaleX: 1, scaleY: 1 };
+    if (isAnimated(activeItem)) {
+      const frames = transformFrames(
+        activeItem.frames,
+        transformRequest.type,
+        targetW,
+        targetH,
+      );
+      onUpdateItem({
+        ...activeItem,
+        ...geometry,
+        frames,
+        canvas: frames[posterIndexOf(activeItem)]!.canvas,
+      });
+    } else {
+      let result: HTMLCanvasElement;
+      switch (transformRequest.type) {
+        case "rotateCW":
+          result = rotateCanvas90(activeItem.canvas, "cw");
+          break;
+        case "rotateCCW":
+          result = rotateCanvas90(activeItem.canvas, "ccw");
+          break;
+        case "flipH":
+          result = flipCanvas(activeItem.canvas, "horizontal");
+          break;
+        case "flipV":
+          result = flipCanvas(activeItem.canvas, "vertical");
+          break;
+      }
+      onUpdateItem({
+        ...activeItem,
+        ...geometry,
+        canvas: reframeCanvas(result, targetW, targetH),
+      });
+    }
     onPushHistory();
   }, [transformRequest]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -438,6 +458,20 @@ export function MultiImageCanvas({
     if (bgRemovalRequest.seq === prevBgRemovalSeqRef.current) return;
     prevBgRemovalSeqRef.current = bgRemovalRequest.seq;
     if (!activeItem) return;
+
+    if (isAnimated(activeItem)) {
+      const frames = removeBackgroundFrames(
+        activeItem.frames,
+        bgRemovalRequest.tolerance,
+      );
+      onUpdateItem({
+        ...activeItem,
+        frames,
+        canvas: frames[posterIndexOf(activeItem)]!.canvas,
+      });
+      onPushHistory();
+      return;
+    }
 
     const src = activeItem.canvas;
     const ctx = src.getContext("2d");
@@ -455,7 +489,7 @@ export function MultiImageCanvas({
   // ── Eraser helper (maps stage coords → item-local coords) ──────────────────
   const applyEraserAt = useCallback(
     (stageX: number, stageY: number) => {
-      if (!activeItem) return;
+      if (!activeItem || isAnimated(activeItem)) return;
       const ctx = activeItem.canvas.getContext("2d");
       if (!ctx) return;
       const localX = (stageX - activeItem.x) / activeItem.scaleX;
@@ -475,7 +509,7 @@ export function MultiImageCanvas({
   // ── Brush flatten helper (maps stage-coord line → item-local canvas) ────────
   const flattenBrushLine = useCallback(() => {
     const line = currentBrushLineRef.current;
-    if (!line || !activeItem) return false;
+    if (!line || !activeItem || isAnimated(activeItem)) return false;
     const ctx = activeItem.canvas.getContext("2d");
     if (!ctx) return false;
     const pts = line.points();
@@ -509,7 +543,7 @@ export function MultiImageCanvas({
   // ── Mouse handlers ──────────────────────────────────────────────────────────
   const handleMouseDown = useCallback(
     (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
-      if (!activeItem) return;
+      if (!activeItem || isAnimated(activeItem)) return;
       const stage = e.target.getStage();
       const pos = stage?.getPointerPosition();
       if (!pos) return;

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useMultiImageCanvas } from "./useMultiImageCanvas";
+import { transformFrames } from "../utils/frameOps";
 import type {
   AnimationFrame,
   CanvasImageItem,
@@ -389,6 +390,79 @@ describe("useMultiImageCanvas", () => {
       expect(result.current.items[0]!.frames).toBe(cropped);
       expect(result.current.items[0]!.canvas).toBe(cropped[0]!.canvas);
       expect(result.current.items[0]!.width).toBe(16);
+    });
+
+    it("bounds the frame-set registry by MAX_HISTORY", () => {
+      const { result } = renderHook(() => useMultiImageCanvas());
+      act(() => {
+        result.current.addAnimatedImage(makeFrames(2), "anim.gif", 0);
+        result.current.pushHistory();
+      });
+      for (let i = 0; i < 30; i++) {
+        act(() => {
+          const frames = makeFrames(2);
+          result.current.updateItem({
+            ...result.current.items[0]!,
+            frames,
+            canvas: frames[0]!.canvas,
+          });
+          result.current.pushHistory();
+        });
+      }
+      expect(result.current.frameSetCount()).toBe(20);
+    });
+
+    it("drops frame sets of an abandoned redo branch", async () => {
+      const { result } = renderHook(() => useMultiImageCanvas());
+      act(() => {
+        result.current.addAnimatedImage(makeFrames(2), "anim.gif", 0);
+        result.current.pushHistory();
+      });
+      act(() => {
+        const frames = makeFrames(2);
+        result.current.updateItem({
+          ...result.current.items[0]!,
+          frames,
+          canvas: frames[0]!.canvas,
+        });
+        result.current.pushHistory();
+      });
+      expect(result.current.frameSetCount()).toBe(2);
+      await act(async () => {
+        await result.current.undo();
+      });
+      act(() => {
+        result.current.updateItem({ ...result.current.items[0]!, x: 1 });
+        result.current.pushHistory();
+      });
+      expect(result.current.frameSetCount()).toBe(1);
+    });
+
+    it("undo after a per-frame flip restores the original frame set", async () => {
+      const { result } = renderHook(() => useMultiImageCanvas());
+      const original = makeFrames(3);
+      act(() => {
+        result.current.addAnimatedImage(original, "anim.gif", 0);
+        result.current.pushHistory();
+      });
+      const flipped = transformFrames(original, "flipH", 32, 32);
+      act(() => {
+        result.current.updateItem({
+          ...result.current.items[0]!,
+          frames: flipped,
+          canvas: flipped[0]!.canvas,
+        });
+        result.current.pushHistory();
+      });
+      expect(result.current.frameSetCount()).toBe(2);
+      await act(async () => {
+        await result.current.undo();
+      });
+      expect(result.current.items[0]!.frames).toBe(original);
+      await act(async () => {
+        await result.current.redo();
+      });
+      expect(result.current.items[0]!.frames).toBe(flipped);
     });
   });
 });

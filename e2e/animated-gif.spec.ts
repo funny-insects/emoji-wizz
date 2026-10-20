@@ -338,32 +338,32 @@ test.describe("auto-fit to size limit", () => {
   });
 });
 
+async function dragOnStage(
+  page: Page,
+  from: [number, number],
+  to: [number, number],
+) {
+  const box = (await page.locator(".konvajs-content").first().boundingBox())!;
+  await page.mouse.move(box.x + from[0], box.y + from[1]);
+  await page.mouse.down();
+  await page.mouse.move(box.x + to[0], box.y + to[1], { steps: 10 });
+  await page.mouse.up();
+}
+
+function pixelAt(
+  frame: { patch: Uint8ClampedArray },
+  x: number,
+  y: number,
+): number[] {
+  const i = (y * 128 + x) * 4;
+  return Array.from(frame.patch.subarray(i, i + 4));
+}
+
+function expectColor(actual: number[], rgba: number[]) {
+  actual.forEach((v, c) => expect(Math.abs(v - rgba[c]!)).toBeLessThan(40));
+}
+
 test.describe("GIF crop", () => {
-  async function dragOnStage(
-    page: Page,
-    from: [number, number],
-    to: [number, number],
-  ) {
-    const box = (await page.locator(".konvajs-content").first().boundingBox())!;
-    await page.mouse.move(box.x + from[0], box.y + from[1]);
-    await page.mouse.down();
-    await page.mouse.move(box.x + to[0], box.y + to[1], { steps: 10 });
-    await page.mouse.up();
-  }
-
-  function pixelAt(
-    frame: { patch: Uint8ClampedArray },
-    x: number,
-    y: number,
-  ): number[] {
-    const i = (y * 128 + x) * 4;
-    return Array.from(frame.patch.subarray(i, i + 4));
-  }
-
-  function expectColor(actual: number[], rgba: number[]) {
-    actual.forEach((v, c) => expect(Math.abs(v - rgba[c]!)).toBeLessThan(40));
-  }
-
   test("cropping a GIF crops every frame to the chosen square", async ({
     page,
   }) => {
@@ -395,5 +395,78 @@ test.describe("GIF crop", () => {
       expect(pixelAt(f, 67, 62)[3]).toBe(0);
       expect(pixelAt(f, 62, 67)[3]).toBe(0);
     }
+  });
+
+  test("cropping at an offset keeps the content under the crop rect", async ({
+    page,
+  }) => {
+    await page.getByRole("button", { name: "Multi-Image" }).click();
+    await addImage(page, animatedGif);
+    await page.locator(".layer-row").click();
+    await page.locator(".konvajs-content").first().scrollIntoViewIfNeeded();
+
+    // Move the 26 px crop rect from 243 to 249: source 9..32 survives (clipped to 23 px).
+    await page.getByRole("button", { name: "Crop" }).click();
+    await dragOnStage(page, [256, 256], [262, 262]);
+    await page.getByRole("button", { name: "Confirm Crop" }).click();
+    await expect(page.locator(".layer-row .layer-frame-count")).toHaveText(
+      "5 frames",
+    );
+
+    const { frames } = decodeFullFrames(await downloadBytes(page));
+    expect(frames).toHaveLength(5);
+    // Output pixel n covers stage 4n..4n+4, i.e. source 4n-240..4n-236.
+    for (const f of frames) {
+      expect(pixelAt(f, 60, 64)[3]).toBe(0);
+      expect(pixelAt(f, 64, 60)[3]).toBe(0);
+    }
+    expectColor(pixelAt(frames[1]!, 66, 66), [255, 0, 0, 255]);
+    // Frame 3's white square is source 12..20; a misapplied offset would shift it right.
+    expectColor(pixelAt(frames[3]!, 64, 64), [255, 255, 255, 255]);
+    expectColor(pixelAt(frames[4]!, 66, 66), [255, 255, 0, 255]);
+  });
+});
+
+test.describe("other tools on an animated GIF", () => {
+  test("drawing tools are disabled while the GIF is selected", async ({
+    page,
+  }) => {
+    await page.getByRole("button", { name: "Multi-Image" }).click();
+    await addImage(page, animatedGif);
+    await page.getByRole("button", { name: "Brush" }).click();
+    await expect(page.getByRole("button", { name: "Brush" })).toHaveClass(
+      /toolbar-btn--active/,
+    );
+
+    await page.locator(".layer-row").click();
+    await expect(page.getByRole("button", { name: "Pointer" })).toHaveClass(
+      /toolbar-btn--active/,
+    );
+    for (const name of ["Brush", "Eraser", "Text"]) {
+      const button = page.getByRole("button", { name });
+      await expect(button).toBeDisabled();
+      await expect(button).toHaveAttribute(
+        "title",
+        "Not available for animated GIFs",
+      );
+    }
+  });
+
+  test("flipping the GIF horizontally mirrors every frame", async ({
+    page,
+  }) => {
+    await page.getByRole("button", { name: "Multi-Image" }).click();
+    await addImage(page, animatedGif);
+    await page.locator(".layer-row").click();
+    await page.getByRole("button", { name: "Flip Horizontal" }).click();
+
+    const { frames } = decodeFullFrames(await downloadBytes(page));
+    expect(frames).toHaveLength(5);
+    // The GIF covers output 60..68; frame 2 is green on its left half before flipping.
+    expectColor(pixelAt(frames[2]!, 61, 63), [255, 0, 0, 255]);
+    expectColor(pixelAt(frames[2]!, 66, 63), [0, 255, 0, 255]);
+    // Frame 4's yellow quadrant moves from bottom-right to bottom-left.
+    expectColor(pixelAt(frames[4]!, 61, 66), [255, 255, 0, 255]);
+    expect(pixelAt(frames[4]!, 66, 66)[3]).toBe(0);
   });
 });

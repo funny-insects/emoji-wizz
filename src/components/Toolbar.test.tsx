@@ -377,4 +377,53 @@ describe("Toolbar — text tool settings", () => {
       "toolbar-btn--active",
     );
   });
+
+  describe("animated selection", () => {
+    function renderToolbar(animatedSelected: boolean, onToolChange = vi.fn()) {
+      render(
+        <Toolbar
+          image={null}
+          hasContent
+          activeTool="pointer"
+          onToolChange={onToolChange}
+          canUndo={false}
+          canRedo={false}
+          onUndo={() => {}}
+          onRedo={() => {}}
+          animatedSelected={animatedSelected}
+          {...defaultTextProps}
+        />,
+      );
+      return onToolChange;
+    }
+
+    it("disables brush, eraser and text with an explanatory title", () => {
+      const onToolChange = renderToolbar(true);
+      for (const name of ["Brush", "Eraser", "Text"]) {
+        const button = screen.getByRole("button", { name });
+        expect(button).toBeDisabled();
+        expect(button).toHaveAttribute(
+          "title",
+          "Not available for animated GIFs",
+        );
+        fireEvent.click(button);
+      }
+      expect(onToolChange).not.toHaveBeenCalled();
+      expect(screen.getByRole("button", { name: "Crop" })).toBeEnabled();
+      expect(
+        screen.getByRole("button", { name: "Flip Horizontal" }),
+      ).toBeEnabled();
+    });
+
+    it("keeps the drawing tools enabled for static selections", () => {
+      renderToolbar(false);
+      for (const name of ["Brush", "Eraser", "Text"]) {
+        expect(screen.getByRole("button", { name })).toBeEnabled();
+      }
+      expect(screen.getByRole("button", { name: "Brush" })).toHaveAttribute(
+        "title",
+        "Brush",
+      );
+    });
+  });
 });

@@ -131,7 +131,7 @@ Reuse the square crop tool on animated items, cropping every frame with the same
 
 ---
 
-### [ ] 5.0 Other Editing Tools & History
+### [x] 5.0 Other Editing Tools & History
 
 Flip / rotate 90° and background removal on every frame; brush, eraser and text disabled for animated items; per-frame operations undoable.
 
@@ -142,7 +142,7 @@ Flip / rotate 90° and background removal on every frame; brush, eraser and text
 
 #### 5.0 Tasks
 
-- [ ] 5.1 `transformFrames()` (rotate / flip + reframe) and `removeBackgroundFrames()` in `frameOps.ts`; route `MultiImageCanvas` transform and bg-removal effects through them for animated items.
-- [ ] 5.2 Toolbar: disable brush / eraser / text with "Not available for animated GIFs" when the active item is animated; switch away from those tools if one is active.
-- [ ] 5.3 Verify frame-set history: transform-only snapshots share references; per-frame ops create a new frame set; `MAX_HISTORY` bounds memory.
-- [ ] 5.4 Unit + E2E tests; final `task test:e2e`.
+- [x] 5.1 `transformFrames()` (rotate / flip + reframe) and `removeBackgroundFrames()` in `frameOps.ts`; route `MultiImageCanvas` transform and bg-removal effects through them for animated items.
+- [x] 5.2 Toolbar: disable brush / eraser / text with "Not available for animated GIFs" when the active item is animated; switch away from those tools if one is active.
+- [x] 5.3 Verify frame-set history: transform-only snapshots share references; per-frame ops create a new frame set; `MAX_HISTORY` bounds memory.
+- [x] 5.4 Unit + E2E tests; final `task test:e2e`.
