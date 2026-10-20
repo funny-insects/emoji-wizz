@@ -14,6 +14,8 @@ import { strengthToTolerance } from "./utils/strengthToTolerance";
 import { PLATFORM_PRESETS } from "./utils/presets";
 import { useImageImport } from "./hooks/useImageImport";
 import { useMultiImageCanvas } from "./hooks/useMultiImageCanvas";
+import { firstClipboardImage, useGifImport } from "./hooks/useGifImport";
+import { isGifFile } from "./utils/gifDecode";
 
 const CANVAS_SIZE = 512;
 import { useHistory } from "./hooks/useHistory";
@@ -21,14 +23,13 @@ import { useStickerHistory } from "./hooks/useStickerHistory";
 import { detectContentBounds } from "./utils/detectContentBounds";
 import { generateSuggestions } from "./utils/generateSuggestions";
 import { detectContrastIssues } from "./utils/detectContrastIssues";
+import { downscaleCanvas, type ExportFormat } from "./utils/exportUtils";
 import {
-  buildExportCanvas,
-  buildFilename,
-  checkFileSizeWarning,
-  downscaleCanvas,
-  exportStageAsBlob,
-  type ExportFormat,
-} from "./utils/exportUtils";
+  exportErrorMessage,
+  describeProgress,
+  exportComposition,
+} from "./utils/exportComposition";
+import { isAnimated, type AnimationControls } from "./utils/canvasImageTypes";
 import type { PlatformPreset } from "./utils/presets";
 import { STICKER_DEFINITIONS } from "./assets/stickers/index";
 import { FRAME_DEFINITIONS } from "./assets/frames/index";
@@ -61,8 +62,71 @@ function App() {
   );
 
   // ── Single-image state ─────────────────────────────────────────────────────
-  const { image, handleFileInput, handleDrop, handlePaste, fileName } =
-    useImageImport();
+  const {
+    image,
+    importFile,
+    handleFileInput,
+    handleDrop,
+    handlePaste,
+    fileName,
+  } = useImageImport();
+  const {
+    importGif,
+    importError: gifImportError,
+    clearImportError: clearGifImportError,
+  } = useGifImport({
+    onAddAnimatedImage: multiImage.addAnimatedImage,
+    onPushHistory: multiImage.pushHistory,
+  });
+
+  const importSingleModeGif = useCallback(
+    async (file: File, label: string) => {
+      const outcome = await importGif(file, label);
+      if (outcome === "animated") setMode("multiImage");
+      else if (outcome === "static") await importFile(file, label);
+    },
+    [importGif, importFile],
+  );
+
+  const handleSingleFileInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !isGifFile(file)) {
+        clearGifImportError();
+        return handleFileInput(e);
+      }
+      const input = e.target;
+      void importSingleModeGif(file, file.name).then(() => {
+        input.value = "";
+      });
+    },
+    [handleFileInput, importSingleModeGif, clearGifImportError],
+  );
+
+  const handleSingleDrop = useCallback(
+    (e: React.DragEvent) => {
+      const file = e.dataTransfer.files?.[0];
+      if (!file || !isGifFile(file)) {
+        clearGifImportError();
+        return handleDrop(e);
+      }
+      e.preventDefault();
+      void importSingleModeGif(file, file.name);
+    },
+    [handleDrop, importSingleModeGif, clearGifImportError],
+  );
+
+  const handleSinglePaste = useCallback(
+    (e: ClipboardEvent) => {
+      const file = firstClipboardImage(e.clipboardData?.items);
+      if (!file || !isGifFile(file)) {
+        clearGifImportError();
+        return handlePaste(e);
+      }
+      void importSingleModeGif(file, "pasted-image");
+    },
+    [handlePaste, importSingleModeGif, clearGifImportError],
+  );
   const [activeTool, setActiveTool] = useState<EditorTool>("pointer");
   const [brushColor, setBrushColor] = useState<string>("#000000");
   const [brushSize, setBrushSize] = useState<number>(3);
@@ -92,7 +156,6 @@ function App() {
   const stickerHistory = useStickerHistory();
 
   const [restoreSnapshot, setRestoreSnapshot] = useState<string | null>(null);
-  const [latestSnapshot, setLatestSnapshot] = useState<string | null>(null);
   const latestSnapshotRef = useRef<string | null>(null);
 
   const [stickers, setStickers] = useState<StickerDescriptor[]>([]);
@@ -115,7 +178,6 @@ function App() {
         activeFrameId,
         frameThickness,
       });
-      setLatestSnapshot(snapshot);
       latestSnapshotRef.current = snapshot;
     },
     [pushState, stickerHistory, stickers, activeFrameId, frameThickness],
@@ -130,7 +192,6 @@ function App() {
     const stickerSnap = stickerHistory.undo();
     if (imgSnap) {
       setRestoreSnapshot(imgSnap);
-      setLatestSnapshot(imgSnap);
     }
     if (stickerSnap) {
       setStickers(stickerSnap.stickers);
@@ -150,7 +211,6 @@ function App() {
     const stickerSnap = stickerHistory.redo();
     if (imgSnap) {
       setRestoreSnapshot(imgSnap);
-      setLatestSnapshot(imgSnap);
     }
     if (stickerSnap) {
       setStickers(stickerSnap.stickers);
@@ -174,7 +234,12 @@ function App() {
       const ctx = activeItem.canvas.getContext("2d");
       if (ctx) {
         setBgRemovalImageData(
-          ctx.getImageData(0, 0, activeItem.canvas.width, activeItem.canvas.height),
+          ctx.getImageData(
+            0,
+            0,
+            activeItem.canvas.width,
+            activeItem.canvas.height,
+          ),
         );
       }
       setShowBgRemovalModal(true);
@@ -487,103 +552,73 @@ function App() {
   }
 
   // ── Download ───────────────────────────────────────────────────────────────
-  function triggerDownload(canvas: HTMLCanvasElement, format: ExportFormat) {
-    const mimeMap: Record<ExportFormat, string> = {
-      png: "image/png",
-      gif: "image/gif",
-      webp: "image/webp",
-    };
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        setSizeWarning(
-          "Export failed: this format is not supported by your browser.",
-        );
-        return;
-      }
-      setSizeWarning(checkFileSizeWarning(blob.size, exportPreset));
-      const href = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = href;
-      a.download = buildFilename(format);
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(href);
-    }, mimeMap[format]);
+  const animationRef = useRef<AnimationControls | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [autoFit, setAutoFit] = useState(true);
+  const [exportProgress, setExportProgress] = useState<string | null>(null);
+  const [exportSummary, setExportSummary] = useState<string | null>(null);
+  const animatedItem =
+    mode === "multiImage" ? multiImage.items.find(isAnimated) : undefined;
+
+  function triggerDownload(blob: Blob, filename: string) {
+    const href = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(href);
   }
 
-  function handleDownload(format: ExportFormat) {
-    // Multi-image mode: flatten the stage
-    if (mode === "multiImage") {
-      if (multiImage.items.length === 0) return;
-      if (!stageRef.current) {
-        setSizeWarning("Export failed: canvas not ready.");
-        return;
-      }
-      exportStageAsBlob(stageRef.current, exportPreset, { hideBgLayer: bgColor === null }).then((blob) => {
-        if (!blob) {
-          setSizeWarning(
-            "Export failed: this format is not supported by your browser.",
-          );
-          return;
-        }
-        setSizeWarning(checkFileSizeWarning(blob.size, exportPreset));
-        const href = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = href;
-        a.download = buildFilename(format);
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(href);
-      });
+  async function handleDownload(format: ExportFormat) {
+    if (!hasContent || exporting) return;
+    const stage = stageRef.current;
+    if (!stage) {
+      setSizeWarning("Export failed: canvas not ready.");
       return;
     }
+    const controls = animationRef.current;
+    setExporting(true);
+    setExportSummary(null);
+    try {
+      const result = await exportComposition({
+        stage,
+        preset: exportPreset,
+        format,
+        bgColor,
+        animation:
+          animatedItem && controls
+            ? {
+                frames: animatedItem.frames,
+                loopCount: animatedItem.loopCount ?? 0,
+                controls,
+              }
+            : null,
+        autoFit,
+        onProgress: (p) => setExportProgress(describeProgress(p)),
+      });
+      setSizeWarning(result.warning);
+      setExportSummary(result.summary);
+      triggerDownload(result.blob, result.filename);
+    } catch (err) {
+      setSizeWarning(exportErrorMessage(err));
+    } finally {
+      setExporting(false);
+      setExportProgress(null);
+    }
+  }
 
-    // Single-image mode (original logic)
-    if (!image) return;
-    if (stickers.length > 0 || activeFrameId !== null) {
-      if (!stageRef.current) {
-        setSizeWarning("Export failed: canvas not ready.");
-        return;
-      }
-      exportStageAsBlob(stageRef.current, exportPreset, { hideBgLayer: bgColor === null }).then((blob) => {
-        if (!blob) {
-          setSizeWarning(
-            "Export failed: this format is not supported by your browser.",
-          );
-          return;
-        }
-        setSizeWarning(checkFileSizeWarning(blob.size, exportPreset));
-        const href = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = href;
-        a.download = buildFilename(format);
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(href);
-      });
-      return;
-    }
-    if (latestSnapshot) {
-      const img = new window.Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = CANVAS_SIZE;
-        canvas.height = CANVAS_SIZE;
-        canvas.getContext("2d")!.drawImage(img, 0, 0);
-        const exportCanvas = downscaleCanvas(
-          canvas,
-          exportPreset.width,
-          exportPreset.height,
-        );
-        triggerDownload(exportCanvas, format);
-      };
-      img.src = latestSnapshot;
-    } else {
-      triggerDownload(buildExportCanvas(image, exportPreset), format);
-    }
+  const activeIsAnimated =
+    mode === "multiImage" &&
+    multiImage.items.some(
+      (i) => i.id === multiImage.activeImageId && isAnimated(i),
+    );
+  if (
+    activeIsAnimated &&
+    (activeTool === "brush" || activeTool === "eraser" || activeTool === "text")
+  ) {
+    setActiveTool("pointer");
   }
 
   // ── Derived values for toolbar / export ───────────────────────────────────
@@ -643,14 +678,16 @@ function App() {
             onFlipVertical={handleFlipVertical}
             onCropConfirm={handleCropConfirm}
             onCropCancel={handleCropCancel}
+            animatedSelected={activeIsAnimated}
           />
 
           {mode === "singleImage" ? (
             <EmojiCanvas
               image={image}
-              handleFileInput={handleFileInput}
-              handleDrop={handleDrop}
-              handlePaste={handlePaste}
+              handleFileInput={handleSingleFileInput}
+              handleDrop={handleSingleDrop}
+              handlePaste={handleSinglePaste}
+              importError={gifImportError}
               bgColor={bgColor}
               onBgColorChange={setBgColor}
               activeTool={activeTool}
@@ -700,6 +737,8 @@ function App() {
               activeFrameSrc={activeFrameSrc}
               frameThickness={frameThickness}
               onAddImage={multiImage.addImage}
+              onAddAnimatedImage={multiImage.addAnimatedImage}
+              animationRef={animationRef}
               onUpdateItem={multiImage.updateItem}
               onRemoveItem={multiImage.removeItem}
               onSetActiveImageId={multiImage.setActiveImageId}
@@ -744,7 +783,14 @@ function App() {
         <ExportControls
           image={image}
           hasContent={hasContent}
-          onDownload={handleDownload}
+          onDownload={(format) => void handleDownload(format)}
+          animated={animatedItem !== undefined}
+          busy={exporting}
+          autoFit={autoFit}
+          onAutoFitChange={setAutoFit}
+          onFormatChange={() => setExportSummary(null)}
+          progress={exportProgress}
+          result={exportSummary}
           sizeWarning={sizeWarning}
           presets={PLATFORM_PRESETS}
           activePresetId={exportPreset.id}
@@ -752,13 +798,16 @@ function App() {
             const preset = PLATFORM_PRESETS.find((p) => p.id === id);
             if (preset) {
               if (
-                (mode === "singleImage" ? image : multiImage.items.length > 0) &&
+                (mode === "singleImage"
+                  ? image
+                  : multiImage.items.length > 0) &&
                 !window.confirm(
                   `Resize canvas to ${preset.label}? This will rescale the image.`,
                 )
               )
                 return;
               setExportPreset(preset);
+              setExportSummary(null);
             }
           }}
         />

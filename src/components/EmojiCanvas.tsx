@@ -25,6 +25,7 @@ interface EmojiCanvasProps {
   handleFileInput: React.ChangeEventHandler<HTMLInputElement>;
   handleDrop: React.DragEventHandler<HTMLDivElement>;
   handlePaste: (e: ClipboardEvent) => void;
+  importError?: string | null;
   activeTool?: EditorTool;
   onToolChange?: (tool: EditorTool) => void;
   onPushState?: (snapshot: string) => void;
@@ -79,6 +80,7 @@ export function EmojiCanvas({
   handleFileInput,
   handleDrop,
   handlePaste,
+  importError = null,
   activeTool,
   onToolChange,
   onPushState,
@@ -689,7 +691,7 @@ export function EmojiCanvas({
                     />
                   )}
                 </Layer>
-                <Layer>
+                <Layer name="ui">
                   {(activeTool === "eraser" || activeTool === "brush") &&
                     eraserPos &&
                     image && (
@@ -708,7 +710,7 @@ export function EmojiCanvas({
                       />
                     )}
                 </Layer>
-                <Layer>
+                <Layer name="ui">
                   {activeTool === "crop" && cropRect && (
                     <>
                       {/* Dark mask: 4 rects surrounding the crop area */}
@@ -891,7 +893,7 @@ export function EmojiCanvas({
                       </>
                     );
                   })}
-                  <Transformer ref={transformerRef} />
+                  <Transformer ref={transformerRef} name="ui" />
                 </Layer>
                 <Layer>
                   {frameImage &&
@@ -1001,6 +1003,11 @@ export function EmojiCanvas({
             </span>
           )}
         </div>
+        {importError && (
+          <p className="import-error" role="alert">
+            {importError}
+          </p>
+        )}
         {onBgColorChange && (
           <div className="bg-color-row">
             <span className="bg-color-label">Background</span>

@@ -1,27 +1,6 @@
-import Konva from "konva";
-import { computeContainRect } from "./imageScaling";
 import type { PlatformPreset } from "./presets";
 
 export type ExportFormat = "png" | "gif" | "webp";
-
-export function buildExportCanvas(
-  image: HTMLImageElement,
-  preset: PlatformPreset,
-): HTMLCanvasElement {
-  const canvas = document.createElement("canvas");
-  canvas.width = preset.width;
-  canvas.height = preset.height;
-  const ctx = canvas.getContext("2d")!;
-  ctx.clearRect(0, 0, preset.width, preset.height);
-  const { x, y, width, height } = computeContainRect(
-    image.naturalWidth,
-    image.naturalHeight,
-    preset.width,
-    preset.height,
-  );
-  ctx.drawImage(image, x, y, width, height);
-  return canvas;
-}
 
 export function buildFilename(
   format: ExportFormat,
@@ -76,41 +55,6 @@ export function downscaleCanvas(
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(sourceCanvas, 0, 0, targetWidth, targetHeight);
   return canvas;
-}
-
-export async function exportStageAsBlob(
-  stage: Konva.Stage,
-  targetPreset?: PlatformPreset,
-  options?: { hideBgLayer?: boolean },
-): Promise<Blob | null> {
-  const hideBg = options?.hideBgLayer !== false;
-  const bgLayer = stage.getLayers()[0];
-  if (bgLayer && hideBg) bgLayer.visible(false);
-  const dataUrl = stage.toDataURL({ pixelRatio: 1 });
-  if (bgLayer && hideBg) bgLayer.visible(true);
-
-  if (targetPreset && targetPreset.width < 512) {
-    const img = await new Promise<HTMLImageElement>((resolve) => {
-      const image = new Image();
-      image.onload = () => resolve(image);
-      image.src = dataUrl;
-    });
-    const sourceCanvas = document.createElement("canvas");
-    sourceCanvas.width = 512;
-    sourceCanvas.height = 512;
-    sourceCanvas.getContext("2d")!.drawImage(img, 0, 0);
-    const downscaled = downscaleCanvas(
-      sourceCanvas,
-      targetPreset.width,
-      targetPreset.height,
-    );
-    return new Promise<Blob | null>((resolve) => {
-      downscaled.toBlob((blob) => resolve(blob));
-    });
-  }
-
-  const blob = await fetch(dataUrl).then((r) => r.blob());
-  return blob;
 }
 
 export function checkFileSizeWarning(

@@ -28,7 +28,10 @@ interface ToolbarProps {
   onFlipVertical: () => void;
   onCropConfirm: () => void;
   onCropCancel: () => void;
+  animatedSelected?: boolean;
 }
+
+const ANIMATED_DISABLED_TITLE = "Not available for animated GIFs";
 
 export function Toolbar({
   image,
@@ -56,6 +59,7 @@ export function Toolbar({
   onFlipVertical,
   onCropConfirm,
   onCropCancel,
+  animatedSelected = false,
 }: ToolbarProps) {
   const enabled = hasContent !== undefined ? hasContent : image !== null;
   if (!enabled) return null;
@@ -74,24 +78,27 @@ export function Toolbar({
         <button
           className={`toolbar-btn${activeTool === "eraser" ? " toolbar-btn--active" : ""}`}
           onClick={() => onToolChange("eraser")}
+          disabled={animatedSelected}
           aria-label="Eraser"
-          title="Eraser"
+          title={animatedSelected ? ANIMATED_DISABLED_TITLE : "Eraser"}
         >
           ◻
         </button>
         <button
           className={`toolbar-btn${activeTool === "brush" ? " toolbar-btn--active" : ""}`}
           onClick={() => onToolChange("brush")}
+          disabled={animatedSelected}
           aria-label="Brush"
-          title="Brush"
+          title={animatedSelected ? ANIMATED_DISABLED_TITLE : "Brush"}
         >
           ✏
         </button>
         <button
           className={`toolbar-btn${activeTool === "text" ? " toolbar-btn--active" : ""}`}
           onClick={() => onToolChange("text")}
+          disabled={animatedSelected}
           aria-label="Text"
-          title="Text"
+          title={animatedSelected ? ANIMATED_DISABLED_TITLE : "Text"}
         >
           T
         </button>

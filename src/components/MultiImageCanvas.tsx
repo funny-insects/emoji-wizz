@@ -17,7 +17,21 @@ import {
   cropCanvas,
 } from "../utils/imageTransforms";
 import type { EditorTool } from "../App";
-import type { CanvasImageItem } from "../utils/canvasImageTypes";
+import {
+  isAnimated,
+  type AnimationControls,
+  type AnimationFrame,
+  type CanvasImageItem,
+} from "../utils/canvasImageTypes";
+import { isGifFile } from "../utils/gifDecode";
+import {
+  cropFrames,
+  cropRectToSourceRegion,
+  removeBackgroundFrames,
+  transformFrames,
+} from "../utils/frameOps";
+import { firstClipboardImage, useGifImport } from "../hooks/useGifImport";
+import { useGifPlayback } from "../hooks/useGifPlayback";
 import type { StickerDescriptor } from "../utils/stickerTypes";
 
 const CANVAS_SIZE = 512;
@@ -54,6 +68,15 @@ function loadImageFromBlob(blob: Blob): Promise<HTMLImageElement> {
   });
 }
 
+const rejectAnimatedImage = () => null;
+
+function posterIndexOf(item: CanvasImageItem): number {
+  return Math.max(
+    0,
+    item.frames?.findIndex((f) => f.canvas === item.canvas) ?? 0,
+  );
+}
+
 export interface MultiImageCanvasProps {
   items: CanvasImageItem[];
   activeImageId: string | null;
@@ -79,6 +102,12 @@ export interface MultiImageCanvasProps {
   activeFrameSrc?: string | null;
   frameThickness?: number;
   onAddImage: (img: HTMLImageElement, label: string) => void;
+  onAddAnimatedImage?: (
+    frames: AnimationFrame[],
+    label: string,
+    loopCount: number,
+  ) => string | null;
+  animationRef?: React.MutableRefObject<AnimationControls | null>;
   onUpdateItem: (updated: CanvasImageItem) => void;
   onRemoveItem: (id: string) => void;
   onSetActiveImageId: (id: string | null) => void;
@@ -107,6 +136,8 @@ export function MultiImageCanvas({
   transformRequest = null,
   cropConfirmSeq = 0,
   onAddImage,
+  onAddAnimatedImage = rejectAnimatedImage,
+  animationRef,
   onUpdateItem,
   onRemoveItem,
   onSetActiveImageId,
@@ -120,6 +151,7 @@ export function MultiImageCanvas({
   const cropRectNodeRef = useRef<Konva.Rect | null>(null);
   const cropTransformerRef = useRef<Konva.Transformer | null>(null);
   const itemNodeRefs = useRef<Map<string, Konva.Image>>(new Map());
+  const selectionOutlineRef = useRef<Konva.Rect | null>(null);
   const stickerNodeRefs = useRef<Map<string, Konva.Image>>(new Map());
   const stickerTransformerRef = useRef<Konva.Transformer | null>(null);
   const [stickerImages, setStickerImages] = useState<
@@ -155,25 +187,97 @@ export function MultiImageCanvas({
     [items, activeImageId],
   );
 
+  const syncSelectionOutline = useCallback(
+    (itemId: string, node: Konva.Node) => {
+      if (itemId !== activeImageId) return;
+      selectionOutlineRef.current?.setAttrs({
+        x: node.x(),
+        y: node.y(),
+        scaleX: node.scaleX(),
+        scaleY: node.scaleY(),
+        rotation: node.rotation(),
+      });
+    },
+    [activeImageId],
+  );
+
+  // ── Animated GIF playback ───────────────────────────────────────────────────
+  const animatedItem = useMemo(() => items.find(isAnimated) ?? null, [items]);
+  const animatedFrames = animatedItem?.frames;
+  const [playing, setPlaying] = useState(true);
+  const { frameIndex, setFrameIndex, currentFrame, showFrame } = useGifPlayback(
+    {
+      item: animatedItem,
+      nodesRef: itemNodeRefs,
+      layerRef: itemsLayerRef,
+      playing,
+    },
+  );
+
+  useEffect(() => {
+    if (!animationRef) return;
+    animationRef.current = animatedItem ? { showFrame, currentFrame } : null;
+    return () => {
+      animationRef.current = null;
+    };
+  }, [animationRef, animatedItem, showFrame, currentFrame]);
+
+  const showRestingFrame = useCallback(
+    (index: number) => {
+      if (!animatedItem || !animatedFrames) return;
+      const canvas = animatedFrames[index]?.canvas;
+      if (canvas && canvas !== animatedItem.canvas) {
+        onUpdateItem({ ...animatedItem, canvas });
+      }
+    },
+    [animatedItem, animatedFrames, onUpdateItem],
+  );
+
+  const handleTogglePlay = useCallback(() => {
+    if (playing) {
+      const index = currentFrame();
+      setFrameIndex(index);
+      showRestingFrame(index);
+    }
+    setPlaying(!playing);
+  }, [playing, currentFrame, setFrameIndex, showRestingFrame]);
+
+  const handleScrub = useCallback(
+    (index: number) => {
+      setFrameIndex(index);
+      showRestingFrame(index);
+    },
+    [setFrameIndex, showRestingFrame],
+  );
+
+  // ── Import (file input / drop / paste) ──────────────────────────────────────
+  const { importGif, importError, clearImportError } = useGifImport({
+    onAddAnimatedImage,
+    onPushHistory,
+  });
+
+  const importFile = useCallback(
+    async (file: File, label: string) => {
+      const isGif = isGifFile(file);
+      if (!isGif && !file.type.startsWith("image/")) return;
+      if (isGif && (await importGif(file, label)) !== "static") return;
+      const img = await loadImageFromBlob(file);
+      onAddImage(img, label);
+      onPushHistory();
+      clearImportError();
+    },
+    [importGif, onAddImage, onPushHistory, clearImportError],
+  );
+
   // ── Paste listener ──────────────────────────────────────────────────────────
   useEffect(() => {
-    async function handlePaste(e: ClipboardEvent) {
-      const clipItems = e.clipboardData?.items;
-      if (!clipItems) return;
-      for (const item of clipItems) {
-        if (item.type.startsWith("image/")) {
-          const blob = item.getAsFile();
-          if (!blob) continue;
-          const img = await loadImageFromBlob(blob);
-          onAddImage(img, "pasted-image");
-          onPushHistory();
-          return;
-        }
-      }
+    function handlePaste(e: ClipboardEvent) {
+      const file = firstClipboardImage(e.clipboardData?.items);
+      if (file) void importFile(file, "pasted-image");
     }
     document.addEventListener("paste", handlePaste);
     return () => document.removeEventListener("paste", handlePaste);
-  }, [onAddImage, onPushHistory]);
+  }, [importFile]);
 
   // ── Load sticker images ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -270,44 +374,45 @@ export function MultiImageCanvas({
     prevCropConfirmSeqRef.current = cropConfirmSeq;
     if (!cropRect || !activeItem) return;
 
-    const localX = Math.max(
-      0,
-      Math.round((cropRect.x - activeItem.x) / activeItem.scaleX),
-    );
-    const localY = Math.max(
-      0,
-      Math.round((cropRect.y - activeItem.y) / activeItem.scaleY),
-    );
-    const localSize = Math.max(
-      1,
-      Math.round(
-        Math.min(
-          cropRect.size / activeItem.scaleX,
-          activeItem.canvas.width - localX,
-          activeItem.canvas.height - localY,
-        ),
-      ),
-    );
-
-    const croppedCanvas = cropCanvas(activeItem.canvas, {
-      x: localX,
-      y: localY,
-      size: localSize,
+    const source = activeItem.frames?.[0]?.canvas ?? activeItem.canvas;
+    const region = cropRectToSourceRegion(cropRect, {
+      x: activeItem.x,
+      y: activeItem.y,
+      scaleX: activeItem.scaleX,
+      scaleY: activeItem.scaleY,
+      canvasWidth: source.width,
+      canvasHeight: source.height,
     });
-    const updatedItem: CanvasImageItem = {
-      ...activeItem,
-      canvas: croppedCanvas,
-      x: cropRect.x,
-      y: cropRect.y,
-      width: localSize,
-      height: localSize,
+    const geometry = region && {
+      x: activeItem.x + region.x * activeItem.scaleX,
+      y: activeItem.y + region.y * activeItem.scaleY,
+      width: region.size,
+      height: region.size,
       scaleX: 1,
       scaleY: 1,
     };
+    let updatedItem: CanvasImageItem | null = null;
+    if (region && geometry && isAnimated(activeItem)) {
+      const frames = cropFrames(activeItem.frames, region);
+      updatedItem = {
+        ...activeItem,
+        ...geometry,
+        frames,
+        canvas: frames[posterIndexOf(activeItem)]!.canvas,
+      };
+    } else if (region && geometry) {
+      updatedItem = {
+        ...activeItem,
+        ...geometry,
+        canvas: cropCanvas(activeItem.canvas, region),
+      };
+    }
     const timerId = setTimeout(() => {
       setCropRect(null);
-      onUpdateItem(updatedItem);
-      onPushHistory();
+      if (updatedItem) {
+        onUpdateItem(updatedItem);
+        onPushHistory();
+      }
       onToolChange?.("pointer");
     }, 0);
     return () => clearTimeout(timerId);
@@ -320,33 +425,45 @@ export function MultiImageCanvas({
     prevTransformSeqRef.current = transformRequest.seq;
     if (!activeItem) return;
 
-    let result: HTMLCanvasElement;
-    switch (transformRequest.type) {
-      case "rotateCW":
-        result = rotateCanvas90(activeItem.canvas, "cw");
-        break;
-      case "rotateCCW":
-        result = rotateCanvas90(activeItem.canvas, "ccw");
-        break;
-      case "flipH":
-        result = flipCanvas(activeItem.canvas, "horizontal");
-        break;
-      case "flipV":
-        result = flipCanvas(activeItem.canvas, "vertical");
-        break;
-    }
     // For rotation the canvas dims swap; reframe to current visual dimensions
     const targetW = Math.round(activeItem.width * activeItem.scaleX);
     const targetH = Math.round(activeItem.height * activeItem.scaleY);
-    const reframed = reframeCanvas(result, targetW, targetH);
-    onUpdateItem({
-      ...activeItem,
-      canvas: reframed,
-      width: targetW,
-      height: targetH,
-      scaleX: 1,
-      scaleY: 1,
-    });
+    const geometry = { width: targetW, height: targetH, scaleX: 1, scaleY: 1 };
+    if (isAnimated(activeItem)) {
+      const frames = transformFrames(
+        activeItem.frames,
+        transformRequest.type,
+        targetW,
+        targetH,
+      );
+      onUpdateItem({
+        ...activeItem,
+        ...geometry,
+        frames,
+        canvas: frames[posterIndexOf(activeItem)]!.canvas,
+      });
+    } else {
+      let result: HTMLCanvasElement;
+      switch (transformRequest.type) {
+        case "rotateCW":
+          result = rotateCanvas90(activeItem.canvas, "cw");
+          break;
+        case "rotateCCW":
+          result = rotateCanvas90(activeItem.canvas, "ccw");
+          break;
+        case "flipH":
+          result = flipCanvas(activeItem.canvas, "horizontal");
+          break;
+        case "flipV":
+          result = flipCanvas(activeItem.canvas, "vertical");
+          break;
+      }
+      onUpdateItem({
+        ...activeItem,
+        ...geometry,
+        canvas: reframeCanvas(result, targetW, targetH),
+      });
+    }
     onPushHistory();
   }, [transformRequest]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -356,6 +473,20 @@ export function MultiImageCanvas({
     if (bgRemovalRequest.seq === prevBgRemovalSeqRef.current) return;
     prevBgRemovalSeqRef.current = bgRemovalRequest.seq;
     if (!activeItem) return;
+
+    if (isAnimated(activeItem)) {
+      const frames = removeBackgroundFrames(
+        activeItem.frames,
+        bgRemovalRequest.tolerance,
+      );
+      onUpdateItem({
+        ...activeItem,
+        frames,
+        canvas: frames[posterIndexOf(activeItem)]!.canvas,
+      });
+      onPushHistory();
+      return;
+    }
 
     const src = activeItem.canvas;
     const ctx = src.getContext("2d");
@@ -373,7 +504,7 @@ export function MultiImageCanvas({
   // ── Eraser helper (maps stage coords → item-local coords) ──────────────────
   const applyEraserAt = useCallback(
     (stageX: number, stageY: number) => {
-      if (!activeItem) return;
+      if (!activeItem || isAnimated(activeItem)) return;
       const ctx = activeItem.canvas.getContext("2d");
       if (!ctx) return;
       const localX = (stageX - activeItem.x) / activeItem.scaleX;
@@ -393,7 +524,7 @@ export function MultiImageCanvas({
   // ── Brush flatten helper (maps stage-coord line → item-local canvas) ────────
   const flattenBrushLine = useCallback(() => {
     const line = currentBrushLineRef.current;
-    if (!line || !activeItem) return false;
+    if (!line || !activeItem || isAnimated(activeItem)) return false;
     const ctx = activeItem.canvas.getContext("2d");
     if (!ctx) return false;
     const pts = line.points();
@@ -427,7 +558,7 @@ export function MultiImageCanvas({
   // ── Mouse handlers ──────────────────────────────────────────────────────────
   const handleMouseDown = useCallback(
     (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
-      if (!activeItem) return;
+      if (!activeItem || isAnimated(activeItem)) return;
       const stage = e.target.getStage();
       const pos = stage?.getPointerPosition();
       if (!pos) return;
@@ -543,23 +674,20 @@ export function MultiImageCanvas({
 
   // ── File picker ─────────────────────────────────────────────────────────────
   async function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !file.type.startsWith("image/")) return;
-    const img = await loadImageFromBlob(file);
-    onAddImage(img, file.name);
-    onPushHistory();
+    const input = e.target;
+    const file = input.files?.[0];
+    if (!file) return;
+    await importFile(file, file.name);
     // reset so the same file can be picked again
-    e.target.value = "";
+    input.value = "";
   }
 
   // ── Drop handler ─────────────────────────────────────────────────────────────
   async function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
-    if (!file || !file.type.startsWith("image/")) return;
-    const img = await loadImageFromBlob(file);
-    onAddImage(img, file.name);
-    onPushHistory();
+    if (!file) return;
+    await importFile(file, file.name);
   }
 
   const needsActiveImage =
@@ -657,9 +785,13 @@ export function MultiImageCanvas({
                       scaleX={item.scaleX}
                       scaleY={item.scaleY}
                       rotation={item.rotation}
-                      stroke={item.id === activeImageId ? "#4A90E2" : undefined}
-                      strokeWidth={item.id === activeImageId ? 2 : 0}
                       draggable={activeTool === "pointer"}
+                      onDragMove={(e) =>
+                        syncSelectionOutline(item.id, e.target)
+                      }
+                      onTransform={(e) =>
+                        syncSelectionOutline(item.id, e.target)
+                      }
                       onClick={() => onSetActiveImageId(item.id)}
                       onTap={() => onSetActiveImageId(item.id)}
                       onDragEnd={(e) => {
@@ -684,11 +816,27 @@ export function MultiImageCanvas({
                       }}
                     />
                   ))}
-                  <Transformer ref={transformerRef} />
+                  {activeItem && (
+                    <Rect
+                      ref={selectionOutlineRef}
+                      name="ui"
+                      listening={false}
+                      x={activeItem.x}
+                      y={activeItem.y}
+                      width={activeItem.width}
+                      height={activeItem.height}
+                      scaleX={activeItem.scaleX}
+                      scaleY={activeItem.scaleY}
+                      rotation={activeItem.rotation}
+                      stroke="#4A90E2"
+                      strokeWidth={2}
+                    />
+                  )}
+                  <Transformer ref={transformerRef} name="ui" />
                 </Layer>
 
                 {/* Layer 2: Drawing overlay (brush lines, cursor, crop) */}
-                <Layer ref={overlayLayerRef}>
+                <Layer ref={overlayLayerRef} name="ui">
                   {(activeTool === "eraser" || activeTool === "brush") &&
                     eraserPos &&
                     activeItem && (
@@ -893,7 +1041,7 @@ export function MultiImageCanvas({
                       </>
                     );
                   })}
-                  <Transformer ref={stickerTransformerRef} />
+                  <Transformer ref={stickerTransformerRef} name="ui" />
                 </Layer>
 
                 {/* Layer 4: Frame */}
@@ -1049,6 +1197,36 @@ export function MultiImageCanvas({
           </div>
         </div>
 
+        {animatedItem && animatedFrames && (
+          <div className="playback-row">
+            <button
+              type="button"
+              className="playback-toggle"
+              onClick={handleTogglePlay}
+              aria-label={playing ? "Pause animation" : "Play animation"}
+            >
+              {playing ? "Pause" : "Play"}
+            </button>
+            {!playing && (
+              <>
+                <input
+                  type="range"
+                  className="playback-scrubber"
+                  aria-label="Frame"
+                  min={0}
+                  max={animatedFrames.length - 1}
+                  step={1}
+                  value={frameIndex}
+                  onChange={(e) => handleScrub(Number(e.target.value))}
+                />
+                <span className="playback-readout">
+                  Frame {frameIndex + 1} / {animatedFrames.length}
+                </span>
+              </>
+            )}
+          </div>
+        )}
+
         <div className="file-input-row">
           <label className="file-input-label">
             <svg
@@ -1079,6 +1257,11 @@ export function MultiImageCanvas({
             </span>
           )}
         </div>
+        {importError && (
+          <p className="import-error" role="alert">
+            {importError}
+          </p>
+        )}
         {onBgColorChange && (
           <div className="bg-color-row">
             <span className="bg-color-label">Background</span>

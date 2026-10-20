@@ -120,4 +120,29 @@ describe("LayerPanel", () => {
     expect(newOrder[0]!.id).toBe("b");
     expect(newOrder[1]!.id).toBe("a");
   });
+
+  it("shows a GIF badge and frame count only for animated items", () => {
+    const animated: CanvasImageItem = {
+      ...makeItem("g", "anim.gif"),
+      frames: Array.from({ length: 5 }, () => ({
+        canvas: document.createElement("canvas"),
+        delayMs: 100,
+      })),
+    };
+    const { container } = render(
+      <LayerPanel
+        items={[makeItem("a", "still.png"), animated]}
+        activeImageId={null}
+        onSelectImage={() => {}}
+        onReorder={() => {}}
+      />,
+    );
+    const rows = container.querySelectorAll(".layer-row");
+    expect(rows[0]!.querySelector(".layer-badge")?.textContent).toBe("GIF");
+    expect(rows[0]!.querySelector(".layer-frame-count")?.textContent).toBe(
+      "5 frames",
+    );
+    expect(rows[1]!.querySelector(".layer-badge")).toBeNull();
+    expect(rows[1]!.querySelector(".layer-frame-count")).toBeNull();
+  });
 });

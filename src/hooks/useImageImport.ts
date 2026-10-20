@@ -20,6 +20,12 @@ export function useImageImport() {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [fileName, setFileName] = useState<string | undefined>(undefined);
 
+  const importFile = useCallback(async (blob: Blob, name: string) => {
+    const img = await loadImageFromBlob(blob);
+    setImage(img);
+    setFileName(name);
+  }, []);
+
   const handleFileInput = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -55,5 +61,12 @@ export function useImageImport() {
     }
   }, []);
 
-  return { image, fileName, handleFileInput, handleDrop, handlePaste };
+  return {
+    image,
+    fileName,
+    importFile,
+    handleFileInput,
+    handleDrop,
+    handlePaste,
+  };
 }
