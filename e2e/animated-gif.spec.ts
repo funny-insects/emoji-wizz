@@ -354,14 +354,43 @@ function pixelAt(
   frame: { patch: Uint8ClampedArray },
   x: number,
   y: number,
+  width = 128,
 ): number[] {
-  const i = (y * 128 + x) * 4;
+  const i = (y * width + x) * 4;
   return Array.from(frame.patch.subarray(i, i + 4));
 }
 
 function expectColor(actual: number[], rgba: number[]) {
   actual.forEach((v, c) => expect(Math.abs(v - rgba[c]!)).toBeLessThan(40));
 }
+
+test("exports do not include the selection outline", async ({ page }) => {
+  await page.getByRole("button", { name: "Multi-Image" }).click();
+  await page.getByRole("combobox", { name: "Platform" }).selectOption("apple");
+  await addImage(page, animatedGif);
+  await page.locator(".layer-row").click();
+  await expect(page.locator(".layer-row--active")).toHaveCount(1);
+
+  const { lsd, frames } = decodeFullFrames(await downloadBytes(page));
+  expect(lsd.width).toBe(512);
+  // At 512 px the GIF covers 240..272 exactly; everything just outside must stay transparent.
+  for (const f of frames) {
+    for (let i = 238; i <= 273; i++) {
+      for (const [x, y] of [
+        [239, i],
+        [272, i],
+        [i, 239],
+        [i, 272],
+      ] as const) {
+        expect({ x, y, alpha: pixelAt(f, x, y, 512)[3] }).toEqual({
+          x,
+          y,
+          alpha: 0,
+        });
+      }
+    }
+  }
+});
 
 test.describe("GIF crop", () => {
   test("cropping a GIF crops every frame to the chosen square", async ({

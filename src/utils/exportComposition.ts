@@ -30,6 +30,14 @@ export class ExportError extends Error {
   }
 }
 
+export function exportErrorMessage(err: unknown): string {
+  if (err instanceof ExportError) return err.message;
+  if (err instanceof Error && err.message) {
+    return `Export failed: ${err.message}`;
+  }
+  return "Export failed: could not encode the image.";
+}
+
 export function routeExport(
   format: ExportFormat,
   animated: boolean,

@@ -1,5 +1,8 @@
-import { describe, it, expect } from "vitest";
-import { START_POSITION, stepPlayback } from "./useGifPlayback";
+import { describe, it, expect, vi } from "vitest";
+import { renderHook, act } from "@testing-library/react";
+import type Konva from "konva";
+import { START_POSITION, stepPlayback, useGifPlayback } from "./useGifPlayback";
+import type { CanvasImageItem } from "../utils/canvasImageTypes";
 
 const DELAYS = [100, 200, 300];
 
@@ -57,5 +60,63 @@ describe("stepPlayback", () => {
   it("ignores negative elapsed time", () => {
     const pos = { index: 1, carryMs: 50, loop: 0, done: false };
     expect(stepPlayback(pos, -20, DELAYS, 0)).toEqual(pos);
+  });
+});
+
+describe("useGifPlayback", () => {
+  it("swaps the node image on each tick without re-rendering", () => {
+    const callbacks: FrameRequestCallback[] = [];
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+      callbacks.push(cb);
+      return callbacks.length;
+    });
+    vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
+    vi.spyOn(performance, "now").mockReturnValue(0);
+
+    const frames = [100, 100, 100].map((delayMs) => ({
+      canvas: document.createElement("canvas"),
+      delayMs,
+    }));
+    const item: CanvasImageItem = {
+      id: "gif",
+      label: "a.gif",
+      canvas: frames[0]!.canvas,
+      x: 0,
+      y: 0,
+      width: 1,
+      height: 1,
+      scaleX: 1,
+      scaleY: 1,
+      rotation: 0,
+      frames,
+      loopCount: 0,
+    };
+    let shown: unknown = null;
+    const node = {
+      image: (value?: unknown) => {
+        if (value !== undefined) shown = value;
+        return shown;
+      },
+    } as unknown as Konva.Image;
+    const batchDraw = vi.fn();
+    const nodesRef = { current: new Map([["gif", node]]) };
+    const layerRef = { current: { batchDraw } as unknown as Konva.Layer };
+
+    let renders = 0;
+    const { result } = renderHook(() => {
+      renders++;
+      return useGifPlayback({ item, nodesRef, layerRef, playing: true });
+    });
+    const rendersBefore = renders;
+
+    const tick = (now: number) => act(() => callbacks.shift()!(now));
+    tick(150);
+    expect(shown).toBe(frames[1]!.canvas);
+    tick(250);
+    expect(shown).toBe(frames[2]!.canvas);
+    expect(renders).toBe(rendersBefore);
+    expect(result.current.currentFrame()).toBe(2);
+    expect(batchDraw).toHaveBeenCalled();
+    vi.restoreAllMocks();
   });
 });

@@ -151,6 +151,7 @@ export function MultiImageCanvas({
   const cropRectNodeRef = useRef<Konva.Rect | null>(null);
   const cropTransformerRef = useRef<Konva.Transformer | null>(null);
   const itemNodeRefs = useRef<Map<string, Konva.Image>>(new Map());
+  const selectionOutlineRef = useRef<Konva.Rect | null>(null);
   const stickerNodeRefs = useRef<Map<string, Konva.Image>>(new Map());
   const stickerTransformerRef = useRef<Konva.Transformer | null>(null);
   const [stickerImages, setStickerImages] = useState<
@@ -184,6 +185,20 @@ export function MultiImageCanvas({
   const activeItem = useMemo(
     () => items.find((i) => i.id === activeImageId) ?? null,
     [items, activeImageId],
+  );
+
+  const syncSelectionOutline = useCallback(
+    (itemId: string, node: Konva.Node) => {
+      if (itemId !== activeImageId) return;
+      selectionOutlineRef.current?.setAttrs({
+        x: node.x(),
+        y: node.y(),
+        scaleX: node.scaleX(),
+        scaleY: node.scaleY(),
+        rotation: node.rotation(),
+      });
+    },
+    [activeImageId],
   );
 
   // ── Animated GIF playback ───────────────────────────────────────────────────
@@ -770,9 +785,13 @@ export function MultiImageCanvas({
                       scaleX={item.scaleX}
                       scaleY={item.scaleY}
                       rotation={item.rotation}
-                      stroke={item.id === activeImageId ? "#4A90E2" : undefined}
-                      strokeWidth={item.id === activeImageId ? 2 : 0}
                       draggable={activeTool === "pointer"}
+                      onDragMove={(e) =>
+                        syncSelectionOutline(item.id, e.target)
+                      }
+                      onTransform={(e) =>
+                        syncSelectionOutline(item.id, e.target)
+                      }
                       onClick={() => onSetActiveImageId(item.id)}
                       onTap={() => onSetActiveImageId(item.id)}
                       onDragEnd={(e) => {
@@ -797,6 +816,22 @@ export function MultiImageCanvas({
                       }}
                     />
                   ))}
+                  {activeItem && (
+                    <Rect
+                      ref={selectionOutlineRef}
+                      name="ui"
+                      listening={false}
+                      x={activeItem.x}
+                      y={activeItem.y}
+                      width={activeItem.width}
+                      height={activeItem.height}
+                      scaleX={activeItem.scaleX}
+                      scaleY={activeItem.scaleY}
+                      rotation={activeItem.rotation}
+                      stroke="#4A90E2"
+                      strokeWidth={2}
+                    />
+                  )}
                   <Transformer ref={transformerRef} name="ui" />
                 </Layer>
 

@@ -1,8 +1,9 @@
 import { useCallback, useState } from "react";
 import {
+  GIF_MAX_BYTES,
   GifImportError,
-  decodeGif,
-  rgbaFramesToCanvases,
+  decodeGifToCanvases,
+  gifTooLargeMessage,
 } from "../utils/gifDecode";
 import type { AnimationFrame } from "../utils/canvasImageTypes";
 
@@ -46,13 +47,18 @@ export function useGifImport({
   const importGif = useCallback(
     async (file: Blob, label: string): Promise<GifImportOutcome> => {
       try {
-        const decoded = decodeGif(await file.arrayBuffer());
-        if (decoded.frames.length <= 1) {
+        if (file.size > GIF_MAX_BYTES) {
+          throw new GifImportError(gifTooLargeMessage(file.size));
+        }
+        const { frames, loopCount } = decodeGifToCanvases(
+          await file.arrayBuffer(),
+          MAX_IMAGE_SIZE,
+        );
+        if (frames.length <= 1) {
           setImportError(null);
           return "static";
         }
-        const frames = rgbaFramesToCanvases(decoded, MAX_IMAGE_SIZE);
-        if (onAddAnimatedImage(frames, label, decoded.loopCount) === null) {
+        if (onAddAnimatedImage(frames, label, loopCount) === null) {
           setImportError(ONE_ANIMATED_GIF_MESSAGE);
           return "error";
         }

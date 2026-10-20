@@ -25,8 +25,7 @@ import { generateSuggestions } from "./utils/generateSuggestions";
 import { detectContrastIssues } from "./utils/detectContrastIssues";
 import { downscaleCanvas, type ExportFormat } from "./utils/exportUtils";
 import {
-  ExportError,
-  UNSUPPORTED_FORMAT_MESSAGE,
+  exportErrorMessage,
   describeProgress,
   exportComposition,
 } from "./utils/exportComposition";
@@ -603,9 +602,7 @@ function App() {
       setExportSummary(result.summary);
       triggerDownload(result.blob, result.filename);
     } catch (err) {
-      setSizeWarning(
-        err instanceof ExportError ? err.message : UNSUPPORTED_FORMAT_MESSAGE,
-      );
+      setSizeWarning(exportErrorMessage(err));
     } finally {
       setExporting(false);
       setExportProgress(null);

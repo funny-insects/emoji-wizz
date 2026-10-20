@@ -6,6 +6,7 @@ import {
   STATIC_EXPORT_NOTE,
   describeProgress,
   exportComposition,
+  exportErrorMessage,
   routeExport,
   type ExportProgress,
 } from "./exportComposition";
@@ -109,6 +110,20 @@ describe("routeExport", () => {
     ["webp", false, "webp"],
   ] as const)("%s (animated=%s) → %s", (format, animated, route) => {
     expect(routeExport(format, animated)).toBe(route);
+  });
+});
+
+describe("exportErrorMessage", () => {
+  it("keeps user-facing export errors and prefixes other failures", () => {
+    expect(exportErrorMessage(new ExportError("Export failed: x."))).toBe(
+      "Export failed: x.",
+    );
+    expect(exportErrorMessage(new Error("GIF worker failed"))).toBe(
+      "Export failed: GIF worker failed",
+    );
+    expect(exportErrorMessage("boom")).toBe(
+      "Export failed: could not encode the image.",
+    );
   });
 });
 

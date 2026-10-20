@@ -6,6 +6,7 @@ import {
   GifImportError,
   compositeFrames,
   decodeGif,
+  decodeGifToCanvases,
   isGifFile,
   normalizeDelay,
   rgbaFramesToCanvases,
@@ -89,6 +90,45 @@ function encode(
   }
   gif.finish();
   return toArrayBuffer(gif.bytes());
+}
+
+/** Hand-built GIF: a screen with a 2-colour GCT and frames whose descriptors are never decompressed. */
+function rawGif(
+  screen: { width: number; height: number },
+  frames: { left?: number; top?: number; width: number; height: number }[],
+): ArrayBuffer {
+  const u16 = (n: number) => [n & 255, n >> 8];
+  const bytes = [
+    ...Array.from("GIF89a", (c) => c.charCodeAt(0)),
+    ...u16(screen.width),
+    ...u16(screen.height),
+    0x80,
+    0,
+    0,
+    0,
+    0,
+    0,
+    255,
+    255,
+    255,
+  ];
+  for (const f of frames) {
+    bytes.push(
+      0x2c,
+      ...u16(f.left ?? 0),
+      ...u16(f.top ?? 0),
+      ...u16(f.width),
+      ...u16(f.height),
+      0,
+      2,
+      2,
+      0x4c,
+      0x01,
+      0,
+    );
+  }
+  bytes.push(0x3b);
+  return toArrayBuffer(new Uint8Array(bytes));
 }
 
 function expectImportError(fn: () => unknown, message: RegExp) {
@@ -339,6 +379,39 @@ describe("decodeGif", () => {
     expect(decodeGif(encode(300)).frames).toHaveLength(300);
   });
 
+  it("rejects frame descriptors larger than the screen before decompressing", () => {
+    const bomb = rawGif({ width: 1, height: 1 }, [
+      { width: 4000, height: 4000 },
+      { width: 4000, height: 4000 },
+      { width: 4000, height: 4000 },
+    ]);
+    expectImportError(() => decodeGif(bomb), /4000×4000 px frame outside/);
+    expectImportError(
+      () => decodeGifToCanvases(bomb, 256),
+      /4000×4000 px frame outside/,
+    );
+  });
+
+  it("rejects a frame offset past the screen edge", () => {
+    expectImportError(
+      () =>
+        decodeGif(
+          rawGif({ width: 10, height: 10 }, [
+            { left: 5, top: 0, width: 6, height: 1 },
+          ]),
+        ),
+      /outside its 10×10 px canvas/,
+    );
+  });
+
+  it("rejects GIFs whose total frame area exceeds the decode budget", () => {
+    const frames = Array.from({ length: 65 }, () => ({ width: 1, height: 1 }));
+    expectImportError(
+      () => decodeGif(rawGif({ width: 2048, height: 2048 }, frames)),
+      /too many pixels/,
+    );
+  });
+
   it("rejects data that is not a GIF", () => {
     const png = new Uint8Array(32).fill(0x89);
 
@@ -389,5 +462,22 @@ describe("rgbaFramesToCanvases", () => {
     const frame = at(rgbaFramesToCanvases(decoded(1000, 1, 1), 256), 0);
 
     expect([frame.canvas.width, frame.canvas.height]).toEqual([256, 1]);
+  });
+});
+
+describe("decodeGifToCanvases", () => {
+  it("returns one downscaled canvas per frame with delays and loop count", () => {
+    const fixture = Uint8Array.from(atob(fixtureDataUrl.split(",")[1]!), (c) =>
+      c.charCodeAt(0),
+    );
+    const { frames, loopCount } = decodeGifToCanvases(
+      toArrayBuffer(fixture),
+      16,
+    );
+    expect(frames.map((f) => [f.canvas.width, f.canvas.height])).toEqual(
+      Array(5).fill([16, 16]),
+    );
+    expect(frames.map((f) => f.delayMs)).toEqual([100, 200, 300, 400, 500]);
+    expect(loopCount).toBe(0);
   });
 });

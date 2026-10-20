@@ -1,10 +1,14 @@
-import { decompressFrames, parseGIF } from "gifuct-js";
+import { decompressFrame, parseGIF } from "gifuct-js";
 import type { ParsedFrame, ParsedGif } from "gifuct-js";
 import type { RgbaFrame } from "./gifEncode";
+import type { AnimationFrame } from "./canvasImageTypes";
 
 export const GIF_MAX_BYTES = 20 * 1024 * 1024;
 export const GIF_MAX_FRAMES = 300;
 export const GIF_MAX_SCREEN = 2048;
+export const GIF_MAX_TOTAL_PIXELS = 256 * 1024 * 1024;
+
+const UNREADABLE = "This file is not a readable GIF.";
 
 export class GifImportError extends Error {
   constructor(message: string) {
@@ -29,13 +33,13 @@ export function normalizeDelay(ms: number): number {
   return ms <= 10 ? 100 : ms;
 }
 
-export function compositeFrames(
-  parsed: ParsedFrame[],
+/** Yields the shared screen buffer after each frame is drawn; consume it before advancing. */
+function* compositeScreens(
+  parsed: Iterable<ParsedFrame>,
   width: number,
   height: number,
-): RgbaFrame[] {
+): Generator<{ screen: Uint8ClampedArray; delayMs: number }> {
   const screen = new Uint8ClampedArray(width * height * 4);
-  const result: RgbaFrame[] = [];
 
   for (const frame of parsed) {
     const { left, top, width: fw, height: fh } = frame.dims;
@@ -56,10 +60,7 @@ export function compositeFrames(
       }
     }
 
-    result.push({
-      data: screen.slice(),
-      delayMs: normalizeDelay(frame.delay ?? 0),
-    });
+    yield { screen, delayMs: normalizeDelay(frame.delay ?? 0) };
 
     if (previous) {
       screen.set(previous);
@@ -69,7 +70,17 @@ export function compositeFrames(
       }
     }
   }
+}
 
+export function compositeFrames(
+  parsed: ParsedFrame[],
+  width: number,
+  height: number,
+): RgbaFrame[] {
+  const result: RgbaFrame[] = [];
+  for (const { screen, delayMs } of compositeScreens(parsed, width, height)) {
+    result.push({ data: screen.slice(), delayMs });
+  }
   return result;
 }
 
@@ -83,16 +94,31 @@ function readLoopCount(parsed: ParsedGif): number {
   return 0;
 }
 
-export function decodeGif(buffer: ArrayBuffer): DecodedGif {
+export function gifTooLargeMessage(bytes: number): string {
+  const mb = (bytes / (1024 * 1024)).toFixed(1);
+  return `GIF is ${mb} MB; the limit is 20 MB.`;
+}
+
+type ImageBlock = Extract<ParsedGif["frames"][number], { image: unknown }>;
+
+interface ValidatedGif {
+  width: number;
+  height: number;
+  gct: ParsedGif["gct"];
+  images: ImageBlock[];
+  loopCount: number;
+}
+
+/** Enforces every cap using only headers and descriptors, before any pixel is decompressed. */
+function parseAndValidate(buffer: ArrayBuffer): ValidatedGif {
   if (buffer.byteLength > GIF_MAX_BYTES) {
-    const mb = (buffer.byteLength / (1024 * 1024)).toFixed(1);
-    throw new GifImportError(`GIF is ${mb} MB; the limit is 20 MB.`);
+    throw new GifImportError(gifTooLargeMessage(buffer.byteLength));
   }
 
   const bytes = new Uint8Array(buffer);
   const signature = String.fromCharCode(...bytes.subarray(0, 3));
   if (bytes.length < 13 || signature !== "GIF") {
-    throw new GifImportError("This file is not a readable GIF.");
+    throw new GifImportError(UNREADABLE);
   }
   const view = new DataView(buffer);
   const width = view.getUint16(6, true);
@@ -103,34 +129,102 @@ export function decodeGif(buffer: ArrayBuffer): DecodedGif {
     );
   }
   if (width === 0 || height === 0) {
-    throw new GifImportError("This file is not a readable GIF.");
+    throw new GifImportError(UNREADABLE);
   }
 
   let parsed: ParsedGif;
   try {
     parsed = parseGIF(buffer);
   } catch {
-    throw new GifImportError("This file is not a readable GIF.");
+    throw new GifImportError(UNREADABLE);
   }
 
-  const frameCount = parsed.frames.filter((f) => "image" in f).length;
-  if (frameCount > GIF_MAX_FRAMES) {
+  const images = parsed.frames.filter((f): f is ImageBlock => "image" in f);
+  if (images.length > GIF_MAX_FRAMES) {
     throw new GifImportError(
-      `GIF has ${frameCount} frames; the limit is ${GIF_MAX_FRAMES}.`,
+      `GIF has ${images.length} frames; the limit is ${GIF_MAX_FRAMES}.`,
     );
   }
-  if (frameCount === 0) {
+  if (images.length === 0) {
     throw new GifImportError("This GIF has no frames.");
   }
 
-  let frames: RgbaFrame[];
-  try {
-    frames = compositeFrames(decompressFrames(parsed, true), width, height);
-  } catch {
-    throw new GifImportError("This file is not a readable GIF.");
+  let totalPixels = 0;
+  for (const { image } of images) {
+    const { left, top, width: fw, height: fh } = image.descriptor;
+    if (left + fw > width || top + fh > height) {
+      throw new GifImportError(
+        `This GIF has a ${fw}×${fh} px frame outside its ${width}×${height} px canvas.`,
+      );
+    }
+    totalPixels += width * height;
+  }
+  if (totalPixels > GIF_MAX_TOTAL_PIXELS) {
+    throw new GifImportError(
+      "This GIF has too many pixels to import; try fewer frames or a smaller size.",
+    );
   }
 
-  return { width, height, frames, loopCount: readLoopCount(parsed) };
+  return {
+    width,
+    height,
+    gct: parsed.gct,
+    images,
+    loopCount: readLoopCount(parsed),
+  };
+}
+
+function* decompressImages(gif: ValidatedGif): Generator<ParsedFrame> {
+  for (const block of gif.images) {
+    let frame: ParsedFrame;
+    try {
+      frame = decompressFrame(block, gif.gct, true);
+    } catch {
+      throw new GifImportError(UNREADABLE);
+    }
+    yield frame;
+  }
+}
+
+export function decodeGif(buffer: ArrayBuffer): DecodedGif {
+  const gif = parseAndValidate(buffer);
+  const frames: RgbaFrame[] = [];
+  for (const { screen, delayMs } of compositeScreens(
+    decompressImages(gif),
+    gif.width,
+    gif.height,
+  )) {
+    frames.push({ data: screen.slice(), delayMs });
+  }
+  return {
+    width: gif.width,
+    height: gif.height,
+    frames,
+    loopCount: gif.loopCount,
+  };
+}
+
+export interface DecodedGifCanvases {
+  frames: AnimationFrame[];
+  loopCount: number;
+}
+
+/** Decodes, composites and downscales one frame at a time, keeping only the ≤ maxSize canvases. */
+export function decodeGifToCanvases(
+  buffer: ArrayBuffer,
+  maxSize: number,
+): DecodedGifCanvases {
+  const gif = parseAndValidate(buffer);
+  const toCanvas = screenToCanvas(gif.width, gif.height, maxSize);
+  const frames: AnimationFrame[] = [];
+  for (const { screen, delayMs } of compositeScreens(
+    decompressImages(gif),
+    gif.width,
+    gif.height,
+  )) {
+    frames.push({ canvas: toCanvas(screen), delayMs });
+  }
+  return { frames, loopCount: gif.loopCount };
 }
 
 export function isGifFile(file: { type: string; name?: string }): boolean {
@@ -140,25 +234,30 @@ export function isGifFile(file: { type: string; name?: string }): boolean {
   );
 }
 
-export function rgbaFramesToCanvases(
-  decoded: DecodedGif,
+function screenToCanvas(
+  width: number,
+  height: number,
   maxSize: number,
-): { canvas: HTMLCanvasElement; delayMs: number }[] {
-  const { width, height } = decoded;
+): (data: Uint8ClampedArray) => HTMLCanvasElement {
   const scale = Math.min(1, maxSize / Math.max(width, height, 1));
   const outWidth = Math.max(1, Math.round(width * scale));
   const outHeight = Math.max(1, Math.round(height * scale));
+  const source = document.createElement("canvas");
+  source.width = width;
+  source.height = height;
+  const sourceCtx = source.getContext("2d");
 
-  return decoded.frames.map((frame) => {
-    const source = document.createElement("canvas");
-    source.width = width;
-    source.height = height;
-    source
-      .getContext("2d")
-      ?.putImageData(new ImageData(frame.data, width, height), 0, 0);
-    if (scale === 1) return { canvas: source, delayMs: frame.delayMs };
-
+  return (data) => {
     const canvas = document.createElement("canvas");
+    if (scale === 1) {
+      canvas.width = width;
+      canvas.height = height;
+      canvas
+        .getContext("2d")
+        ?.putImageData(new ImageData(data, width, height), 0, 0);
+      return canvas;
+    }
+    sourceCtx?.putImageData(new ImageData(data, width, height), 0, 0);
     canvas.width = outWidth;
     canvas.height = outHeight;
     const ctx = canvas.getContext("2d");
@@ -167,6 +266,17 @@ export function rgbaFramesToCanvases(
       ctx.imageSmoothingQuality = "high";
       ctx.drawImage(source, 0, 0, outWidth, outHeight);
     }
-    return { canvas, delayMs: frame.delayMs };
-  });
+    return canvas;
+  };
+}
+
+export function rgbaFramesToCanvases(
+  decoded: DecodedGif,
+  maxSize: number,
+): AnimationFrame[] {
+  const toCanvas = screenToCanvas(decoded.width, decoded.height, maxSize);
+  return decoded.frames.map((frame) => ({
+    canvas: toCanvas(frame.data),
+    delayMs: frame.delayMs,
+  }));
 }

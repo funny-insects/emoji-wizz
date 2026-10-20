@@ -110,7 +110,6 @@ export function useGifPlayback({
     if (positionRef.current.done) positionRef.current = START_POSITION;
     let rafId = 0;
     let last = performance.now();
-    let lastIndex = positionRef.current.index;
     const tick = (now: number) => {
       const next = stepPlayback(
         positionRef.current,
@@ -121,10 +120,6 @@ export function useGifPlayback({
       last = now;
       positionRef.current = next;
       showFrameOnNode(next.index);
-      if (next.index !== lastIndex) {
-        lastIndex = next.index;
-        setFrameIndexState(next.index);
-      }
       if (!next.done) rafId = requestAnimationFrame(tick);
     };
     showFrameOnNode(positionRef.current.index);
