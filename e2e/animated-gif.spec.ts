@@ -337,3 +337,63 @@ test.describe("auto-fit to size limit", () => {
     await expect(page.locator(".export-result")).toHaveCount(0);
   });
 });
+
+test.describe("GIF crop", () => {
+  async function dragOnStage(
+    page: Page,
+    from: [number, number],
+    to: [number, number],
+  ) {
+    const box = (await page.locator(".konvajs-content").first().boundingBox())!;
+    await page.mouse.move(box.x + from[0], box.y + from[1]);
+    await page.mouse.down();
+    await page.mouse.move(box.x + to[0], box.y + to[1], { steps: 10 });
+    await page.mouse.up();
+  }
+
+  function pixelAt(
+    frame: { patch: Uint8ClampedArray },
+    x: number,
+    y: number,
+  ): number[] {
+    const i = (y * 128 + x) * 4;
+    return Array.from(frame.patch.subarray(i, i + 4));
+  }
+
+  function expectColor(actual: number[], rgba: number[]) {
+    actual.forEach((v, c) => expect(Math.abs(v - rgba[c]!)).toBeLessThan(40));
+  }
+
+  test("cropping a GIF crops every frame to the chosen square", async ({
+    page,
+  }) => {
+    await page.getByRole("button", { name: "Multi-Image" }).click();
+    await addImage(page, animatedGif);
+    await page.locator(".layer-row").click();
+    await page.locator(".konvajs-content").first().scrollIntoViewIfNeeded();
+
+    // The 32 px GIF sits at 240..272; the crop rect starts at 80% (26 px at 243).
+    // Move it onto the GIF's top-left corner: source 0..26.
+    await page.getByRole("button", { name: "Crop" }).click();
+    await dragOnStage(page, [256, 256], [253, 253]);
+    await expect(
+      page.getByRole("button", { name: "Pause animation" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Confirm Crop" }).click();
+    await expect(page.locator(".layer-row .layer-frame-count")).toHaveText(
+      "5 frames",
+    );
+
+    const { frames } = decodeFullFrames(await downloadBytes(page));
+    expect(frames).toHaveLength(5);
+    // Output pixel 62 is source 8..12; source x/y 16 splits the fixture's halves.
+    expectColor(pixelAt(frames[0]!, 62, 62), [255, 0, 0, 255]);
+    expectColor(pixelAt(frames[1]!, 62, 62), [0, 0, 255, 255]);
+    expectColor(pixelAt(frames[2]!, 62, 62), [0, 255, 0, 255]);
+    // Output pixel 67 is source 28..32: red in the uncropped frame 0, gone after the crop.
+    for (const f of frames) {
+      expect(pixelAt(f, 67, 62)[3]).toBe(0);
+      expect(pixelAt(f, 62, 67)[3]).toBe(0);
+    }
+  });
+});

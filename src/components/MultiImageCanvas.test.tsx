@@ -287,4 +287,126 @@ describe("MultiImageCanvas", () => {
       expect(animationRef.current).toBeNull();
     });
   });
+
+  describe("crop confirm", () => {
+    function makeAnimated(): CanvasImageItem {
+      const frames = [100, 200, 300].map((delayMs) => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 100;
+        canvas.height = 100;
+        return { canvas, delayMs };
+      });
+      return makeItem({
+        id: "gif-1",
+        canvas: frames[0]!.canvas,
+        x: 100,
+        y: 100,
+        width: 100,
+        height: 100,
+        frames,
+      });
+    }
+
+    function renderCrop(item: CanvasImageItem) {
+      const onUpdateItem = vi.fn();
+      const onPushHistory = vi.fn();
+      const onToolChange = vi.fn();
+      const ui = (
+        tool: "pointer" | "crop",
+        seq: number,
+        current: CanvasImageItem,
+      ) => (
+        <MultiImageCanvas
+          items={[current]}
+          activeImageId={current.id}
+          activeTool={tool}
+          cropConfirmSeq={seq}
+          onToolChange={onToolChange}
+          onAddImage={noop}
+          onUpdateItem={onUpdateItem}
+          onRemoveItem={noop}
+          onSetActiveImageId={noop}
+          onPushHistory={onPushHistory}
+        />
+      );
+      const view = render(ui("pointer", 0, item));
+      view.rerender(ui("crop", 0, item));
+      return {
+        onUpdateItem,
+        onPushHistory,
+        onToolChange,
+        confirm: (current: CanvasImageItem = item) => {
+          view.rerender(ui("crop", 1, current));
+          act(() => {
+            vi.runAllTimers();
+          });
+        },
+      };
+    }
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("crops every frame of an animated item with one history entry", () => {
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      const item = makeAnimated();
+      const { onUpdateItem, onPushHistory, onToolChange, confirm } =
+        renderCrop(item);
+      confirm();
+
+      expect(onUpdateItem).toHaveBeenCalledTimes(1);
+      const updated: CanvasImageItem = onUpdateItem.mock.calls[0]![0];
+      // Default crop rect: 80% of the 100 px item, centred → 80 px at (110, 110).
+      expect(updated.frames).toHaveLength(3);
+      expect(updated.frames).not.toBe(item.frames);
+      for (const f of updated.frames!) {
+        expect([f.canvas.width, f.canvas.height]).toEqual([80, 80]);
+      }
+      expect(updated.frames!.map((f) => f.delayMs)).toEqual([100, 200, 300]);
+      expect(updated.canvas).toBe(updated.frames![0]!.canvas);
+      expect(updated).toMatchObject({
+        x: 110,
+        y: 110,
+        width: 80,
+        height: 80,
+        scaleX: 1,
+        scaleY: 1,
+      });
+      expect(onPushHistory).toHaveBeenCalledTimes(1);
+      expect(onToolChange).toHaveBeenCalledWith("pointer");
+    });
+
+    it("keeps the paused frame as the resting canvas after cropping", () => {
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      const base = makeAnimated();
+      const item = { ...base, canvas: base.frames![2]!.canvas };
+      const { onUpdateItem, confirm } = renderCrop(item);
+      confirm();
+      const updated: CanvasImageItem = onUpdateItem.mock.calls[0]![0];
+      expect(updated.canvas).toBe(updated.frames![2]!.canvas);
+    });
+
+    it("is a no-op when the crop rect misses the item", () => {
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      const item = makeAnimated();
+      const { onUpdateItem, onPushHistory, onToolChange, confirm } =
+        renderCrop(item);
+      confirm({ ...item, x: 400, y: 400 });
+      expect(onUpdateItem).not.toHaveBeenCalled();
+      expect(onPushHistory).not.toHaveBeenCalled();
+      expect(onToolChange).toHaveBeenCalledWith("pointer");
+    });
+
+    it("positions a static crop at the clamped region", () => {
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      const item = makeItem({ x: 100, y: 100, width: 100, height: 80 });
+      const { onUpdateItem, confirm } = renderCrop(item);
+      // Rect is 64 px at (118, 108); moving the item right clips its left edge.
+      confirm({ ...item, x: 150 });
+      const updated: CanvasImageItem = onUpdateItem.mock.calls[0]![0];
+      expect(updated).toMatchObject({ x: 150, y: 108, width: 32, height: 32 });
+      expect(updated.frames).toBeUndefined();
+    });
+  });
 });

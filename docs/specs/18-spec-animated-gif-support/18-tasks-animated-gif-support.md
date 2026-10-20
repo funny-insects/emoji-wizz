@@ -113,7 +113,7 @@ Compress animated exports under `preset.maxFileSizeKb` using a binary-searched q
 
 ---
 
-### [ ] 4.0 GIF Crop
+### [x] 4.0 GIF Crop
 
 Reuse the square crop tool on animated items, cropping every frame with the same source rectangle while the GIF keeps playing.
 
@@ -124,10 +124,10 @@ Reuse the square crop tool on animated items, cropping every frame with the same
 
 #### 4.0 Tasks
 
-- [ ] 4.1 Implement `cropFrames()` in `src/utils/frameOps.ts`.
-- [ ] 4.2 Keep playback running while the crop tool is active.
-- [ ] 4.3 On confirm, clamp the crop rect to the item bounds (miss → no-op), crop every frame, update position/size, push one history entry.
-- [ ] 4.4 Unit + E2E tests.
+- [x] 4.1 Implement `cropFrames()` in `src/utils/frameOps.ts`.
+- [x] 4.2 Keep playback running while the crop tool is active.
+- [x] 4.3 On confirm, clamp the crop rect to the item bounds (miss → no-op), crop every frame, update position/size, push one history entry.
+- [x] 4.4 Unit + E2E tests.
 
 ---
 

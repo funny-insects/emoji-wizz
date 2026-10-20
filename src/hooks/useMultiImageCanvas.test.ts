@@ -356,5 +356,39 @@ describe("useMultiImageCanvas", () => {
       });
       expect(id).not.toBeNull();
     });
+
+    it("undo/redo of a per-frame crop swaps whole frame sets", async () => {
+      const { result } = renderHook(() => useMultiImageCanvas());
+      const original = makeFrames(3);
+      act(() => {
+        result.current.addAnimatedImage(original, "anim.gif", 0);
+        result.current.pushHistory();
+      });
+      const cropped = makeFrames(3, 16);
+      act(() => {
+        result.current.updateItem({
+          ...result.current.items[0]!,
+          frames: cropped,
+          canvas: cropped[0]!.canvas,
+          width: 16,
+          height: 16,
+        });
+        result.current.pushHistory();
+      });
+
+      await act(async () => {
+        await result.current.undo();
+      });
+      expect(result.current.items[0]!.frames).toBe(original);
+      expect(result.current.items[0]!.canvas).toBe(original[0]!.canvas);
+      expect(result.current.items[0]!.width).toBe(32);
+
+      await act(async () => {
+        await result.current.redo();
+      });
+      expect(result.current.items[0]!.frames).toBe(cropped);
+      expect(result.current.items[0]!.canvas).toBe(cropped[0]!.canvas);
+      expect(result.current.items[0]!.width).toBe(16);
+    });
   });
 });

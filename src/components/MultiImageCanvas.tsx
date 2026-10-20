@@ -24,6 +24,7 @@ import {
   type CanvasImageItem,
 } from "../utils/canvasImageTypes";
 import { isGifFile } from "../utils/gifDecode";
+import { cropFrames, cropRectToSourceRegion } from "../utils/frameOps";
 import { firstClipboardImage, useGifImport } from "../hooks/useGifImport";
 import { useGifPlayback } from "../hooks/useGifPlayback";
 import type { StickerDescriptor } from "../utils/stickerTypes";
@@ -346,44 +347,49 @@ export function MultiImageCanvas({
     prevCropConfirmSeqRef.current = cropConfirmSeq;
     if (!cropRect || !activeItem) return;
 
-    const localX = Math.max(
-      0,
-      Math.round((cropRect.x - activeItem.x) / activeItem.scaleX),
-    );
-    const localY = Math.max(
-      0,
-      Math.round((cropRect.y - activeItem.y) / activeItem.scaleY),
-    );
-    const localSize = Math.max(
-      1,
-      Math.round(
-        Math.min(
-          cropRect.size / activeItem.scaleX,
-          activeItem.canvas.width - localX,
-          activeItem.canvas.height - localY,
-        ),
-      ),
-    );
-
-    const croppedCanvas = cropCanvas(activeItem.canvas, {
-      x: localX,
-      y: localY,
-      size: localSize,
+    const source = activeItem.frames?.[0]?.canvas ?? activeItem.canvas;
+    const region = cropRectToSourceRegion(cropRect, {
+      x: activeItem.x,
+      y: activeItem.y,
+      scaleX: activeItem.scaleX,
+      scaleY: activeItem.scaleY,
+      canvasWidth: source.width,
+      canvasHeight: source.height,
     });
-    const updatedItem: CanvasImageItem = {
-      ...activeItem,
-      canvas: croppedCanvas,
-      x: cropRect.x,
-      y: cropRect.y,
-      width: localSize,
-      height: localSize,
+    const geometry = region && {
+      x: activeItem.x + region.x * activeItem.scaleX,
+      y: activeItem.y + region.y * activeItem.scaleY,
+      width: region.size,
+      height: region.size,
       scaleX: 1,
       scaleY: 1,
     };
+    let updatedItem: CanvasImageItem | null = null;
+    if (region && geometry && isAnimated(activeItem)) {
+      const frames = cropFrames(activeItem.frames, region);
+      const poster = Math.max(
+        0,
+        activeItem.frames.findIndex((f) => f.canvas === activeItem.canvas),
+      );
+      updatedItem = {
+        ...activeItem,
+        ...geometry,
+        frames,
+        canvas: (frames[poster] ?? frames[0]!).canvas,
+      };
+    } else if (region && geometry) {
+      updatedItem = {
+        ...activeItem,
+        ...geometry,
+        canvas: cropCanvas(activeItem.canvas, region),
+      };
+    }
     const timerId = setTimeout(() => {
       setCropRect(null);
-      onUpdateItem(updatedItem);
-      onPushHistory();
+      if (updatedItem) {
+        onUpdateItem(updatedItem);
+        onPushHistory();
+      }
       onToolChange?.("pointer");
     }, 0);
     return () => clearTimeout(timerId);
