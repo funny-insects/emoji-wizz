@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { ExportFormat } from "../utils/exportUtils";
 import type { PlatformPreset } from "../utils/presets";
+import { STATIC_EXPORT_NOTE } from "../utils/exportComposition";
 
 interface ExportControlsProps {
   image: HTMLImageElement | null;
@@ -10,6 +11,8 @@ interface ExportControlsProps {
   presets: PlatformPreset[];
   activePresetId: string;
   onPresetChange: (id: string) => void;
+  animated?: boolean;
+  busy?: boolean;
 }
 
 export function ExportControls({
@@ -20,9 +23,18 @@ export function ExportControls({
   presets,
   activePresetId,
   onPresetChange,
+  animated = false,
+  busy = false,
 }: ExportControlsProps) {
   const canDownload = hasContent !== undefined ? hasContent : image !== null;
-  const [selectedFormat, setSelectedFormat] = useState<ExportFormat>("png");
+  const [selectedFormat, setSelectedFormat] = useState<ExportFormat>(
+    animated ? "gif" : "png",
+  );
+  const [prevAnimated, setPrevAnimated] = useState(animated);
+  if (animated !== prevAnimated) {
+    setPrevAnimated(animated);
+    if (animated) setSelectedFormat("gif");
+  }
 
   return (
     <div className="section">
@@ -53,12 +65,16 @@ export function ExportControls({
         </select>
         <button
           className="btn-download"
-          disabled={!canDownload}
+          disabled={!canDownload || busy}
           onClick={() => onDownload(selectedFormat)}
         >
           Download
         </button>
       </div>
+
+      {animated && selectedFormat !== "gif" && (
+        <p className="export-note">{STATIC_EXPORT_NOTE}</p>
+      )}
 
       {sizeWarning !== null && (
         <p className="export-warning">

@@ -691,7 +691,7 @@ export function EmojiCanvas({
                     />
                   )}
                 </Layer>
-                <Layer>
+                <Layer name="ui">
                   {(activeTool === "eraser" || activeTool === "brush") &&
                     eraserPos &&
                     image && (
@@ -710,7 +710,7 @@ export function EmojiCanvas({
                       />
                     )}
                 </Layer>
-                <Layer>
+                <Layer name="ui">
                   {activeTool === "crop" && cropRect && (
                     <>
                       {/* Dark mask: 4 rects surrounding the crop area */}
@@ -893,7 +893,7 @@ export function EmojiCanvas({
                       </>
                     );
                   })}
-                  <Transformer ref={transformerRef} />
+                  <Transformer ref={transformerRef} name="ui" />
                 </Layer>
                 <Layer>
                   {frameImage &&

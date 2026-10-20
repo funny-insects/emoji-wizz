@@ -268,7 +268,7 @@ describe("MultiImageCanvas", () => {
 
     it("exposes animation controls through animationRef", () => {
       const animationRef: {
-        current: import("./MultiImageCanvas").AnimationControls | null;
+        current: import("../utils/canvasImageTypes").AnimationControls | null;
       } = { current: null };
       const { unmount } = render(
         <MultiImageCanvas

@@ -19,6 +19,7 @@ import {
 import type { EditorTool } from "../App";
 import {
   isAnimated,
+  type AnimationControls,
   type AnimationFrame,
   type CanvasImageItem,
 } from "../utils/canvasImageTypes";
@@ -59,12 +60,6 @@ function loadImageFromBlob(blob: Blob): Promise<HTMLImageElement> {
     };
     img.src = url;
   });
-}
-
-export interface AnimationControls {
-  /** Sets the animated node's image synchronously without redrawing; restore with showFrame(currentFrame()). */
-  showFrame: (index: number) => void;
-  currentFrame: () => number;
 }
 
 const rejectAnimatedImage = () => null;
@@ -762,11 +757,11 @@ export function MultiImageCanvas({
                       }}
                     />
                   ))}
-                  <Transformer ref={transformerRef} />
+                  <Transformer ref={transformerRef} name="ui" />
                 </Layer>
 
                 {/* Layer 2: Drawing overlay (brush lines, cursor, crop) */}
-                <Layer ref={overlayLayerRef}>
+                <Layer ref={overlayLayerRef} name="ui">
                   {(activeTool === "eraser" || activeTool === "brush") &&
                     eraserPos &&
                     activeItem && (
@@ -971,7 +966,7 @@ export function MultiImageCanvas({
                       </>
                     );
                   })}
-                  <Transformer ref={stickerTransformerRef} />
+                  <Transformer ref={stickerTransformerRef} name="ui" />
                 </Layer>
 
                 {/* Layer 4: Frame */}

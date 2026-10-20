@@ -506,6 +506,15 @@
   min-width: 0;
 }
 
+.export-note {
+  padding: 10px 14px;
+  background: var(--yellow-dim);
+  border: 1px solid rgba(255, 234, 187, 0.2);
+  border-radius: var(--radius-sm);
+  color: var(--yellow);
+  font-size: 0.8rem;
+}
+
 .export-warning {
   display: flex;
   align-items: center;

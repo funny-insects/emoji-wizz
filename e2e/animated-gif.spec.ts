@@ -1,6 +1,8 @@
 import { test, expect, type Page } from "@playwright/test";
+import { readFile } from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
+import { decompressFrames, parseGIF } from "gifuct-js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const animatedGif = path.join(__dirname, "fixtures", "test-animated.gif");
@@ -163,4 +165,108 @@ test("dragging the GIF moves it and it keeps every frame", async ({ page }) => {
   );
   await pauseAndScrub(page, 1);
   await expectPixel(page, SAMPLE.x, SAMPLE.y, BLUE);
+});
+
+async function downloadBytes(page: Page): Promise<Buffer> {
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download" }).click();
+  const download = await downloadPromise;
+  return readFile(await download.path());
+}
+
+function decodeFullFrames(bytes: Buffer) {
+  const buffer = bytes.buffer.slice(
+    bytes.byteOffset,
+    bytes.byteOffset + bytes.byteLength,
+  ) as ArrayBuffer;
+  const gif = parseGIF(buffer);
+  const frames = decompressFrames(gif, true);
+  for (const f of frames) {
+    expect(f.dims).toMatchObject({
+      top: 0,
+      left: 0,
+      width: gif.lsd.width,
+      height: gif.lsd.height,
+    });
+  }
+  return { lsd: gif.lsd, frames };
+}
+
+function countDifferingPixels(
+  a: Uint8ClampedArray,
+  b: Uint8ClampedArray,
+  width: number,
+  box: { x0: number; y0: number; x1: number; y1: number },
+) {
+  let count = 0;
+  for (let y = box.y0; y < box.y1; y++) {
+    for (let x = box.x0; x < box.x1; x++) {
+      const i = (y * width + x) * 4;
+      if ([0, 1, 2, 3].some((c) => Math.abs(a[i + c]! - b[i + c]!) > 24)) {
+        count++;
+      }
+    }
+  }
+  return count;
+}
+
+test.describe("animated GIF export", () => {
+  test("downloads a 128×128 animated GIF with every source frame", async ({
+    page,
+  }) => {
+    await page.getByRole("button", { name: "Multi-Image" }).click();
+    await addImage(page, animatedGif);
+    await expect(page.getByRole("combobox", { name: "Format" })).toHaveValue(
+      "gif",
+    );
+
+    const bytes = await downloadBytes(page);
+    expect(bytes.subarray(0, 6).toString("latin1")).toBe("GIF89a");
+    const { lsd, frames } = decodeFullFrames(bytes);
+    expect(lsd.width).toBe(128);
+    expect(lsd.height).toBe(128);
+    expect(frames).toHaveLength(5);
+    expect(frames.map((f) => f.delay)).toEqual([100, 200, 300, 400, 500]);
+    const gifBox = { x0: 60, y0: 60, x1: 68, y1: 68 };
+    expect(
+      countDifferingPixels(frames[0]!.patch, frames[1]!.patch, 128, gifBox),
+    ).toBeGreaterThan(0);
+  });
+
+  test("a sticker appears on the first and last exported frames", async ({
+    page,
+  }) => {
+    await page.getByRole("button", { name: "Multi-Image" }).click();
+    await addImage(page, animatedGif);
+    const without = decodeFullFrames(await downloadBytes(page)).frames;
+
+    await page.getByRole("button", { name: "Burger" }).click();
+    const withSticker = decodeFullFrames(await downloadBytes(page)).frames;
+    expect(withSticker).toHaveLength(without.length);
+
+    // The sticker is placed at 224..288 on the 512 stage, i.e. 56..72 at 128.
+    const stickerBox = { x0: 56, y0: 56, x1: 72, y1: 72 };
+    for (const i of [0, without.length - 1]) {
+      const changed = countDifferingPixels(
+        without[i]!.patch,
+        withSticker[i]!.patch,
+        128,
+        stickerBox,
+      );
+      expect(changed).toBeGreaterThan(40);
+    }
+  });
+
+  test("a static image exported as GIF is a real GIF", async ({ page }) => {
+    await page
+      .locator('label:has-text("Choose image") input[type="file"]')
+      .setInputFiles(staticPng);
+    await page.getByRole("combobox", { name: "Format" }).selectOption("gif");
+
+    const bytes = await downloadBytes(page);
+    expect(bytes.subarray(0, 6).toString("latin1")).toBe("GIF89a");
+    const { lsd, frames } = decodeFullFrames(bytes);
+    expect([lsd.width, lsd.height]).toEqual([128, 128]);
+    expect(frames).toHaveLength(1);
+  });
 });

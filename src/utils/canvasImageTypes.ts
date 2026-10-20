@@ -3,6 +3,12 @@ export interface AnimationFrame {
   delayMs: number;
 }
 
+export interface AnimationControls {
+  /** Sets the animated node's image synchronously without redrawing; restore with showFrame(currentFrame()). */
+  showFrame: (index: number) => void;
+  currentFrame: () => number;
+}
+
 export interface CanvasImageItem {
   id: string;
   label: string;

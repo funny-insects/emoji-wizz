@@ -131,4 +131,57 @@ describe("ExportControls", () => {
     });
     expect(onPresetChange).toHaveBeenCalledWith("discord");
   });
+
+  describe("animated compositions", () => {
+    const formatSelect = () =>
+      screen.getByRole("combobox", { name: "Format" }) as HTMLSelectElement;
+
+    function renderControls(animated: boolean, busy = false) {
+      return (
+        <ExportControls
+          image={null}
+          hasContent
+          animated={animated}
+          busy={busy}
+          onDownload={vi.fn()}
+          sizeWarning={null}
+          {...defaultPresetProps}
+        />
+      );
+    }
+
+    it("auto-selects GIF when the composition becomes animated", () => {
+      const { rerender } = render(renderControls(false));
+      expect(formatSelect().value).toBe("png");
+      rerender(renderControls(true));
+      expect(formatSelect().value).toBe("gif");
+      expect(
+        screen.queryByText("Static export: animation not included"),
+      ).toBeNull();
+    });
+
+    it("shows the static-export note when PNG or WebP is chosen for an animation", () => {
+      render(renderControls(true));
+      fireEvent.change(formatSelect(), { target: { value: "png" } });
+      expect(
+        screen.getByText("Static export: animation not included"),
+      ).toBeInTheDocument();
+      fireEvent.change(formatSelect(), { target: { value: "webp" } });
+      expect(
+        screen.getByText("Static export: animation not included"),
+      ).toBeInTheDocument();
+    });
+
+    it("does not show the note for static compositions", () => {
+      render(renderControls(false));
+      expect(
+        screen.queryByText("Static export: animation not included"),
+      ).toBeNull();
+    });
+
+    it("disables Download while an export is running", () => {
+      render(renderControls(true, true));
+      expect(screen.getByRole("button", { name: "Download" })).toBeDisabled();
+    });
+  });
 });

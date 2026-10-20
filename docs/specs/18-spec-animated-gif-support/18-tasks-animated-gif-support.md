@@ -72,7 +72,7 @@ Decode an uploaded animated GIF into composited frames, add it to the multi-imag
 
 ---
 
-### [ ] 2.0 Animated GIF Export
+### [x] 2.0 Animated GIF Export
 
 Encode a real animated GIF of the whole composition at preset dimensions with stickers and frames on every frame, fix the GIF/WebP format bug, and collapse the three download paths into `exportComposition()`.
 
@@ -84,12 +84,12 @@ Encode a real animated GIF of the whole composition at preset dimensions with st
 
 #### 2.0 Tasks
 
-- [ ] 2.1 Implement `src/utils/gifEncode.ts` (`encodeGif` with per-frame quantization, transparency index for alpha < 128 when the background is transparent, loop count).
-- [ ] 2.2 Name UI-only Konva nodes `ui`; implement per-frame rendering: set animated node to frame i, `stage.toCanvas()` with UI (and transparent background) hidden, `downscaleCanvas` to preset size, restore.
-- [ ] 2.3 Implement `exportComposition()` with routing: animated + GIF → animated encode; static GIF → `gifenc`; WebP → `toDataURL('image/webp')`; PNG → canvas PNG.
-- [ ] 2.4 Replace the three download copies in `App.tsx` with `exportComposition()`.
-- [ ] 2.5 ExportControls: auto-select GIF when an animated item exists; PNG/WebP show "Static export: animation not included".
-- [ ] 2.6 Unit + E2E tests.
+- [x] 2.1 Implement `src/utils/gifEncode.ts` (`encodeGif` with per-frame quantization, transparency index for alpha < 128 when the background is transparent, loop count).
+- [x] 2.2 Name UI-only Konva nodes `ui`; implement per-frame rendering: set animated node to frame i, `stage.toCanvas()` with UI (and transparent background) hidden, `downscaleCanvas` to preset size, restore.
+- [x] 2.3 Implement `exportComposition()` with routing: animated + GIF → animated encode; static GIF → `gifenc`; WebP → `toDataURL('image/webp')`; PNG → canvas PNG.
+- [x] 2.4 Replace the three download copies in `App.tsx` with `exportComposition()`.
+- [x] 2.5 ExportControls: auto-select GIF when an animated item exists; PNG/WebP show "Static export: animation not included".
+- [x] 2.6 Unit + E2E tests.
 
 ---
 
