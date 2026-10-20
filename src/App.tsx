@@ -14,6 +14,8 @@ import { strengthToTolerance } from "./utils/strengthToTolerance";
 import { PLATFORM_PRESETS } from "./utils/presets";
 import { useImageImport } from "./hooks/useImageImport";
 import { useMultiImageCanvas } from "./hooks/useMultiImageCanvas";
+import { firstClipboardImage, useGifImport } from "./hooks/useGifImport";
+import { isGifFile } from "./utils/gifDecode";
 
 const CANVAS_SIZE = 512;
 import { useHistory } from "./hooks/useHistory";
@@ -61,8 +63,71 @@ function App() {
   );
 
   // ── Single-image state ─────────────────────────────────────────────────────
-  const { image, handleFileInput, handleDrop, handlePaste, fileName } =
-    useImageImport();
+  const {
+    image,
+    importFile,
+    handleFileInput,
+    handleDrop,
+    handlePaste,
+    fileName,
+  } = useImageImport();
+  const {
+    importGif,
+    importError: gifImportError,
+    clearImportError: clearGifImportError,
+  } = useGifImport({
+    onAddAnimatedImage: multiImage.addAnimatedImage,
+    onPushHistory: multiImage.pushHistory,
+  });
+
+  const importSingleModeGif = useCallback(
+    async (file: File, label: string) => {
+      const outcome = await importGif(file, label);
+      if (outcome === "animated") setMode("multiImage");
+      else if (outcome === "static") await importFile(file, label);
+    },
+    [importGif, importFile],
+  );
+
+  const handleSingleFileInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !isGifFile(file)) {
+        clearGifImportError();
+        return handleFileInput(e);
+      }
+      const input = e.target;
+      void importSingleModeGif(file, file.name).then(() => {
+        input.value = "";
+      });
+    },
+    [handleFileInput, importSingleModeGif, clearGifImportError],
+  );
+
+  const handleSingleDrop = useCallback(
+    (e: React.DragEvent) => {
+      const file = e.dataTransfer.files?.[0];
+      if (!file || !isGifFile(file)) {
+        clearGifImportError();
+        return handleDrop(e);
+      }
+      e.preventDefault();
+      void importSingleModeGif(file, file.name);
+    },
+    [handleDrop, importSingleModeGif, clearGifImportError],
+  );
+
+  const handleSinglePaste = useCallback(
+    (e: ClipboardEvent) => {
+      const file = firstClipboardImage(e.clipboardData?.items);
+      if (!file || !isGifFile(file)) {
+        clearGifImportError();
+        return handlePaste(e);
+      }
+      void importSingleModeGif(file, "pasted-image");
+    },
+    [handlePaste, importSingleModeGif, clearGifImportError],
+  );
   const [activeTool, setActiveTool] = useState<EditorTool>("pointer");
   const [brushColor, setBrushColor] = useState<string>("#000000");
   const [brushSize, setBrushSize] = useState<number>(3);
@@ -174,7 +239,12 @@ function App() {
       const ctx = activeItem.canvas.getContext("2d");
       if (ctx) {
         setBgRemovalImageData(
-          ctx.getImageData(0, 0, activeItem.canvas.width, activeItem.canvas.height),
+          ctx.getImageData(
+            0,
+            0,
+            activeItem.canvas.width,
+            activeItem.canvas.height,
+          ),
         );
       }
       setShowBgRemovalModal(true);
@@ -520,7 +590,9 @@ function App() {
         setSizeWarning("Export failed: canvas not ready.");
         return;
       }
-      exportStageAsBlob(stageRef.current, exportPreset, { hideBgLayer: bgColor === null }).then((blob) => {
+      exportStageAsBlob(stageRef.current, exportPreset, {
+        hideBgLayer: bgColor === null,
+      }).then((blob) => {
         if (!blob) {
           setSizeWarning(
             "Export failed: this format is not supported by your browser.",
@@ -547,7 +619,9 @@ function App() {
         setSizeWarning("Export failed: canvas not ready.");
         return;
       }
-      exportStageAsBlob(stageRef.current, exportPreset, { hideBgLayer: bgColor === null }).then((blob) => {
+      exportStageAsBlob(stageRef.current, exportPreset, {
+        hideBgLayer: bgColor === null,
+      }).then((blob) => {
         if (!blob) {
           setSizeWarning(
             "Export failed: this format is not supported by your browser.",
@@ -648,9 +722,10 @@ function App() {
           {mode === "singleImage" ? (
             <EmojiCanvas
               image={image}
-              handleFileInput={handleFileInput}
-              handleDrop={handleDrop}
-              handlePaste={handlePaste}
+              handleFileInput={handleSingleFileInput}
+              handleDrop={handleSingleDrop}
+              handlePaste={handleSinglePaste}
+              importError={gifImportError}
               bgColor={bgColor}
               onBgColorChange={setBgColor}
               activeTool={activeTool}
@@ -700,6 +775,7 @@ function App() {
               activeFrameSrc={activeFrameSrc}
               frameThickness={frameThickness}
               onAddImage={multiImage.addImage}
+              onAddAnimatedImage={multiImage.addAnimatedImage}
               onUpdateItem={multiImage.updateItem}
               onRemoveItem={multiImage.removeItem}
               onSetActiveImageId={multiImage.setActiveImageId}
@@ -752,7 +828,9 @@ function App() {
             const preset = PLATFORM_PRESETS.find((p) => p.id === id);
             if (preset) {
               if (
-                (mode === "singleImage" ? image : multiImage.items.length > 0) &&
+                (mode === "singleImage"
+                  ? image
+                  : multiImage.items.length > 0) &&
                 !window.confirm(
                   `Resize canvas to ${preset.label}? This will rescale the image.`,
                 )

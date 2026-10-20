@@ -171,6 +171,48 @@
   display: none;
 }
 
+.playback-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.playback-toggle {
+  padding: 6px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.playback-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.playback-scrubber {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--accent);
+}
+
+.playback-readout {
+  font-size: 0.75rem;
+  color: var(--text-2);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.import-error {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--red);
+}
+
 .file-name {
   font-size: 0.75rem;
   color: var(--text-2);
@@ -474,4 +516,22 @@
   border-radius: var(--radius-sm);
   color: var(--red);
   font-size: 0.8rem;
+}
+
+.layer-badge {
+  flex-shrink: 0;
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.layer-frame-count {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  color: var(--text-3);
+  white-space: nowrap;
 }

@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useMultiImageCanvas } from "./useMultiImageCanvas";
-import type { CanvasImageItem } from "../utils/canvasImageTypes";
+import type {
+  AnimationFrame,
+  CanvasImageItem,
+} from "../utils/canvasImageTypes";
 
 // Minimal 1×1 transparent PNG data URL
 const MOCK_DATA_URL =
@@ -45,6 +48,15 @@ function makeImage(w = 100, h = 80): HTMLImageElement {
     configurable: true,
   });
   return img;
+}
+
+function makeFrames(count = 3, size = 32): AnimationFrame[] {
+  return Array.from({ length: count }, (_, i) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    return { canvas, delayMs: 100 * (i + 1) };
+  });
 }
 
 describe("useMultiImageCanvas", () => {
@@ -218,5 +230,131 @@ describe("useMultiImageCanvas", () => {
     expect(result.current.activeImageId).toBeNull();
     expect(result.current.canUndo).toBe(false);
     expect(result.current.canRedo).toBe(false);
+  });
+
+  describe("animated items", () => {
+    it("addAnimatedImage adds a centred item whose canvas is the first frame", () => {
+      const { result } = renderHook(() => useMultiImageCanvas());
+      const frames = makeFrames();
+      let id!: string | null;
+      act(() => {
+        id = result.current.addAnimatedImage(frames, "anim.gif", 2);
+      });
+      const item = result.current.items[0]!;
+      expect(item.id).toBe(id);
+      expect(item.frames).toBe(frames);
+      expect(item.canvas).toBe(frames[0]!.canvas);
+      expect(item.loopCount).toBe(2);
+      expect(item.x).toBe((512 - 32) / 2);
+      expect(item.y).toBe((512 - 32) / 2);
+      expect(result.current.hasAnimatedItem).toBe(true);
+    });
+
+    it("rejects a second animated item but still accepts static images", () => {
+      const { result } = renderHook(() => useMultiImageCanvas());
+      let second!: string | null;
+      act(() => {
+        result.current.addAnimatedImage(makeFrames(), "a.gif", 0);
+      });
+      act(() => {
+        second = result.current.addAnimatedImage(makeFrames(), "b.gif", 0);
+        result.current.addImage(makeImage(), "still.png");
+      });
+      expect(second).toBeNull();
+      expect(result.current.items).toHaveLength(2);
+      expect(result.current.items.filter((i) => i.frames)).toHaveLength(1);
+    });
+
+    it("undo/redo after a move keeps the identical frames reference", async () => {
+      const { result } = renderHook(() => useMultiImageCanvas());
+      const frames = makeFrames();
+      act(() => {
+        result.current.addAnimatedImage(frames, "anim.gif", 0);
+        result.current.pushHistory();
+      });
+      act(() => {
+        result.current.updateItem({ ...result.current.items[0]!, x: 10 });
+        result.current.pushHistory();
+      });
+
+      await act(async () => {
+        await result.current.undo();
+      });
+      expect(result.current.items[0]!.x).toBe(240);
+      expect(result.current.items[0]!.frames).toBe(frames);
+      expect(result.current.items[0]!.canvas).toBe(frames[0]!.canvas);
+
+      await act(async () => {
+        await result.current.redo();
+      });
+      expect(result.current.items[0]!.x).toBe(10);
+      expect(result.current.items[0]!.frames).toBe(frames);
+      expect(result.current.items[0]!.loopCount).toBe(0);
+    });
+
+    it("transform-only snapshots share the frame set and never serialize frames", async () => {
+      const { result } = renderHook(() => useMultiImageCanvas());
+      const frames = makeFrames(5);
+      const toDataURL = vi.mocked(HTMLCanvasElement.prototype.toDataURL);
+      act(() => {
+        result.current.addAnimatedImage(frames, "anim.gif", 0);
+        result.current.pushHistory();
+      });
+      for (const x of [1, 2, 3]) {
+        act(() => {
+          result.current.updateItem({ ...result.current.items[0]!, x });
+          result.current.pushHistory();
+        });
+      }
+      expect(toDataURL).not.toHaveBeenCalled();
+
+      for (let i = 0; i < 3; i++) {
+        await act(async () => {
+          await result.current.undo();
+        });
+        expect(result.current.items[0]!.frames).toBe(frames);
+      }
+    });
+
+    it("restores the paused poster frame from history", async () => {
+      const { result } = renderHook(() => useMultiImageCanvas());
+      const frames = makeFrames();
+      act(() => {
+        result.current.addAnimatedImage(frames, "anim.gif", 0);
+        result.current.pushHistory();
+      });
+      act(() => {
+        result.current.updateItem({
+          ...result.current.items[0]!,
+          canvas: frames[2]!.canvas,
+          x: 5,
+        });
+        result.current.pushHistory();
+      });
+      await act(async () => {
+        await result.current.undo();
+      });
+      await act(async () => {
+        await result.current.redo();
+      });
+      expect(result.current.items[0]!.canvas).toBe(frames[2]!.canvas);
+    });
+
+    it("undoing the add removes the animated item and allows a new one", async () => {
+      const { result } = renderHook(() => useMultiImageCanvas());
+      act(() => {
+        result.current.addAnimatedImage(makeFrames(), "a.gif", 0);
+        result.current.pushHistory();
+      });
+      await act(async () => {
+        await result.current.undo();
+      });
+      expect(result.current.hasAnimatedItem).toBe(false);
+      let id!: string | null;
+      act(() => {
+        id = result.current.addAnimatedImage(makeFrames(), "b.gif", 0);
+      });
+      expect(id).not.toBeNull();
+    });
   });
 });

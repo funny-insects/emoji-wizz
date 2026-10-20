@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import type { CanvasImageItem } from "../utils/canvasImageTypes";
+import { isAnimated, type CanvasImageItem } from "../utils/canvasImageTypes";
 
 interface LayerPanelProps {
   items: CanvasImageItem[];
@@ -29,7 +29,8 @@ function ItemThumbnail({ canvas }: { canvas: HTMLCanvasElement }) {
         border: "1px solid var(--border)",
         borderRadius: 3,
         flexShrink: 0,
-        background: "repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 0 0 / 8px 8px",
+        background:
+          "repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 0 0 / 8px 8px",
       }}
     />
   );
@@ -99,6 +100,14 @@ export function LayerPanel({
             <span className="layer-label" title={item.label}>
               {item.label}
             </span>
+            {isAnimated(item) && (
+              <>
+                <span className="layer-badge">GIF</span>
+                <span className="layer-frame-count">
+                  {item.frames.length} frames
+                </span>
+              </>
+            )}
           </li>
         ))}
       </ul>

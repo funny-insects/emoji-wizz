@@ -17,7 +17,14 @@ import {
   cropCanvas,
 } from "../utils/imageTransforms";
 import type { EditorTool } from "../App";
-import type { CanvasImageItem } from "../utils/canvasImageTypes";
+import {
+  isAnimated,
+  type AnimationFrame,
+  type CanvasImageItem,
+} from "../utils/canvasImageTypes";
+import { isGifFile } from "../utils/gifDecode";
+import { firstClipboardImage, useGifImport } from "../hooks/useGifImport";
+import { useGifPlayback } from "../hooks/useGifPlayback";
 import type { StickerDescriptor } from "../utils/stickerTypes";
 
 const CANVAS_SIZE = 512;
@@ -54,6 +61,14 @@ function loadImageFromBlob(blob: Blob): Promise<HTMLImageElement> {
   });
 }
 
+export interface AnimationControls {
+  /** Sets the animated node's image synchronously without redrawing; restore with showFrame(currentFrame()). */
+  showFrame: (index: number) => void;
+  currentFrame: () => number;
+}
+
+const rejectAnimatedImage = () => null;
+
 export interface MultiImageCanvasProps {
   items: CanvasImageItem[];
   activeImageId: string | null;
@@ -79,6 +94,12 @@ export interface MultiImageCanvasProps {
   activeFrameSrc?: string | null;
   frameThickness?: number;
   onAddImage: (img: HTMLImageElement, label: string) => void;
+  onAddAnimatedImage?: (
+    frames: AnimationFrame[],
+    label: string,
+    loopCount: number,
+  ) => string | null;
+  animationRef?: React.MutableRefObject<AnimationControls | null>;
   onUpdateItem: (updated: CanvasImageItem) => void;
   onRemoveItem: (id: string) => void;
   onSetActiveImageId: (id: string | null) => void;
@@ -107,6 +128,8 @@ export function MultiImageCanvas({
   transformRequest = null,
   cropConfirmSeq = 0,
   onAddImage,
+  onAddAnimatedImage = rejectAnimatedImage,
+  animationRef,
   onUpdateItem,
   onRemoveItem,
   onSetActiveImageId,
@@ -155,25 +178,83 @@ export function MultiImageCanvas({
     [items, activeImageId],
   );
 
+  // ── Animated GIF playback ───────────────────────────────────────────────────
+  const animatedItem = useMemo(() => items.find(isAnimated) ?? null, [items]);
+  const animatedFrames = animatedItem?.frames;
+  const [playing, setPlaying] = useState(true);
+  const { frameIndex, setFrameIndex, currentFrame, showFrame } = useGifPlayback(
+    {
+      item: animatedItem,
+      nodesRef: itemNodeRefs,
+      layerRef: itemsLayerRef,
+      playing,
+    },
+  );
+
+  useEffect(() => {
+    if (!animationRef) return;
+    animationRef.current = animatedItem ? { showFrame, currentFrame } : null;
+    return () => {
+      animationRef.current = null;
+    };
+  }, [animationRef, animatedItem, showFrame, currentFrame]);
+
+  const showRestingFrame = useCallback(
+    (index: number) => {
+      if (!animatedItem || !animatedFrames) return;
+      const canvas = animatedFrames[index]?.canvas;
+      if (canvas && canvas !== animatedItem.canvas) {
+        onUpdateItem({ ...animatedItem, canvas });
+      }
+    },
+    [animatedItem, animatedFrames, onUpdateItem],
+  );
+
+  const handleTogglePlay = useCallback(() => {
+    if (playing) {
+      const index = currentFrame();
+      setFrameIndex(index);
+      showRestingFrame(index);
+    }
+    setPlaying(!playing);
+  }, [playing, currentFrame, setFrameIndex, showRestingFrame]);
+
+  const handleScrub = useCallback(
+    (index: number) => {
+      setFrameIndex(index);
+      showRestingFrame(index);
+    },
+    [setFrameIndex, showRestingFrame],
+  );
+
+  // ── Import (file input / drop / paste) ──────────────────────────────────────
+  const { importGif, importError, clearImportError } = useGifImport({
+    onAddAnimatedImage,
+    onPushHistory,
+  });
+
+  const importFile = useCallback(
+    async (file: File, label: string) => {
+      const isGif = isGifFile(file);
+      if (!isGif && !file.type.startsWith("image/")) return;
+      if (isGif && (await importGif(file, label)) !== "static") return;
+      const img = await loadImageFromBlob(file);
+      onAddImage(img, label);
+      onPushHistory();
+      clearImportError();
+    },
+    [importGif, onAddImage, onPushHistory, clearImportError],
+  );
+
   // ── Paste listener ──────────────────────────────────────────────────────────
   useEffect(() => {
-    async function handlePaste(e: ClipboardEvent) {
-      const clipItems = e.clipboardData?.items;
-      if (!clipItems) return;
-      for (const item of clipItems) {
-        if (item.type.startsWith("image/")) {
-          const blob = item.getAsFile();
-          if (!blob) continue;
-          const img = await loadImageFromBlob(blob);
-          onAddImage(img, "pasted-image");
-          onPushHistory();
-          return;
-        }
-      }
+    function handlePaste(e: ClipboardEvent) {
+      const file = firstClipboardImage(e.clipboardData?.items);
+      if (file) void importFile(file, "pasted-image");
     }
     document.addEventListener("paste", handlePaste);
     return () => document.removeEventListener("paste", handlePaste);
-  }, [onAddImage, onPushHistory]);
+  }, [importFile]);
 
   // ── Load sticker images ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -543,23 +624,20 @@ export function MultiImageCanvas({
 
   // ── File picker ─────────────────────────────────────────────────────────────
   async function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !file.type.startsWith("image/")) return;
-    const img = await loadImageFromBlob(file);
-    onAddImage(img, file.name);
-    onPushHistory();
+    const input = e.target;
+    const file = input.files?.[0];
+    if (!file) return;
+    await importFile(file, file.name);
     // reset so the same file can be picked again
-    e.target.value = "";
+    input.value = "";
   }
 
   // ── Drop handler ─────────────────────────────────────────────────────────────
   async function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
-    if (!file || !file.type.startsWith("image/")) return;
-    const img = await loadImageFromBlob(file);
-    onAddImage(img, file.name);
-    onPushHistory();
+    if (!file) return;
+    await importFile(file, file.name);
   }
 
   const needsActiveImage =
@@ -1049,6 +1127,36 @@ export function MultiImageCanvas({
           </div>
         </div>
 
+        {animatedItem && animatedFrames && (
+          <div className="playback-row">
+            <button
+              type="button"
+              className="playback-toggle"
+              onClick={handleTogglePlay}
+              aria-label={playing ? "Pause animation" : "Play animation"}
+            >
+              {playing ? "Pause" : "Play"}
+            </button>
+            {!playing && (
+              <>
+                <input
+                  type="range"
+                  className="playback-scrubber"
+                  aria-label="Frame"
+                  min={0}
+                  max={animatedFrames.length - 1}
+                  step={1}
+                  value={frameIndex}
+                  onChange={(e) => handleScrub(Number(e.target.value))}
+                />
+                <span className="playback-readout">
+                  Frame {frameIndex + 1} / {animatedFrames.length}
+                </span>
+              </>
+            )}
+          </div>
+        )}
+
         <div className="file-input-row">
           <label className="file-input-label">
             <svg
@@ -1079,6 +1187,11 @@ export function MultiImageCanvas({
             </span>
           )}
         </div>
+        {importError && (
+          <p className="import-error" role="alert">
+            {importError}
+          </p>
+        )}
         {onBgColorChange && (
           <div className="bg-color-row">
             <span className="bg-color-label">Background</span>

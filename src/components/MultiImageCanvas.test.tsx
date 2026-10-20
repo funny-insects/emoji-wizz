@@ -1,5 +1,5 @@
-import { describe, it, expect, afterEach } from "vitest";
-import { render, act } from "@testing-library/react";
+import { describe, it, expect, afterEach, vi } from "vitest";
+import { render, act, screen, fireEvent } from "@testing-library/react";
 import Konva from "konva";
 import { MultiImageCanvas } from "./MultiImageCanvas";
 import type { CanvasImageItem } from "../utils/canvasImageTypes";
@@ -78,7 +78,9 @@ describe("MultiImageCanvas", () => {
         onPushHistory={noop}
       />,
     );
-    expect(container.textContent).not.toContain("Paste, drop, or choose images");
+    expect(container.textContent).not.toContain(
+      "Paste, drop, or choose images",
+    );
   });
 
   it("shows 'Select an image to edit' hint when brush tool is active and no image is selected", async () => {
@@ -187,5 +189,102 @@ describe("MultiImageCanvas", () => {
     });
     expect(removedId).toBe("item-1");
     expect(historyPushed).toBe(true);
+  });
+
+  describe("animation playback controls", () => {
+    function makeAnimatedItem(): CanvasImageItem {
+      const frames = Array.from({ length: 4 }, () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 32;
+        canvas.height = 32;
+        return { canvas, delayMs: 100 };
+      });
+      return makeItem({
+        id: "gif-1",
+        label: "anim.gif",
+        canvas: frames[0]!.canvas,
+        width: 32,
+        height: 32,
+        frames,
+        loopCount: 0,
+      });
+    }
+
+    function renderCanvas(
+      items: CanvasImageItem[],
+      onUpdateItem: (item: CanvasImageItem) => void = noop,
+    ) {
+      return render(
+        <MultiImageCanvas
+          items={items}
+          activeImageId={null}
+          onAddImage={noop}
+          onUpdateItem={onUpdateItem}
+          onRemoveItem={noop}
+          onSetActiveImageId={noop}
+          onPushHistory={noop}
+        />,
+      );
+    }
+
+    it("does not render playback controls without an animated item", () => {
+      renderCanvas([makeItem()]);
+      expect(
+        screen.queryByRole("button", { name: "Pause animation" }),
+      ).toBeNull();
+      expect(
+        screen.queryByRole("button", { name: "Play animation" }),
+      ).toBeNull();
+    });
+
+    it("renders a Pause button and no scrubber while playing", () => {
+      renderCanvas([makeItem(), makeAnimatedItem()]);
+      expect(
+        screen.getByRole("button", { name: "Pause animation" }),
+      ).toHaveTextContent("Pause");
+      expect(screen.queryByRole("slider", { name: "Frame" })).toBeNull();
+    });
+
+    it("pausing shows the scrubber and scrubbing sets the resting frame", () => {
+      const item = makeAnimatedItem();
+      const onUpdateItem = vi.fn();
+      renderCanvas([item], onUpdateItem);
+
+      fireEvent.click(screen.getByRole("button", { name: "Pause animation" }));
+      expect(
+        screen.getByRole("button", { name: "Play animation" }),
+      ).toHaveTextContent("Play");
+      const slider = screen.getByRole("slider", { name: "Frame" });
+      expect(slider).toHaveAttribute("max", "3");
+      expect(screen.getByText("Frame 1 / 4")).toBeInTheDocument();
+
+      fireEvent.change(slider, { target: { value: "2" } });
+      expect(screen.getByText("Frame 3 / 4")).toBeInTheDocument();
+      expect(onUpdateItem).toHaveBeenLastCalledWith({
+        ...item,
+        canvas: item.frames![2]!.canvas,
+      });
+    });
+
+    it("exposes animation controls through animationRef", () => {
+      const animationRef: {
+        current: import("./MultiImageCanvas").AnimationControls | null;
+      } = { current: null };
+      const { unmount } = render(
+        <MultiImageCanvas
+          items={[makeAnimatedItem()]}
+          activeImageId={null}
+          animationRef={animationRef}
+          onAddImage={noop}
+          onUpdateItem={noop}
+          onRemoveItem={noop}
+          onSetActiveImageId={noop}
+          onPushHistory={noop}
+        />,
+      );
+      expect(animationRef.current?.currentFrame()).toBe(0);
+      unmount();
+      expect(animationRef.current).toBeNull();
+    });
   });
 });
